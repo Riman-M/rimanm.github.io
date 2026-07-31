@@ -1,11 +1,12 @@
 {
-  "citations": 229,
+  "citations": 249,
   "hIndex": 9,
-  "i10Index": 7,
+  "i10Index": 8,
   "publications": 19,
+  "patentsTotal": 9,
   "patentsPublished": 7,
-  "patentsApplied": 2,
-  "maxCitationsSinglePaper": 77,
-  "yearsExperience": 8,
-  "updated": "2026-02"
+  "patentsGranted": 2,
+  "maxCitationsSinglePaper": 79,
+  "yearsExperience": 8.5,
+  "updated": "2026-07"
 }
