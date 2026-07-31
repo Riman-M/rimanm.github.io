@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dr. Riman Mandal — Green Cloud Computing · Assistant Professor</title>
+<meta name="description" content="Dr. Riman Mandal, Assistant Professor of Computer Science and Engineering at Galgotias University. Research on energy-aware VM consolidation, green cloud computing, and fog & edge computing.">
+<meta name="author" content="Riman Mandal">
+<link rel="canonical" href="https://rimanm.com/">
+<meta property="og:type" content="profile">
+<meta property="og:title" content="Dr. Riman Mandal">
+<meta property="og:description" content="Green cloud computing — doing the same work on fewer running servers.">
+<meta property="og:url" content="https://rimanm.com/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="wrap navrow">
+    <a class="brand" href="index.html">R. Mandal</a>
+    <div class="navlinks">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="index.html#research">Research</a>
+      <a href="publications.html">Publications</a>
+      <a href="teaching.html">Teaching</a>
+      <a href="index.html#contact">Contact</a>
+      <button class="themetoggle" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="herotop">
+      <div>
+        <p class="eyebrow">Assistant Professor · Dept. of Computer Science &amp; Engineering · Galgotias University</p>
+        <h1 class="name">Dr. Riman Mandal</h1>
+        <p class="tagline">Doing the same work on fewer running servers.</p>
+        <p class="lede">I design virtual-machine selection and placement policies that consolidate workloads onto fewer active servers — cutting a data centre's energy draw without breaking its service-level agreements. Eight years of research and teaching across cloud, fog, and edge computing.</p>
+        <div class="actions">
+          <a class="btn" id="link-cv" href="Riman_Mandal_CV.pdf">Download CV</a>
+          <a class="btn ghost" id="link-scholar" href="#" target="_blank" rel="noopener">Google Scholar</a>
+        </div>
+      </div>
+      <div class="portrait" aria-hidden="true"><span>RM</span></div>
+    </div>
+
+    <!-- SIGNATURE -->
+    <div class="rack">
+      <div class="rackhead">
+        <span class="t">VM consolidation — live sketch</span>
+        <span class="v" id="readout">Active <b class="on">6</b> · Idle <b class="off">0</b></span>
+      </div>
+      <div class="stage" id="stage" aria-hidden="true"></div>
+      <p class="caption" id="caption">Twenty-four virtual machines spread thin across six hosts. Every host draws power whether it is busy or idle.</p>
+    </div>
+
+    <!-- METRICS -->
+    <div class="metrics" id="metrics"></div>
+  </div>
+</header>
+
+<section class="band" id="research">
+  <div class="wrap">
+    <p class="kicker">Research</p>
+    <h2>Energy, latency, and the promises we make to users</h2>
+    <div class="research">
+      <a class="rcard" href="publications.html">
+        <h3>Green cloud computing</h3>
+        <p>Energy-aware VM consolidation that holds quality of service — the MECpVms and PbVmSp selection policies weigh energy cost and SLA violation together, not one at the other's expense.</p>
+      </a>
+      <a class="rcard" href="publications.html">
+        <h3>Fog &amp; edge computing</h3>
+        <p>Deciding what belongs near the sensor and what belongs in the cloud — applied to real deployments: an elephant corridor over a railway track, a tiger alarm for endangered wildlife, low-latency identification.</p>
+      </a>
+      <a class="rcard future" href="publications.html">
+        <h3>Quantum simulation &amp; ML</h3>
+        <p>A current direction: bringing quantum simulation and machine learning to bear on scheduling and resource problems.</p>
+      </a>
+      <a class="rcard" href="publications.html">
+        <h3>Cloud security</h3>
+        <p>Securing infrastructure proactively rather than after the breach — the subject of my 2025 authored book and several filed patents.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <p class="kicker">Selected work</p>
+    <h2>A few papers worth starting with</h2>
+    <div id="selected"></div>
+    <p style="margin-top:1.4rem"><a class="seelink" href="publications.html">All publications, patents &amp; chapters →</a></p>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <p class="kicker">Teaching · 6 years 6 months</p>
+    <h2>Where I've taught</h2>
+    <div id="teachprev"></div>
+    <p style="margin-top:1.4rem"><a class="seelink" href="teaching.html">Full courses &amp; student resources →</a></p>
+  </div>
+</section>
+
+<section class="band" id="contact">
+  <div class="wrap">
+    <p class="kicker">Contact</p>
+    <h2>Open to collaboration and research supervision</h2>
+    <p style="max-width:52ch;margin-top:.9rem">If you work on energy-aware scheduling, fog deployments in the field, or cloud security, write to me. I also supervise student projects in these areas.</p>
+
+    <form id="contactform" class="cform" method="POST" action="#" hidden>
+      <div class="cfrow">
+        <label>Name<input type="text" name="name" required autocomplete="name"></label>
+        <label>Email<input type="email" name="email" required autocomplete="email"></label>
+      </div>
+      <label>Message<textarea name="message" rows="4" required></textarea></label>
+      <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off">
+      <div class="cfoot">
+        <button type="submit">Send message</button>
+        <span id="cstatus" class="cstatus" role="status"></span>
+      </div>
+    </form>
+
+    <div class="contactgrid">
+      <a id="link-email" href="#">mandal.riman@gmail.com <span>Email</span></a>
+      <a id="link-scholar" href="#" target="_blank" rel="noopener">Google Scholar <span>Profile</span></a>
+      <a id="link-orcid" href="#" target="_blank" rel="noopener">ORCiD 0000-0001-7409-8491 <span>Profile</span></a>
+      <a id="link-rg" href="#" target="_blank" rel="noopener">ResearchGate <span>Profile</span></a>
+      <a id="link-linkedin" href="#" target="_blank" rel="noopener">LinkedIn <span>Profile</span></a>
+      <a id="link-ieee" href="#">mandal.riman@ieee.org <span>IEEE</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Dr. Riman Mandal · Department of Computer Science and Engineering, Galgotias University, Greater Noida, Uttar Pradesh, India<br>
+    rimanm.com · built on GitHub Pages
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>

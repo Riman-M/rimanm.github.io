@@ -1,0 +1,44 @@
+name: Update Scholar metrics
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"      # every Monday at 06:00 UTC
+  workflow_dispatch:          # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write             # allows the job to commit metrics.json back
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install scholarly
+          # Optional reliable backend — only used if SERPAPI_KEY secret is set:
+          pip install google-search-results || true
+
+      - name: Fetch latest metrics
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+        run: python scripts/update_scholar.py
+
+      - name: Commit any changes
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet data/metrics.json; then
+            git add data/metrics.json
+            git commit -m "chore: refresh Scholar metrics"
+            git push
+          else
+            echo "No metric changes to commit."
+          fi
