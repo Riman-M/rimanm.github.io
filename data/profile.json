@@ -6,12 +6,15 @@
   "email": "mandal.riman@gmail.com",
   "emailIeee": "mandal.riman@ieee.org",
   "scholarAuthorId": "RE-LPh0AAAAJ",
+  "scopusAuthorId": "",
+  "orcidId": "0000-0001-7409-8491",
   "formspreeId": "YOUR_FORM_ID",
   "links": {
     "scholar": "https://scholar.google.com/citations?user=RE-LPh0AAAAJ&hl=en",
     "orcid": "https://orcid.org/0000-0001-7409-8491",
     "researchgate": "https://www.researchgate.net/profile/Riman-Mandal",
-    "linkedin": "https://www.linkedin.com/in/riman-mandal"
+    "linkedin": "https://www.linkedin.com/in/riman-mandal",
+    "scopus": ""
   },
   "cv": "Riman_Mandal_CV.pdf"
 }

@@ -8,5 +8,30 @@
   "patentsGranted": 2,
   "maxCitationsSinglePaper": 79,
   "yearsExperience": 8.5,
-  "updated": "2026-07"
+  "updated": "2026-07",
+  "primarySource": "scholar",
+  "sources": {
+    "scholar": {
+      "label": "Google Scholar",
+      "citations": 249,
+      "hIndex": 9,
+      "i10Index": 8,
+      "documents": null,
+      "updated": "2026-07"
+    },
+    "scopus": {
+      "label": "Scopus",
+      "citations": null,
+      "hIndex": null,
+      "documents": null,
+      "updated": null
+    },
+    "orcid": {
+      "label": "ORCiD",
+      "citations": null,
+      "hIndex": null,
+      "documents": null,
+      "updated": null
+    }
+  }
 }
