@@ -1,0 +1,44 @@
+name: Update research metrics
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install scholarly || true
+          pip install google-search-results || true
+
+      - name: Fetch metrics from Scholar, Scopus and ORCiD
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          SCOPUS_API_KEY: ${{ secrets.SCOPUS_API_KEY }}
+        run: python scripts/update_metrics.py
+
+      - name: Commit any changes
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet data/metrics.json; then
+            git add data/metrics.json
+            git commit -m "chore: refresh research metrics"
+            git push
+          else
+            echo "No metric changes to commit."
+          fi
