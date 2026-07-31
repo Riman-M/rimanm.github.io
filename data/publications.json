@@ -5,11 +5,10 @@
       "authors": "V. D. Katkar, R. Mandal, U. Biswas, M. Lunagaria, G. G. Tejani",
       "venue": "Alexandria Engineering Journal",
       "year": 2025,
-      "note": "Under review",
       "index": "SCIE",
       "impact": "IF 6.8",
-      "doi": "",
-      "featured": false
+      "doi": "https://doi.org/10.1016/j.aej.2025.12.017",
+      "featured": true
     },
     {
       "title": "Design and development of a fog-assisted elephant corridor over a railway track",
@@ -19,7 +18,7 @@
       "index": "SCIE",
       "impact": "IF 3.9",
       "doi": "10.3390/su15075944",
-      "featured": true
+      "featured": false
     },
     {
       "title": "MECpVms: an SLA-aware energy-efficient virtual machine selection policy for green cloud computing",
@@ -40,7 +39,7 @@
       "index": "SCIE",
       "impact": "IF 6.0",
       "doi": "10.1016/j.comcom.2022.07.029",
-      "featured": true
+      "featured": false
     },
     {
       "title": "An approach toward design and development of an energy-aware VM selection policy with improved SLA violation in green cloud computing",
@@ -79,7 +78,7 @@
       "authors": "R. K. Singh, I. Siraj, A. Kumar, D. Singh, R. Mandal, P. Kumar",
       "venue": "2nd Int. Conf. on Multidisciplinary Research and Innovations in Engineering (ICMRIE)",
       "year": 2025,
-      "doi": ""
+      "doi": "10.1109/MRIE66930.2025.11156639"
     },
     {
       "title": "Currency detection application for visually impaired people using TensorFlow Lite",
