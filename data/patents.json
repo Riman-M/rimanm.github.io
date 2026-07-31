@@ -1,4 +1,18 @@
 {
+  "granted": [
+    {
+      "title": "Smart ECG device",
+      "date": "Granted Apr 2026",
+      "applicationNo": "Design No. 444225-001",
+      "type": "Indian Design"
+    },
+    {
+      "title": "Compact thermal storage system for renewable energy",
+      "date": "Granted Oct 2025",
+      "applicationNo": "Design No. 6450612",
+      "type": "UK Design"
+    }
+  ],
   "published": [
     {
       "title": "Cloud-based deep learning model management system for enterprise applications",
@@ -43,5 +57,5 @@
       "type": "Indian Utility"
     }
   ],
-  "appliedCount": 2
+  "total": 9
 }

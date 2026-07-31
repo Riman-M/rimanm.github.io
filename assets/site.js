@@ -58,7 +58,7 @@ function renderMetrics(){
       [m.citations,'Citations'],
       [m.hIndex,'h-index'],
       [m.publications,'Publications'],
-      [m.patentsPublished,'Patents']
+      [m.patentsTotal||m.patentsPublished,'Patents']
     ];
     cells.forEach(function(c){
       var d=el('div','metric');
@@ -131,16 +131,22 @@ function renderPublications(){
 function renderPatents(){
   var host=document.getElementById('patlist'); if(!host) return;
   getJSON('data/patents.json').then(function(d){
-    d.published.forEach(function(p){
-      var e=el('div','entry');
-      var meta=el('div','meta');
-      meta.appendChild(el('span',null,esc(p.date)));
-      meta.appendChild(el('span',null,esc(p.applicationNo)));
-      meta.appendChild(el('span',null,esc(p.type)));
-      e.appendChild(meta);
-      e.appendChild(el('div','title',esc(p.title)));
-      host.appendChild(e);
-    });
+    function block(label,items){
+      if(!items||!items.length) return;
+      host.appendChild(el('div','grouphead',esc(label)+' — '+items.length));
+      items.forEach(function(p){
+        var e=el('div','entry');
+        var meta=el('div','meta');
+        meta.appendChild(el('span',null,esc(p.date)));
+        meta.appendChild(el('span',null,esc(p.applicationNo)));
+        meta.appendChild(el('span',null,esc(p.type)));
+        e.appendChild(meta);
+        e.appendChild(el('div','title',esc(p.title)));
+        host.appendChild(e);
+      });
+    }
+    block('Granted',d.granted);
+    block('Published',d.published);
   }).catch(function(){});
 }
 
