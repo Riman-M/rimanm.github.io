@@ -45,6 +45,7 @@ function pubEntry(p){
   var foot=el('div','foot');
   if(p.index) foot.appendChild(el('span','tag',esc(p.index)));
   if(p.impact) foot.appendChild(el('span','tag if',esc(p.impact)));
+  if(p.isbn) foot.appendChild(el('span','tag','ISBN '+esc(p.isbn)));
   var d=doiEl(p.doi); if(d) foot.appendChild(d);
   if(foot.children.length) e.appendChild(foot);
   return e;
@@ -190,6 +191,40 @@ function renderTeachingFull(){
   }).catch(function(){});
 }
 
+/* ---------- research impact by source ---------- */
+function renderImpact(){
+  var host=document.getElementById('impact'); if(!host) return;
+  getJSON('data/metrics.json').then(function(m){
+    var srcs=m.sources||{};
+    var order=['scholar','scopus','orcid'];
+    var any=false;
+    order.forEach(function(key){
+      var s=srcs[key]; if(!s) return;
+      var has=(s.citations!=null)||(s.hIndex!=null)||(s.documents!=null);
+      if(!has) return;
+      any=true;
+      var card=el('div','srccard');
+      card.appendChild(el('div','srcname',esc(s.label||key)));
+      var row=el('div','srcstats');
+      function stat(v,label){
+        if(v==null) return;
+        var d=el('div','srcstat');
+        d.appendChild(el('b',null,esc(v)));
+        d.appendChild(el('span',null,esc(label)));
+        row.appendChild(d);
+      }
+      stat(s.citations,'Citations');
+      stat(s.hIndex,'h-index');
+      if(s.i10Index!=null) stat(s.i10Index,'i10');
+      stat(s.documents,'Documents');
+      card.appendChild(row);
+      if(s.updated) card.appendChild(el('div','srcdate','Updated '+esc(s.updated)));
+      host.appendChild(card);
+    });
+    if(!any) host.parentNode.style.display='none';
+  }).catch(function(){});
+}
+
 /* ---------- profile links (contact + hero buttons) ---------- */
 function renderProfile(){
   getJSON('data/profile.json').then(function(p){
@@ -293,6 +328,7 @@ function runConsolidation(){
 document.addEventListener('DOMContentLoaded',function(){
   renderProfile();
   renderMetrics();
+  renderImpact();
   renderSelected();
   renderTeachingPreview();
   renderPublications();

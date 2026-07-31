@@ -177,6 +177,16 @@ section.band{padding:clamp(2.5rem,6vw,4rem) 0;border-top:1px solid var(--rule)}
 .matlist li.on{color:var(--active-ink);border-color:color-mix(in srgb,var(--active) 40%,var(--rule))}
 .matlist a{text-decoration:none;color:inherit}
 
+/* research impact by source */
+.impact{display:grid;grid-template-columns:1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:3px;overflow:hidden;margin-top:1.3rem}
+@media(min-width:640px){.impact{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
+.srccard{background:var(--surface);padding:1.1rem 1.15rem}
+.srcname{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--active-ink);margin-bottom:.7rem}
+.srcstats{display:flex;flex-wrap:wrap;gap:1.2rem}
+.srcstat b{display:block;font-family:var(--display);font-size:1.5rem;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.srcstat span{font-family:var(--mono);font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.srcdate{font-family:var(--mono);font-size:.62rem;color:var(--faint);margin-top:.8rem;letter-spacing:.04em}
+
 /* contact form */
 .cform{margin-top:1.4rem;max-width:560px}
 .cfrow{display:grid;grid-template-columns:1fr;gap:.8rem}
