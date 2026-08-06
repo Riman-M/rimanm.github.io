@@ -11,16 +11,20 @@
 <meta property="og:title" content="Dr. Riman Mandal">
 <meta property="og:description" content="Green cloud computing — doing the same work on fewer running servers.">
 <meta property="og:url" content="https://rimanm.com/">
+<meta property="og:image" content="https://rimanm.com/assets/img/logo.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=5">
 </head>
 <body>
 
 <nav>
   <div class="wrap navrow">
-    <a class="brand" href="index.html">R. Mandal</a>
+    <a class="brand" href="index.html"><img src="assets/img/logo.png" alt="" width="22" height="22"> R. Mandal</a>
     <div class="navlinks">
       <a href="index.html" aria-current="page">Home</a>
       <a href="index.html#research">Research</a>
@@ -39,23 +43,23 @@
         <p class="eyebrow">Assistant Professor · Dept. of Computer Science &amp; Engineering · Galgotias University</p>
         <h1 class="name">Dr. Riman Mandal</h1>
         <p class="tagline">Doing the same work on fewer running servers.</p>
-        <p class="lede">I design virtual-machine selection and placement policies that consolidate workloads onto fewer active servers — cutting a data centre's energy draw without breaking its service-level agreements. Eight years of research and teaching across cloud, fog, and edge computing.</p>
+        <p class="lede">I design virtual-machine selection and placement policies that consolidate workloads onto fewer active servers — cutting a data centre's energy draw without breaking its service-level agreements. Eight and a half years of research and teaching across cloud, fog, and edge computing.</p>
         <div class="actions">
           <a class="btn" id="link-cv" href="Riman_Mandal_CV.pdf">Download CV</a>
           <a class="btn ghost" id="link-scholar" href="#" target="_blank" rel="noopener">Google Scholar</a>
         </div>
       </div>
-      <div class="portrait" aria-hidden="true"><span>RM</span></div>
+      <div class="portrait"><img src="assets/img/logo.png" alt="Illustrated portrait of Dr. Riman Mandal"></div>
     </div>
 
     <!-- SIGNATURE -->
     <div class="rack">
       <div class="rackhead">
         <span class="t">VM consolidation — live sketch</span>
-        <span class="v" id="readout">Active <b class="on">6</b> · Idle <b class="off">0</b></span>
+        <span class="v">Drag the thresholds to re-run the policy</span>
       </div>
-      <div class="stage" id="stage" aria-hidden="true"></div>
-      <p class="caption" id="caption">Twenty-four virtual machines spread thin across six hosts. Every host draws power whether it is busy or idle.</p>
+      <div id="viz" aria-hidden="true"></div>
+      <p class="caption">Twenty-one virtual machines across six hosts. An SLA-aware policy sheds load from the hosts above the upper threshold, evacuates the ones below the lower threshold, and powers those machines down — that is where the energy saving lives, and where the risk of breaking the SLA begins.</p>
     </div>
 
     <!-- METRICS -->
@@ -99,7 +103,7 @@
 
 <section class="band">
   <div class="wrap">
-    <p class="kicker">Teaching · 6 years 6 months</p>
+    <p class="kicker">Teaching · 7 years 1 month</p>
     <h2>Where I've taught</h2>
     <div id="teachprev"></div>
     <p style="margin-top:1.4rem"><a class="seelink" href="teaching.html">Full courses &amp; student resources →</a></p>
@@ -110,7 +114,7 @@
   <div class="wrap">
     <p class="kicker">Contact</p>
     <h2>Open to collaboration and research supervision</h2>
-    <p style="max-width:52ch;margin-top:.9rem">If you work on energy-aware scheduling, fog deployments in the field, or cloud security, write to me. I also supervise student projects in these areas.</p>
+    <p style="max-width:52ch;margin-top:.9rem">If you work on cloud computing, Edge and Fog Computing, Quantum COmputing write to me. I also supervise student projects in these areas.</p>
 
     <form id="contactform" class="cform" method="POST" action="#" hidden>
       <div class="cfrow">
@@ -143,6 +147,7 @@
   </div>
 </footer>
 
-<script src="assets/site.js"></script>
+<script src="assets/site.js?v=5"></script>
+<script src="assets/consolidation.js?v=1"></script>
 </body>
 </html>

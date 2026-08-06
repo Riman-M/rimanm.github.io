@@ -1,0 +1,163 @@
+{
+  "journals": [
+    {
+      "title": "Enhancing biometric authentication privacy and security: a synergistic approach using cancelable biometrics and federated learning",
+      "authors": "V. D. Katkar, R. Mandal, U. Biswas, M. Lunagaria, G. G. Tejani",
+      "venue": "Alexandria Engineering Journal",
+      "year": 2025,
+      "index": "SCIE",
+      "impact": "IF 6.8",
+      "doi": "https://doi.org/10.1016/j.aej.2025.12.017",
+      "featured": true
+    },
+    {
+      "title": "Design and development of a fog-assisted elephant corridor over a railway track",
+      "authors": "M. K. Mondal, R. Mandal, et al.",
+      "venue": "Sustainability, 15(7), 5944",
+      "year": 2023,
+      "index": "SCIE",
+      "impact": "IF 3.9",
+      "doi": "10.3390/su15075944",
+      "featured": false
+    },
+    {
+      "title": "MECpVms: an SLA-aware energy-efficient virtual machine selection policy for green cloud computing",
+      "authors": "R. Mandal, et al.",
+      "venue": "Cluster Computing, 26(1), 651–665",
+      "year": 2022,
+      "note": "Most cited",
+      "index": "SCIE",
+      "impact": "IF 4.4",
+      "doi": "10.1007/s10586-022-03684-2",
+      "featured": true
+    },
+    {
+      "title": "A CPS-based social distancing measuring model using edge and fog computing",
+      "authors": "M. K. Mondal, R. Mandal, S. Banerjee, U. Biswas, P. Chatterjee, W. Alnumay",
+      "venue": "Computer Communications, 194, 378–386",
+      "year": 2022,
+      "index": "SCIE",
+      "impact": "IF 6.0",
+      "doi": "10.1016/j.comcom.2022.07.029",
+      "featured": false
+    },
+    {
+      "title": "An approach toward design and development of an energy-aware VM selection policy with improved SLA violation in green cloud computing",
+      "authors": "R. Mandal, M. K. Mondal, S. Banerjee, U. Biswas",
+      "venue": "The Journal of Supercomputing, 76, 7374–7393",
+      "year": 2020,
+      "index": "SCI",
+      "impact": "IF 3.3",
+      "doi": "10.1007/s11227-020-03165-6",
+      "featured": true
+    },
+    {
+      "title": "An approach towards amelioration of an efficient VM allocation policy in cloud computing domain",
+      "authors": "S. Banerjee, R. Mandal, U. Biswas",
+      "venue": "Wireless Personal Communications, 98, 1799–1820",
+      "year": 2018,
+      "index": "SCIE",
+      "impact": "IF 2.2",
+      "doi": "10.1007/s11277-017-4946-0",
+      "featured": false
+    },
+    {
+      "title": "An approach toward amelioration of a new cloudlet allocation strategy using CloudSim",
+      "authors": "S. Banerjee, A. Roy, A. Chowdhury, R. Mutsuddy, R. Mandal, U. Biswas",
+      "venue": "Arabian Journal for Science and Engineering, 43, 879–902",
+      "year": 2018,
+      "index": "SCIE",
+      "impact": "IF 2.9",
+      "doi": "10.1007/s13369-017-2781-y",
+      "featured": false
+    }
+  ],
+  "conferences": [
+    {
+      "title": "FIR-Robot: a federated learning approach to information retrieval in robotic edge devices",
+      "authors": "R. K. Singh, I. Siraj, A. Kumar, D. Singh, R. Mandal, P. Kumar",
+      "venue": "2nd Int. Conf. on Multidisciplinary Research and Innovations in Engineering (ICMRIE)",
+      "year": 2025,
+      "doi": "10.1109/MRIE66930.2025.11156639"
+    },
+    {
+      "title": "Currency detection application for visually impaired people using TensorFlow Lite",
+      "authors": "R. Bhakhar, R. Mandal, A. Goyal, A. Kumar, R. Singh, H. Vardhan",
+      "venue": "13th Int. Conf. on System Modeling & Advancement in Research Trends (SMART)",
+      "year": 2024,
+      "doi": "10.1109/SMART63812.2024.10882163"
+    },
+    {
+      "title": "Advancements in voice assistants: a study of speech recognition and emotional intelligence",
+      "authors": "N. Jee, S. Kumar, R. R. Patel, R. Mandal, R. K. Singh, H. Vardhan",
+      "venue": "13th Int. Conf. on System Modeling & Advancement in Research Trends (SMART)",
+      "year": 2024,
+      "doi": "10.1109/SMART63812.2024.10882573"
+    },
+    {
+      "title": "Transforming algorithmic trading with AI: achieving competitive market edge",
+      "authors": "H. Vardhan, N. Sharma, M. Kumar, R. K. Singh, R. Mandal, I. Siraj",
+      "venue": "13th Int. Conf. on System Modeling & Advancement in Research Trends (SMART)",
+      "year": 2024,
+      "doi": "10.1109/SMART63812.2024.10882194"
+    },
+    {
+      "title": "Fog-assisted visitor identification framework with improved latency and network usage",
+      "authors": "M. K. Mondal, R. Mandal, S. Banerjee, P. Chatterjee, W. Mansoor, U. Biswas",
+      "venue": "Advances in Science and Engineering Technology Int. Conf. (ASET), Dubai",
+      "year": 2023,
+      "doi": "10.1109/ASET56582.2023.10180736"
+    },
+    {
+      "title": "Fog-assisted tiger alarming framework for saving endangered wildlife",
+      "authors": "M. K. Mondal, R. Mandal, S. Banerjee, M. Sanyal, U. Ghosh, U. Biswas",
+      "venue": "SoutheastCon 2023, IEEE, Orlando, FL",
+      "year": 2023,
+      "doi": "10.1109/SoutheastCon51012.2023.10115072"
+    },
+    {
+      "title": "Design and implementation of an SLA and energy-aware VM placement policy in green cloud computing",
+      "authors": "R. Mandal, M. K. Mondal, S. Banerjee, P. Chatterjee, W. Mansoor, U. Biswas",
+      "venue": "IEEE Globecom Workshops (GC Wkshps), Rio de Janeiro",
+      "year": 2022,
+      "doi": "10.1109/GCWkshps56602.2022.10008675"
+    },
+    {
+      "title": "PbVmSp: a priority-based VM selection policy for VM consolidation in green cloud computing",
+      "authors": "R. Mandal, M. K. Mondal, S. Banerjee, P. Chatterjee, W. Mansoor, U. Biswas",
+      "venue": "5th Int. Conf. on Signal Processing and Information Security (ICSPIS), Dubai",
+      "year": 2022,
+      "doi": "10.1109/ICSPIS57063.2022.10002668"
+    }
+  ],
+  "book": {
+    "title": "Artificial Intelligence-Driven Approaches for Proactively Securing Cloud Infrastructure",
+    "authors": "R. Mandal, et al.",
+    "venue": "Kiwi International Publishing House (KIPH)",
+    "year": 2025,
+    "isbn": "978-93-49818-99-6"
+  },
+  "chapters": [
+    {
+      "title": "Big IoT data analytics in fog computing",
+      "authors": "M. K. Mondal, R. Mandal, U. Biswas",
+      "venue": "Fog Computing for Intelligent Cloud IoT Systems, Wiley, 279–307",
+      "year": 2024,
+      "doi": "10.1002/9781394175345.ch12"
+    },
+    {
+      "title": "QoS and energy efficiency using green cloud computing",
+      "authors": "R. Mandal, S. Banerjee, M. B. Islam, P. Chatterjee, U. Biswas",
+      "venue": "Intelligent Internet of Things for Healthcare and Industry, Springer, 287–305",
+      "year": 2022,
+      "doi": "10.1007/978-3-030-81473-1_14"
+    },
+    {
+      "title": "A survey and critical analysis on energy generation from datacenter",
+      "authors": "R. Mandal, M. K. Mondal, S. Banerjee, C. Chakraborty, U. Biswas",
+      "venue": "Data Deduplication Approaches, Elsevier, 203–230",
+      "year": 2021,
+      "doi": "10.1016/B978-0-12-823395-5.00005-7"
+    }
+  ]
+}
