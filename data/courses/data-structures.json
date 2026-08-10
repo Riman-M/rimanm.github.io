@@ -1,0 +1,39 @@
+{
+  "id": "data-structures",
+  "title": "Data Structures",
+  "institution": "Galgotias University",
+  "level": "B.Tech CSE",
+  "term": "2025–26",
+  "summary": "Arrays, linked lists, stacks, queues, trees, heaps, and graphs — chosen and analysed by the operations a problem actually needs.",
+  "outcomes": [
+    "Choose a data structure by the cost of the operations a problem requires",
+    "Analyse time and space complexity with asymptotic notation",
+    "Implement and traverse trees and graphs",
+    "Apply sorting and searching techniques appropriately"
+  ],
+  "sections": [
+    {
+      "kind": "animations",
+      "label": "Animated walkthroughs",
+      "note": "Interactive animations, viewable in-browser. Narrated video versions are coming to YouTube — these will stay up alongside them.",
+      "items": [
+        { "title": "What is a data structure?", "file": "video-01-what-is-a-data-structure.html", "meta": "Unit 1 · ~8:30" },
+        { "title": "What makes one algorithm better than another?", "file": "video-02-analysis-of-algorithms.html", "meta": "Unit 1 · ~9:00" },
+        { "title": "Time vs space: the trade-off", "file": "video-03-time-vs-space.html", "meta": "Unit 1 · ~8:45" },
+        { "title": "Big-O, Omega, Theta: asymptotic notation", "file": "video-04-asymptotic-notation.html", "meta": "Unit 1 · ~10:00" }
+      ]
+    },
+    {
+      "kind": "notes",
+      "label": "Lecture notes",
+      "items": [
+        { "title": "Unit 1 — Arrays, linked lists, complexity", "file": "assets/course-materials/data-structures/unit1.pdf" },
+        { "title": "Unit 2 — Stacks and queues", "file": "assets/course-materials/data-structures/unit2.pdf" }
+      ]
+    }
+  ],
+  "reading": [
+    "Cormen, Leiserson, Rivest & Stein — Introduction to Algorithms",
+    "Weiss — Data Structures and Algorithm Analysis"
+  ]
+}
