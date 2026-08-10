@@ -355,61 +355,6 @@ function wireContactForm(formId){
   });
 }
 
-/* ---------- consolidation animation (home only) ---------- */
-function runConsolidation(){
-  var stage=document.getElementById('stage');
-  var readout=document.getElementById('readout');
-  var caption=document.getElementById('caption');
-  if(!stage) return;
-
-  var HOSTS=6,SLOTS=8,TOTAL=24;
-  var slotEls=[],hostEls=[],vmEls=[];
-  for(var h=0;h<HOSTS;h++){
-    var host=el('div','host'),col=[];
-    for(var s=0;s<SLOTS;s++){var slot=el('div','slot');host.appendChild(slot);col.push(slot);}
-    host.appendChild(el('div','hlabel','H'+(h+1)));
-    stage.appendChild(host);hostEls.push(host);slotEls.push(col);
-  }
-  var start=[],end=[];
-  for(var i=0;i<TOTAL;i++){
-    start.push({h:i%HOSTS,s:Math.floor(i/HOSTS)});
-    end.push({h:Math.floor(i/SLOTS),s:i%SLOTS});
-  }
-  for(var v=0;v<TOTAL;v++){var vm=el('div','vm');stage.appendChild(vm);vmEls.push(vm);}
-  var current=start.slice();
-
-  function place(animate){
-    var base=stage.getBoundingClientRect();
-    for(var i=0;i<TOTAL;i++){
-      var pos=current[i];
-      var t=slotEls[pos.h][pos.s].getBoundingClientRect();
-      var e=vmEls[i];
-      if(!animate) e.style.transition='none';
-      e.style.width=t.width+'px';
-      e.style.transform='translate('+(t.left-base.left)+'px,'+(t.top-base.top)+'px)';
-      if(!animate){e.offsetHeight;e.style.transition='';}
-    }
-  }
-  place(false);
-  window.addEventListener('resize',function(){place(false);});
-
-  var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function consolidate(){
-    current=end.slice();place(true);
-    for(var h=3;h<HOSTS;h++) hostEls[h].classList.add('off');
-    if(readout) readout.innerHTML='Active <b class="on">3</b> · Idle <b class="off">3</b>';
-    if(caption) caption.textContent='The same 24 VMs, packed onto three hosts by an SLA-aware selection policy. Three machines can now power down — that is where the energy saving lives, and where the risk of breaking the SLA begins.';
-    for(var i=0;i<TOTAL;i++){if(i%8===7)vmEls[i].classList.add('hot');}
-  }
-  if(reduced){consolidate();return;}
-  var fired=false;
-  function go(){if(fired)return;fired=true;setTimeout(consolidate,1400);}
-  if('IntersectionObserver' in window){
-    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)go();});},{threshold:.3});
-    io.observe(stage);
-  }else go();
-}
-
 /* ---------- boot ---------- */
 document.addEventListener('DOMContentLoaded',function(){
   renderProfile();
@@ -420,7 +365,6 @@ document.addEventListener('DOMContentLoaded',function(){
   renderPublications();
   renderPatents();
   renderTeachingFull();
-  runConsolidation();
   renderCourse();
   var btn=document.querySelector('.themetoggle');
   if(btn) btn.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'Light':'Dark';

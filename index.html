@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=6">
+<link rel="stylesheet" href="assets/style.css?v=7">
 </head>
 <body>
 
@@ -53,13 +53,10 @@
     </div>
 
     <!-- SIGNATURE -->
-    <div class="rack">
-      <div class="rackhead">
-        <span class="t">VM consolidation — live sketch</span>
-        <span class="v" id="readout">Active <b class="on">6</b> · Idle <b class="off">0</b></span>
-      </div>
-      <div class="stage" id="stage" aria-hidden="true"></div>
-      <p class="caption" id="caption">Twenty-four virtual machines spread thin across six hosts. Every host draws power whether it is busy or idle.</p>
+    <div class="rack-frame">
+      <iframe src="assets/animations/homepage/vm-consolidation.html"
+              title="VM consolidation — energy-aware placement, animated"
+              loading="lazy"></iframe>
     </div>
 
     <!-- METRICS -->
@@ -147,6 +144,6 @@
   </div>
 </footer>
 
-<script src="assets/site.js?v=6"></script>
+<script src="assets/site.js?v=7"></script>
 </body>
 </html>
