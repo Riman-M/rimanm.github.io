@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video 01 — What Is a Data Structure? · Animatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080A0D; --panel:#0D1116; --stage:#12161C; --line:#1E252E;
+  --cellf:#28313D; --cells:#3B4756;
+  --blue:#4C8DFF; --green:#3DD68C; --red:#FF6B6B; --yellow:#FFC94D;
+  --text:#E7ECF3; --dim:#7C8899; --faint:#4A5464;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--disp)}
+body{padding:18px 16px 60px;max-width:1180px;margin:0 auto}
+
+/* ── masthead ── */
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.slate{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink);background:var(--yellow);padding:3px 8px;border-radius:3px;font-weight:600}
+h1{font-size:clamp(19px,4vw,27px);font-weight:700;letter-spacing:-.02em;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;margin-left:auto}
+
+/* ── stage ── */
+.stagewrap{margin-top:14px;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--stage)}
+svg#stage{display:block;width:100%;height:auto;background:
+  linear-gradient(rgba(76,141,255,.035) 1px,transparent 1px) 0 0/100% 36px,
+  linear-gradient(90deg,rgba(76,141,255,.035) 1px,transparent 1px) 0 0/36px 100%,
+  var(--stage)}
+.badge{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint)}
+.badge b{color:var(--blue);font-weight:600}
+
+/* ── ruler (signature) ── */
+.ruler{margin-top:12px}
+.secrow,.tickrow{display:flex;gap:2px}
+.secrow{margin-bottom:5px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--faint);border-top:1px solid var(--line);padding-top:4px;overflow:hidden;white-space:nowrap}
+.tick{height:26px;background:#131922;border:0;padding:0;border-radius:2px;position:relative;cursor:pointer;overflow:hidden}
+.tick:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tick i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:var(--faint)}
+.tick.done i{transform:scaleX(1)}
+.tick.now i{background:var(--blue)}
+.tick span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--dim)}
+.tick.now span{color:#fff}
+
+/* ── transport ── */
+.transport{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.ctl{font-family:var(--mono);font-size:12px;color:var(--text);background:#131922;border:1px solid var(--line);border-radius:6px;padding:9px 13px;cursor:pointer}
+button.ctl:hover{border-color:var(--faint)}
+button.ctl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.ctl.primary{background:var(--blue);color:#06101F;border-color:var(--blue);font-weight:600;min-width:96px}
+.rate{margin-left:auto;display:flex;gap:2px}
+.rate button{padding:9px 10px}
+.rate button[aria-pressed="true"]{background:#1B2431;border-color:var(--faint);color:var(--yellow)}
+
+/* ── spec sheet ── */
+.spec{margin-top:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.vo{border-left:2px solid var(--yellow);padding:2px 0 2px 14px}
+.vo .lab,.fld .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.vo p{margin:6px 0 0;font-size:clamp(16px,2.4vw,20px);line-height:1.45;letter-spacing:-.01em}
+.fields{display:grid;gap:10px}
+.fld{border-left:1px solid var(--line);padding-left:14px}
+.fld p{margin:4px 0 0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#B9C4D2}
+.fld.hold p{color:var(--green)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:760px){.spec{grid-template-columns:1fr}.meta{margin-left:0;width:100%}.tick span{display:none}}
+
+/* ── stage element transitions ── */
+.p{transition:transform .55s cubic-bezier(.2,.8,.25,1),opacity .4s ease,fill .3s ease,stroke .3s ease}
+.fast{transition:transform .25s ease,opacity .2s ease,fill .12s ease}
+.q{transition:none}
+@keyframes shake{0%,100%{transform:translate(var(--tx),var(--ty))}25%{transform:translate(calc(var(--tx) - 7px),var(--ty))}75%{transform:translate(calc(var(--tx) + 7px),var(--ty))}}
+.shake{animation:shake .28s 2}
+@media(prefers-reduced-motion:reduce){.p,.fast{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slate">VID 01</span>
+  <h1>What Is a Data Structure?</h1>
+  <span class="meta">UNIT 1 · TARGET 8:30 · 24 BEATS · ANIMATIC v1</span>
+</header>
+
+<div class="stagewrap">
+  <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Animation stage"></svg>
+  <div class="badge">BEAT <b id="bn">01</b> · <span id="bt">0:00</span></div>
+</div>
+
+<div class="ruler">
+  <div class="secrow" id="secrow"></div>
+  <div class="tickrow" id="tickrow"></div>
+</div>
+
+<div class="transport">
+  <button class="ctl" id="prev" aria-label="Previous beat">◀ PREV</button>
+  <button class="ctl primary" id="play">▶ PLAY</button>
+  <button class="ctl" id="next" aria-label="Next beat">NEXT ▶</button>
+  <button class="ctl" id="replay">↻ BEAT</button>
+  <div class="rate" role="group" aria-label="Playback rate">
+    <button class="ctl" data-r="0.5">.5×</button>
+    <button class="ctl" data-r="1" aria-pressed="true">1×</button>
+    <button class="ctl" data-r="2">2×</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div class="vo"><span class="lab">VO</span><p id="f-vo"></p></div>
+  <div class="fields">
+    <div class="fld"><span class="lab">VIS</span><p id="f-vis"></p></div>
+    <div class="fld"><span class="lab">ACT</span><p id="f-act"></p></div>
+    <div class="fld hold"><span class="lab">HOLD</span><p id="f-hold"></p></div>
+  </div>
+</div>
+
+<footer>
+  ANIMATIC RUNS AT STORYBOARD PACE — REAL CUT IS TIMED TO VO (8:30).<br>
+  KEYS: SPACE PLAY/PAUSE · ← → STEP BEAT · R REPLAY BEAT.<br>
+  THIS FILE IS THE FORMAT SPEC. CLONE FOR VIDEOS 02–48; REPLACE THE BEATS ARRAY ONLY.
+</footer>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const stage=document.getElementById("stage");
+let layer=document.createElementNS(NS,"g");stage.appendChild(layer);
+
+/* ── primitive kit ── */
+function E(t,a={},p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);(p||layer).appendChild(n);return n}
+function G(a={},p){return E("g",a,p)}
+function move(n,x,y){n.style.setProperty("--tx",x+"px");n.style.setProperty("--ty",y+"px");n.style.transform=`translate(${x}px,${y}px)`}
+function cell(x,y,o={}){const w=o.w||46,h=o.h||46;
+  const g=G({class:o.cls||"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:o.rx??9,fill:o.fill||"var(--cellf)",stroke:o.stroke||"var(--cells)","stroke-width":1.5,class:o.cls||"p"},g);
+  if(o.label!=null)E("text",{x:w/2,y:h/2+5,fill:o.tf||"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g).textContent=o.label;
+  g.rect=r;g.opacity=v=>g.style.opacity=v;return g}
+function label(x,y,s,o={}){const t=E("text",{x,y,fill:o.fill||"var(--dim)","font-family":o.f||"IBM Plex Mono","font-size":o.size||13,"text-anchor":o.anchor||"middle","letter-spacing":o.ls||0,class:o.cls||"p","font-weight":o.w||400},o.p);t.textContent=s;if(o.o!=null)t.style.opacity=o.o;return t}
+function line(x1,y1,x2,y2,o={}){return E("line",{x1,y1,x2,y2,stroke:o.stroke||"var(--cells)","stroke-width":o.sw||2,"stroke-linecap":"round",class:"p",...(o.attrs||{})})}
+function drawIn(l,ms,delay){const len=Math.hypot(l.x2.baseVal.value-l.x1.baseVal.value,l.y2.baseVal.value-l.y1.baseVal.value);
+  l.style.strokeDasharray=len;l.style.strokeDashoffset=len;l.style.transition="none";
+  requestAnimationFrame(()=>{l.style.transition=`stroke-dashoffset ${ms||420}ms cubic-bezier(.3,.7,.3,1) ${delay||0}ms, stroke .3s`;l.style.strokeDashoffset=0});return l}
+function arrow(x1,y1,x2,y2,o={}){const l=line(x1,y1,x2,y2,o);l.setAttribute("marker-end","url(#ah)");return l}
+function chip(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||(s.length*8.4+22);
+  const r=E("rect",{width:w,height:28,rx:14,fill:o.fill||"#1A2230",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const t=E("text",{x:w/2,y:19,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;g.w=w;return g}
+function nodeBox(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||64,h=o.h||44;
+  const r=E("rect",{width:w,height:h,rx:8,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:w/2,y:h/2+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;return g}
+function circleNode(cx,cy,s,o={}){const g=G({class:"p"});
+  const c=E("circle",{cx,cy,r:o.r||24,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.c=c;g.txt=t;return g}
+function fadeUp(n,d){n.style.opacity=0;setTimeout(()=>n.style.opacity=1,d||0);return n}
+function defs(){const d=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"},d);
+  E("path",{d:"M0 0 L10 5 L0 10 z",fill:"var(--cells)"},m)}
+function clearStage(){layer.remove();layer=document.createElementNS(NS,"g");stage.appendChild(layer);defs()}
+const C={blue:"var(--blue)",green:"var(--green)",red:"var(--red)",yellow:"var(--yellow)",grey:"var(--cellf)"};
+
+/* ── beats ── */
+const RAND=[[150,120],[340,90],[560,160],[720,110],[210,330],[430,380],[640,320],[810,250]];
+const ROWX=i=>228+i*62, ROWY=250;
+let at; // scheduler injected per beat
+
+const BEATS=[
+{s:"HOOK",t:"0:00",vo:"Two programs. Same data, same task. One finishes in half a second. The other takes four minutes.",
+ vis:"Split screen, two identical grids of 20 neutral cells.",act:"Left grid: 3 cells flash blue in sequence, green check. Right grid: 18 cells flash blue one by one, slowly.",hold:"800ms",dur:6200,
+ build(){
+  line(480,60,480,480,{stroke:"var(--line)",sw:1});
+  label(240,92,"PROGRAM A",{ls:"0.2em",size:12});label(720,92,"PROGRAM B",{ls:"0.2em",size:12});
+  const mk=ox=>{const a=[];for(let r=0;r<4;r++)for(let c=0;c<5;c++)a.push(cell(ox+c*56,150+r*56,{w:44,h:44,cls:"fast"}));return a};
+  const A=mk(112),B=mk(592);
+  const flash=(g,d)=>{at(d,()=>g.rect.setAttribute("fill",C.blue));at(d+220,()=>g.rect.setAttribute("fill",C.grey))};
+  [0,6,13].forEach((i,k)=>flash(A[i],400+k*230));
+  at(1250,()=>{const p=E("path",{d:"M448 400 l14 15 l26 -30",stroke:C.green,"stroke-width":4,fill:"none","stroke-linecap":"round",class:"p"});
+    p.setAttribute("transform","translate(-240,0)");drawIn2(p,300)});
+  at(1350,()=>label(240,452,"0.4s",{fill:C.green,size:18,f:"IBM Plex Mono"}));
+  for(let i=0;i<18;i++)flash(B[i],400+i*250);
+  at(5000,()=>label(720,452,"4m 12s",{fill:C.red,size:18,f:"IBM Plex Mono"}));
+ }},
+{s:"HOOK",t:"0:09",vo:"The difference isn't the language, the machine, or the programmer. It's how the data was arranged. That's this entire subject.",
+ vis:"Both grids shrink to center, title card fades in.",act:'Title "DATA STRUCTURES" types on, accent blue.',hold:"600ms",dur:5000,
+ build(){
+  const wrap=G({class:"p"});wrap.style.transformOrigin="480px 300px";
+  const mk=ox=>{for(let r=0;r<4;r++)for(let c=0;c<5;c++){const g=cell(ox+c*56,150+r*56,{w:44,h:44});wrap.appendChild(g)}};
+  mk(112);mk(592);layer.appendChild(wrap);
+  at(300,()=>{wrap.style.transform="scale(.18)";wrap.style.opacity=.25});
+  const t=label(480,290,"",{fill:C.blue,size:52,f:"Space Grotesk",w:700,ls:"0.02em"});
+  const full="DATA STRUCTURES";
+  for(let i=0;i<=full.length;i++)at(900+i*85,()=>t.textContent=full.slice(0,i)+(i<full.length?"▌":""));
+  at(900+full.length*85+120,()=>{t.textContent=full;fadeUp(label(480,336,"organization + operations",{size:15,ls:"0.14em"}),0)});
+ }},
+{s:"PROMISE",t:"0:20",vo:"In this video: what a data structure actually is, the two ways they're classified, and where each one shows up in software you use every day.",
+ vis:"Three chips slide in from left: Definition · Classification · Applications.",act:"Stagger 150ms each.",hold:"500ms",dur:4200,
+ build(){
+  label(480,150,"IN THIS VIDEO",{ls:"0.28em",size:12});
+  ["Definition","Classification","Applications"].forEach((s,i)=>{
+    const c=chip(0,236+i*62,s,{w:280,tf:"var(--text)"});
+    c.querySelector("rect").setAttribute("height",44);c.querySelector("text").setAttribute("y",27);
+    move(c,-320,236+i*62);c.style.opacity=0;
+    at(200+i*150,()=>{move(c,340,236+i*62);c.style.opacity=1});
+    const n=label(-260,236+i*62+28,"0"+(i+1),{fill:C.blue,size:13,anchor:"start"});n.style.opacity=0;
+    at(200+i*150,()=>{n.setAttribute("x",296);n.style.opacity=1});
+  });
+ }},
+{s:"CORE 1 · DEFINITION",t:"0:40",vo:"Data by itself is raw. Roll numbers, marks, names — just values sitting in memory.",
+ vis:"8 unlabeled cells scattered randomly in work area, neutral grey.",act:"Cells fade in at random positions.",hold:"700ms",dur:3800,
+ build(){RAND.forEach((p,i)=>fadeUp(cell(p[0],p[1]),120+i*110));
+  at(1400,()=>fadeUp(label(480,500,"raw values · no arrangement · no rules",{size:13,ls:"0.1em"}),0))}},
+{s:"CORE 1 · DEFINITION",t:"0:55",vo:"A data structure is a way of organizing that data — plus the set of operations allowed on it.",
+ vis:"Same cells.",act:"Cells snap into a straight row, index labels appear beneath. Bottom state bar shows: insert · delete · search · traverse.",hold:"900ms",dur:5200,
+ build(){
+  const cs=RAND.map(p=>cell(p[0],p[1]));
+  at(400,()=>cs.forEach((c,i)=>move(c,ROWX(i),ROWY)));
+  at(1050,()=>cs.forEach((c,i)=>fadeUp(label(ROWX(i)+23,ROWY+72,"["+i+"]",{size:12}),i*60)));
+  at(1600,()=>{line(180,420,780,420,{stroke:"var(--line)",sw:1});
+    ["insert","delete","search","traverse"].forEach((s,i)=>fadeUp(chip(230+i*135,450,s,{w:120}),i*120))});
+ }},
+{s:"CORE 1 · DEFINITION",t:"1:35",vo:"That second half matters more than students expect. The arrangement decides which operations are cheap and which are expensive.",
+ vis:"Row of 8 cells.",act:"search chip in state bar turns green; insert chip turns red.",hold:"900ms",dur:4600,
+ build(){
+  const cs=[];for(let i=0;i<8;i++)cs.push(cell(ROWX(i),ROWY,{label:i}));
+  line(180,420,780,420,{stroke:"var(--line)",sw:1});
+  const chips=["insert","delete","search","traverse"].map((s,i)=>chip(230+i*135,450,s,{w:120}));
+  at(900,()=>{chips[2].rect.setAttribute("stroke",C.green);chips[2].rect.setAttribute("fill","#122A21");chips[2].txt.setAttribute("fill",C.green);
+    cs.forEach((c,i)=>setTimeout(()=>c.rect.setAttribute("stroke",C.green),i*70))});
+  at(2100,()=>{chips[0].rect.setAttribute("stroke",C.red);chips[0].rect.setAttribute("fill","#2A1618");chips[0].txt.setAttribute("fill",C.red);
+    cs.slice(3).forEach((c,i)=>setTimeout(()=>{c.rect.setAttribute("stroke",C.red);move(c,ROWX(i+3)+16,ROWY)},i*70))});
+  at(1000,()=>fadeUp(label(480,505,"cheap",{fill:C.green,size:13,ls:"0.2em"}),0));
+ }},
+{s:"CORE 1 · DEFINITION",t:"2:05",vo:"Choosing a data structure is choosing what you want to be fast at — and accepting what becomes slow.",
+ vis:"Row holds.",act:"Complexity chip appears top-right: O(1) access / O(n) insert.",hold:"1000ms",dur:4200,
+ build(){
+  for(let i=0;i<8;i++)cell(ROWX(i),ROWY,{label:i});
+  const a=chip(600,110,"O(1) access",{w:170,stroke:C.green,tf:C.green});a.style.opacity=0;
+  const b=chip(600,152,"O(n) insert",{w:170,stroke:C.red,tf:C.red});b.style.opacity=0;
+  at(500,()=>a.style.opacity=1);at(800,()=>b.style.opacity=1);
+  at(1400,()=>fadeUp(label(480,430,"pick your fast path — pay for it somewhere else",{size:14,ls:"0.06em"}),0));
+ }},
+{s:"CORE 2 · CLASSIFICATION",t:"2:30",vo:"Classification one: primitive versus non-primitive.",
+ vis:'Tree diagram forming, root labeled "Data Structures".',act:"Two branches draw downward.",hold:"600ms",dur:3600,
+ build(){
+  nodeBox(390,90,"Data Structures",{w:180});
+  at(400,()=>{drawIn(line(480,134,270,200),420);drawIn(line(480,134,690,200),420,80)});
+  at(900,()=>{fadeUp(nodeBox(190,200,"Primitive",{w:160}),0);fadeUp(nodeBox(610,200,"Non-primitive",{w:160}),120)});
+ }},
+{s:"CORE 2 · CLASSIFICATION",t:"2:45",vo:"Primitive types are what the machine understands directly — int, char, float, pointer. Non-primitive ones you build out of them.",
+ vis:"Left branch expands: int · char · float · pointer. Right branch: array · list · tree · graph.",act:"Leaves stagger in, 150ms.",hold:"800ms",dur:5200,
+ build(){
+  nodeBox(390,70,"Data Structures",{w:180});
+  drawIn(line(480,114,270,180),1);drawIn(line(480,114,690,180),1);
+  nodeBox(190,180,"Primitive",{w:160});nodeBox(610,180,"Non-primitive",{w:160});
+  ["int","char","float","pointer"].forEach((s,i)=>{const y=280+i*58;
+    at(300+i*150,()=>{drawIn(line(270,224,190,y+22),260);fadeUp(nodeBox(150,y,s,{w:110,stroke:C.blue}),120)})});
+  ["array","list","tree","graph"].forEach((s,i)=>{const y=280+i*58;
+    at(900+i*150,()=>{drawIn(line(690,224,770,y+22),260);fadeUp(nodeBox(770,y,s,{w:110,stroke:C.yellow}),120)})});
+ }},
+{s:"CORE 2 · CLASSIFICATION",t:"3:05",vo:"Classification two, and this is the one worth memorizing: linear versus non-linear.",
+ vis:"Non-primitive branch expands into two.",act:"Draw two sub-branches.",hold:"600ms",dur:3800,
+ build(){
+  nodeBox(390,90,"Data Structures",{w:180});
+  drawIn(line(480,134,270,210),1);drawIn(line(480,134,690,210),1);
+  const p=nodeBox(190,210,"Primitive",{w:160});p.style.opacity=.3;
+  nodeBox(610,210,"Non-primitive",{w:160,stroke:C.blue});
+  at(500,()=>{drawIn(line(690,254,560,340),420,0);drawIn(line(690,254,820,340),420,90)});
+  at(1000,()=>{fadeUp(nodeBox(490,340,"Linear",{w:140,stroke:C.blue}),0);fadeUp(nodeBox(750,340,"Non-linear",{w:140,stroke:C.yellow}),140)});
+  at(1700,()=>fadeUp(label(690,470,"MEMORIZE THIS CUT",{fill:C.yellow,size:13,ls:"0.24em"}),0));
+ }},
+{s:"CORE 2 · CLASSIFICATION",t:"3:20",vo:"Linear means elements sit in a sequence. Each one has exactly one before it and one after it.",
+ vis:"Node boxes in a horizontal chain, four of them.",act:"Pointer arrows draw left to right, head to tail.",hold:"900ms",dur:4600,
+ build(){
+  label(480,140,"LINEAR",{fill:C.blue,ls:"0.3em",size:14});
+  const xs=[190,370,550,730];
+  xs.forEach((x,i)=>fadeUp(nodeBox(x,270,"D"+(i+1),{w:100,h:56,stroke:C.blue}),i*100));
+  xs.slice(0,3).forEach((x,i)=>at(600+i*260,()=>drawIn(arrow(x+104,298,x+176,298,{stroke:C.blue}),240)));
+  at(1700,()=>fadeUp(label(480,400,"one predecessor · one successor",{size:14,ls:"0.08em"}),0));
+ }},
+{s:"CORE 2 · CLASSIFICATION",t:"3:38",vo:"Arrays, linked lists, stacks, queues — all linear.",
+ vis:"Four small icons appear beneath the chain.",act:"Stagger in.",hold:"700ms",dur:4000,
+ build(){
+  const xs=[190,370,550,730];
+  xs.forEach((x,i)=>{nodeBox(x,190,"D"+(i+1),{w:100,h:50,stroke:C.blue});if(i<3)arrow(x+104,215,x+176,215,{stroke:C.blue})});
+  ["Array","Linked list","Stack","Queue"].forEach((s,i)=>{
+    const g=G({class:"p"});move(g,150+i*180,330);g.style.opacity=0;
+    E("rect",{width:140,height:88,rx:10,fill:"#141B25",stroke:"var(--line)","stroke-width":1.5},g);
+    for(let k=0;k<3;k++)E("rect",{x:22+k*34,y:24,width:26,height:26,rx:5,fill:"#222C39",stroke:C.blue,"stroke-width":1.2},g);
+    const t=E("text",{x:70,y:74,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle"},g);t.textContent=s;
+    at(200+i*150,()=>g.style.opacity=1)});
+ }},
+{s:"CORE 2 · CLASSIFICATION",t:"3:50",vo:"Non-linear means one element can connect to many. Hierarchy instead of sequence.",
+ vis:"Node boxes forming a small binary tree, 7 nodes.",act:"Edges draw top-down, one level at a time.",hold:"900ms",dur:4800,
+ build(){
+  label(480,110,"NON-LINEAR",{fill:C.yellow,ls:"0.3em",size:14});
+  const P=[[480,180],[330,290],[630,290],[250,400],[410,400],[550,400],[710,400]];
+  const ns=P.map((p,i)=>{const n=circleNode(p[0],p[1],"D"+(i+1),{stroke:C.yellow});n.style.opacity=0;return n});
+  at(150,()=>ns[0].style.opacity=1);
+  at(500,()=>{drawIn(line(480,204,330,266,{stroke:C.yellow}),380);drawIn(line(480,204,630,266,{stroke:C.yellow}),380);
+    setTimeout(()=>{ns[1].style.opacity=1;ns[2].style.opacity=1},280)});
+  at(1300,()=>{[[330,250],[330,410],[630,550],[630,710]].forEach((e,k)=>drawIn(line(e[0],314,e[1],376,{stroke:C.yellow}),380,k*60));
+    setTimeout(()=>ns.slice(3).forEach((n,k)=>setTimeout(()=>n.style.opacity=1,k*60)),300)});
+  at(2600,()=>fadeUp(label(480,480,"one node → many children",{size:14,ls:"0.08em"}),0));
+ }},
+{s:"CORE 2 · CLASSIFICATION",t:"4:10",vo:"Trees and graphs. A file system is a tree. A friend network is a graph.",
+ vis:"Tree morphs into a graph with cross edges.",act:"Three extra edges draw in accent yellow.",hold:"900ms",dur:5000,
+ build(){
+  const P=[[480,170],[330,290],[630,290],[250,410],[410,410],[550,410],[710,410]];
+  [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]].forEach(e=>line(P[e[0]][0],P[e[0]][1]+24,P[e[1]][0],P[e[1]][1]-24,{stroke:"var(--cells)"}));
+  P.forEach((p,i)=>circleNode(p[0],p[1],"D"+(i+1)));
+  const l1=label(250,110,"TREE",{fill:C.blue,ls:"0.3em",size:13,anchor:"start"});
+  at(900,()=>{[[3,4],[4,5],[5,6]].forEach((e,k)=>drawIn(line(P[e[0]][0]+24,P[e[0]][1],P[e[1]][0]-24,P[e[1]][1],{stroke:C.yellow,sw:2.5}),420,k*180))});
+  at(1800,()=>{l1.textContent="GRAPH";l1.setAttribute("fill",C.yellow)});
+  at(2300,()=>{fadeUp(label(250,490,"file system",{size:13}),0);fadeUp(label(700,490,"friend network",{fill:C.yellow,size:13}),150)});
+ }},
+{s:"CORE 2 · CLASSIFICATION",t:"4:30",vo:"One more cut you'll see in exams: static versus dynamic. Static structures fix their size at compile time. Dynamic ones grow and shrink while the program runs.",
+ vis:"Left: fixed row of 5 cells with a wall at each end. Right: chain that appends a node.",act:"Left row shakes when a 6th cell tries to enter and bounces off red. Right chain grows one node smoothly.",hold:"1000ms",dur:6000,
+ build(){
+  line(480,80,480,470,{stroke:"var(--line)",sw:1});
+  label(240,120,"STATIC · size fixed at compile time",{size:12,ls:"0.06em"});
+  label(720,120,"DYNAMIC · grows at run time",{size:12,ls:"0.06em"});
+  E("rect",{x:60,y:230,width:8,height:80,rx:3,fill:"var(--red)",opacity:.7});
+  E("rect",{x:404,y:230,width:8,height:80,rx:3,fill:"var(--red)",opacity:.7});
+  const row=[];for(let i=0;i<5;i++)row.push(cell(84+i*64,247,{w:52,h:46}));
+  const six=cell(470,247,{w:52,h:46,stroke:C.blue});six.style.opacity=0;
+  at(600,()=>{six.style.opacity=1;move(six,424,247)});
+  at(1250,()=>{move(six,414,247);six.rect.setAttribute("stroke",C.red);six.rect.setAttribute("fill","#2A1618");
+    row.forEach(c=>{c.classList.add("shake")});
+    setTimeout(()=>row.forEach(c=>c.classList.remove("shake")),600)});
+  at(2000,()=>{move(six,520,247);six.style.opacity=0});
+  at(2100,()=>fadeUp(label(240,400,"OVERFLOW",{fill:C.red,size:14,ls:"0.24em"}),0));
+  const xs=[540,660,780];
+  xs.forEach((x,i)=>{nodeBox(x,248,"D"+(i+1),{w:90,h:44,stroke:C.green});if(i<2)arrow(x+94,270,x+116,270,{stroke:C.green})});
+  at(2800,()=>{const n=nodeBox(870,248,"D4",{w:90,h:44,stroke:C.green});n.style.opacity=0;move(n,870,300);
+    drawIn(arrow(874,270,896,270,{stroke:C.green}),1);
+    setTimeout(()=>{n.style.opacity=1;move(n,870,248)},60)});
+  at(3600,()=>fadeUp(label(720,400,"malloc / new",{fill:C.green,size:14,ls:"0.14em"}),0));
+ }},
+{s:"CORE 3 · APPLICATIONS",t:"5:00",vo:"So where does this actually show up?",
+ vis:"Clear to blank canvas.",act:"Fade out.",hold:"400ms",dur:2600,
+ build(){
+  const g=G({class:"p"});
+  const P=[[480,180],[330,290],[630,290],[250,400],[410,400],[550,400],[710,400]];
+  [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]].forEach(e=>{const l=line(P[e[0]][0],P[e[0]][1]+24,P[e[1]][0],P[e[1]][1]-24);g.appendChild(l)});
+  P.forEach(p=>g.appendChild(circleNode(p[0],p[1],"")));
+  at(400,()=>g.style.opacity=0);
+  at(1200,()=>fadeUp(label(480,290,"WHERE DOES THIS SHOW UP?",{fill:"var(--text)",size:26,f:"Space Grotesk",w:700,ls:"0.04em"}),0));
+ }},
+{s:"CORE 3 · APPLICATIONS",t:"5:10",vo:"Ctrl-Z. Every undo you've ever pressed is a stack — the last thing you did is the first thing removed.",
+ vis:"Vertical stack of frame plates, 4 high.",act:"Top plate pops off upward, fades red.",hold:"900ms",dur:4800,
+ build(){
+  label(480,110,"STACK · last in, first out",{fill:C.blue,ls:"0.16em",size:14});
+  const plates=[];const txts=["typed 'hello'","bold","pasted image","deleted line"];
+  for(let i=0;i<4;i++){const g=G({class:"p"});move(g,330,380-i*58);
+    E("rect",{width:300,height:48,rx:8,fill:"#1B2431",stroke:i===3?C.blue:"var(--cells)","stroke-width":1.8,class:"p"},g);
+    const t=E("text",{x:150,y:30,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=txts[i];
+    plates.push(g);fadeUp(g,i*90)}
+  at(1100,()=>fadeUp(label(700,206,"◀ TOP",{fill:C.blue,size:13,anchor:"start"}),0));
+  at(1700,()=>{const p=plates[3];p.querySelector("rect").setAttribute("stroke",C.red);move(p,330,120);p.style.opacity=0});
+  at(2300,()=>fadeUp(label(480,470,"Ctrl-Z  →  pop()",{fill:C.red,size:16,ls:"0.1em"}),0));
+ }},
+{s:"CORE 3 · APPLICATIONS",t:"5:35",vo:"A print queue, or requests hitting a server — first in, first out. That's a queue.",
+ vis:"Horizontal row of cells.",act:"Cell enters right, cell exits left, remaining cells slide.",hold:"900ms",dur:5000,
+ build(){
+  label(480,120,"QUEUE · first in, first out",{fill:C.green,ls:"0.16em",size:14});
+  label(150,290,"OUT",{fill:C.red,size:13});label(810,290,"IN",{fill:C.green,size:13});
+  const X=i=>240+i*82;const cs=[];
+  for(let i=0;i<5;i++)cs.push(cell(X(i),260,{w:66,h:56,label:"job"+(i+1),stroke:i===0?C.red:"var(--cells)"}));
+  at(700,()=>{const n=cell(900,260,{w:66,h:56,label:"job6",stroke:C.green});n.style.opacity=0;
+    setTimeout(()=>{n.style.opacity=1;move(n,X(5),260)},40);cs.push(n)});
+  at(1800,()=>{move(cs[0],120,260);cs[0].style.opacity=0;cs[0].rect.setAttribute("stroke",C.red)});
+  at(2100,()=>cs.slice(1).forEach((c,i)=>move(c,X(i),260)));
+  at(2400,()=>cs[1].rect.setAttribute("stroke",C.red));
+  at(2900,()=>fadeUp(label(480,430,"printer jobs · server requests · keyboard buffer",{size:13,ls:"0.06em"}),0));
+ }},
+{s:"CORE 3 · APPLICATIONS",t:"6:00",vo:"Your phone's contact list, sorted and searchable in milliseconds across thousands of entries — that's a tree.",
+ vis:"Binary search tree, 7 nodes.",act:"Path from root to a leaf lights blue, node by node, 3 steps.",hold:"900ms",dur:5400,
+ build(){
+  label(480,100,"BINARY SEARCH TREE · 4,000 contacts, 12 comparisons",{fill:C.blue,ls:"0.1em",size:13});
+  const P=[[480,170],[330,290],[630,290],[250,410],[410,410],[560,410],[710,410]];
+  const NAMES=["M","F","R","B","J","P","T"];
+  const ed=[[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]].map(e=>line(P[e[0]][0],P[e[0]][1]+24,P[e[1]][0],P[e[1]][1]-24));
+  const ns=P.map((p,i)=>circleNode(p[0],p[1],NAMES[i]));
+  const path=[0,2,6],eds=[1,5];
+  at(800,()=>{ns[0].c.setAttribute("stroke",C.blue);ns[0].c.setAttribute("fill","#12213A")});
+  at(1500,()=>{ed[1].setAttribute("stroke",C.blue);ns[2].c.setAttribute("stroke",C.blue);ns[2].c.setAttribute("fill","#12213A")});
+  at(2200,()=>{ed[5].setAttribute("stroke",C.blue);ns[6].c.setAttribute("stroke",C.green);ns[6].c.setAttribute("fill","#122A21")});
+  at(2600,()=>fadeUp(label(710,470,'found "Tara"',{fill:C.green,size:13}),0));
+  at(3000,()=>fadeUp(label(480,505,"search space halves at every step",{size:13,ls:"0.08em"}),0));
+ }},
+{s:"CORE 3 · APPLICATIONS",t:"6:25",vo:"Maps finding a route, social networks suggesting people you might know — graphs.",
+ vis:"Graph, 6 nodes.",act:"Shortest path highlights green.",hold:"900ms",dur:5000,
+ build(){
+  label(480,100,"GRAPH · nodes and the links between them",{fill:C.yellow,ls:"0.12em",size:13});
+  const P=[[180,300],[330,180],[360,420],[560,160],[600,380],[790,270]];
+  const N=["A","B","C","D","E","F"];
+  const E2=[[0,1],[0,2],[1,2],[1,3],[2,4],[3,4],[3,5],[4,5]];
+  const ls=E2.map(e=>line(P[e[0]][0],P[e[0]][1],P[e[1]][0],P[e[1]][1],{stroke:"#2C3644"}));
+  const ns=P.map((p,i)=>circleNode(p[0],p[1],N[i]));
+  const path=[0,2,4,5],eIdx=[1,4,7];
+  at(700,()=>{ns[0].c.setAttribute("stroke",C.green);ns[5].c.setAttribute("stroke",C.red)});
+  eIdx.forEach((e,k)=>at(1300+k*450,()=>{ls[e].setAttribute("stroke",C.green);ls[e].setAttribute("stroke-width",3.5);
+    const nx=path[k+1];ns[nx].c.setAttribute("stroke",C.green);ns[nx].c.setAttribute("fill","#122A21")}));
+  at(3100,()=>fadeUp(label(480,490,"A → C → E → F   ·   shortest route",{fill:C.green,size:15,ls:"0.08em"}),0));
+ }},
+{s:"CORE 3 · APPLICATIONS",t:"6:50",vo:"Notice the pattern. Nobody picks a structure because it's elegant. They pick it because the operation they do most often needs to be fast.",
+ vis:"Four icons return in a 2×2 grid, each with its hero operation labeled.",act:"Labels fade in.",hold:"1200ms",dur:5600,
+ build(){
+  const D=[["Stack","push / pop","O(1)",C.blue],["Queue","enqueue / dequeue","O(1)",C.green],
+           ["Tree","search","O(log n)",C.blue],["Graph","visit neighbours","O(V+E)",C.yellow]];
+  D.forEach((d,i)=>{const x=170+(i%2)*330,y=140+Math.floor(i/2)*190;
+    const g=G({class:"p"});move(g,x,y);g.style.opacity=0;
+    E("rect",{width:290,height:150,rx:12,fill:"#131A24",stroke:"var(--line)","stroke-width":1.5},g);
+    const a=E("text",{x:24,y:44,fill:d[3],"font-family":"Space Grotesk","font-size":22,"font-weight":700},g);a.textContent=d[0];
+    const b=E("text",{x:24,y:82,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":13},g);b.textContent="hero op";
+    const c=E("text",{x:24,y:106,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":15},g);c.textContent=d[1];
+    const e=E("text",{x:266,y:44,fill:d[3],"font-family":"IBM Plex Mono","font-size":14,"text-anchor":"end"},g);e.textContent=d[2];
+    b.style.opacity=0;c.style.opacity=0;e.style.opacity=0;
+    at(200+i*160,()=>g.style.opacity=1);
+    at(1600+i*220,()=>{b.style.opacity=1;c.style.opacity=1;e.style.opacity=1})});
+  at(3400,()=>fadeUp(label(480,500,"the structure is chosen by the operation you repeat most",{size:14,ls:"0.06em"}),0));
+ }},
+{s:"CLOSE",t:"7:15",vo:"Recap. A data structure is organization plus operations. Primitive versus non-primitive. Linear versus non-linear. Static versus dynamic.",
+ vis:"The full classification tree redraws, compressed.",act:"Instant draw, no animation, 1.5s.",hold:"1500ms",dur:5200,
+ build(){
+  label(480,60,"RECAP",{fill:C.yellow,ls:"0.3em",size:13});
+  nodeBox(390,90,"Data Structures",{w:180});
+  line(480,134,250,180);line(480,134,710,180);
+  nodeBox(170,180,"Primitive",{w:160});nodeBox(630,180,"Non-primitive",{w:160,stroke:C.blue});
+  ["int","char","float","pointer"].forEach((s,i)=>{line(250,224,225,290+i*54);nodeBox(115,270+i*54,s,{w:110,h:40})});
+  line(710,224,560,280);line(710,224,850,280);
+  nodeBox(490,280,"Linear",{w:140,stroke:C.blue});nodeBox(780,280,"Non-linear",{w:140,stroke:C.yellow});
+  ["array","list","stack","queue"].forEach((s,i)=>{const y=350+i*44;line(560,324,540,y+18);nodeBox(430,y,s,{w:110,h:36})});
+  ["tree","graph"].forEach((s,i)=>{const y=350+i*44;line(850,324,880,y+18);nodeBox(830,y,s,{w:110,h:36})});
+  at(1800,()=>{const b=chip(300,470,"static vs dynamic — size fixed, or size grows",{w:380,stroke:C.green,tf:C.green});b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+ }},
+{s:"CLOSE",t:"7:50",vo:"Exam question you'll see: give one difference between linear and non-linear data structures, with an example of each. Pause and answer it now.",
+ vis:"Question card, centered.",act:"Card slides up.",hold:"2000ms",dur:6000,
+ build(){
+  const g=G({class:"p"});move(g,180,540);
+  E("rect",{width:600,height:280,rx:16,fill:"#141B25",stroke:C.yellow,"stroke-width":2},g);
+  const t1=E("text",{x:36,y:56,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":12,"letter-spacing":"0.24em"},g);t1.textContent="EXAM QUESTION · 2 MARKS";
+  ["Give one difference between linear and","non-linear data structures, with an","example of each."].forEach((s,i)=>{
+    const t=E("text",{x:36,y:112+i*38,fill:"var(--text)","font-family":"Space Grotesk","font-size":24,"font-weight":500},g);t.textContent=s});
+  const t3=E("text",{x:36,y:246,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);t3.textContent="⏸  Pause and answer it now.";
+  at(300,()=>move(g,180,130));
+  at(3400,()=>{const bar=E("rect",{x:216,y:436,width:0,height:4,rx:2,fill:C.yellow});bar.style.transition="width 2s linear";setTimeout(()=>bar.setAttribute("width",528),30)});
+ }},
+{s:"CLOSE",t:"8:15",vo:"Next video: what makes one algorithm better than another, and how we measure it. That's where Big-O starts.",
+ vis:"End card, next-video thumbnail right.",act:"Fade.",hold:"End.",dur:6000,
+ build(){
+  const l=label(120,240,"NEXT",{fill:C.dim,size:14,anchor:"start",ls:"0.3em"});
+  const a=label(120,300,"How We Measure",{fill:"var(--text)",size:38,f:"Space Grotesk",w:700,anchor:"start"});
+  const b=label(120,348,"Algorithms",{fill:"var(--text)",size:38,f:"Space Grotesk",w:700,anchor:"start"});
+  const c=label(120,398,"VIDEO 02 · BIG-O NOTATION",{fill:C.blue,size:13,anchor:"start",ls:"0.16em"});
+  [l,a,b,c].forEach((n,i)=>{n.style.opacity=0;at(200+i*160,()=>n.style.opacity=1)});
+  const g=G({class:"p"});move(g,540,150);g.style.opacity=0;
+  E("rect",{width:320,height:200,rx:12,fill:"#101722",stroke:"var(--line)","stroke-width":1.5},g);
+  const ax=E("path",{d:"M40 168 L280 168 M40 168 L40 40",stroke:"var(--cells)","stroke-width":2,fill:"none"},g);
+  const p1=E("path",{d:"M40 160 L280 150",stroke:C.green,"stroke-width":2.5,fill:"none"},g);
+  const p2=E("path",{d:"M40 165 L280 60",stroke:C.yellow,"stroke-width":2.5,fill:"none"},g);
+  const p3=E("path",{d:"M40 168 C160 168 240 60 268 36",stroke:C.red,"stroke-width":2.5,fill:"none"},g);
+  [["O(1)",C.green,146],["O(n)",C.yellow,66],["O(n²)",C.red,34]].forEach(d=>{
+    const t=E("text",{x:288,y:d[2],fill:d[1],"font-family":"IBM Plex Mono","font-size":11,"text-anchor":"end"},g);t.textContent=d[0]});
+  at(900,()=>g.style.opacity=1);
+  at(2200,()=>fadeUp(label(480,500,"SUBSCRIBE · UNIT 1 PLAYLIST IN DESCRIPTION",{size:12,ls:"0.2em"}),0));
+ }}
+];
+
+/* small helper used by beat 1 for the check path */
+function drawIn2(p,ms){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{p.style.transition=`stroke-dashoffset ${ms}ms ease`;p.style.strokeDashoffset=0})}
+
+/* ── runner ── */
+let idx=0,elapsed=0,playing=false,rate=1,queue=[],last=0;
+const tickrow=document.getElementById("tickrow"),secrow=document.getElementById("secrow");
+const total=BEATS.reduce((a,b)=>a+b.dur,0);
+BEATS.forEach((b,i)=>{const t=document.createElement("button");t.className="tick";
+  t.style.flex=b.dur;t.innerHTML='<i></i><span>'+(i+1)+'</span>';
+  t.title="Beat "+(i+1)+" — "+b.s;t.onclick=()=>go(i,playing);tickrow.appendChild(t)});
+let cur=null;BEATS.forEach(b=>{if(!cur||cur.s!==b.s){cur={s:b.s,d:0};const el=document.createElement("div");el.className="sec";el.textContent=b.s;el.dataset.s=b.s;secrow.appendChild(el)}
+  cur.d+=b.dur;secrow.lastChild.style.flex=cur.d});
+
+function go(i,autoplay){
+  idx=Math.max(0,Math.min(BEATS.length-1,i));elapsed=0;queue=[];
+  clearStage();const b=BEATS[idx];
+  at=(ms,fn)=>queue.push({ms,fn,done:false});
+  b.build();
+  document.getElementById("bn").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("bt").textContent=b.t;
+  document.getElementById("f-vo").textContent=b.vo;
+  document.getElementById("f-vis").textContent=b.vis;
+  document.getElementById("f-act").textContent=b.act;
+  document.getElementById("f-hold").textContent=b.hold;
+  [...tickrow.children].forEach((t,k)=>{t.classList.toggle("now",k===idx);t.classList.toggle("done",k<idx)});
+  playing=!!autoplay;paint();
+}
+function paint(){document.getElementById("play").textContent=playing?"❚❚ PAUSE":"▶ PLAY";
+  const t=tickrow.children[idx];t.querySelector("i").style.transform=`scaleX(${elapsed/BEATS[idx].dur})`}
+function frame(ts){const dt=Math.min(64,ts-(last||ts));last=ts;
+  if(playing){elapsed+=dt*rate;
+    queue.forEach(q=>{if(!q.done&&elapsed>=q.ms){q.done=true;q.fn()}});
+    if(elapsed>=BEATS[idx].dur){if(idx<BEATS.length-1)go(idx+1,true);else{playing=false;elapsed=BEATS[idx].dur}}
+    paint()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+document.getElementById("play").onclick=()=>{if(!playing&&elapsed>=BEATS[idx].dur)go(idx,true);else{playing=!playing;paint()}};
+document.getElementById("next").onclick=()=>go(idx+1,playing);
+document.getElementById("prev").onclick=()=>go(idx-1,playing);
+document.getElementById("replay").onclick=()=>go(idx,true);
+document.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>{rate=parseFloat(b.dataset.r);
+  document.querySelectorAll(".rate button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;
+  if(e.key===" "){e.preventDefault();document.getElementById("play").click()}
+  if(e.key==="ArrowRight")go(idx+1,playing);if(e.key==="ArrowLeft")go(idx-1,playing);
+  if(e.key.toLowerCase()==="r")go(idx,true)});
+
+go(0,false);
+</script>
+</body>
+</html>

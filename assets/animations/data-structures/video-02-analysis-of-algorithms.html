@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video 02 — What Makes One Algorithm Better Than Another? · Animatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080A0D; --panel:#0D1116; --stage:#12161C; --line:#1E252E;
+  --cellf:#28313D; --cells:#3B4756;
+  --blue:#4C8DFF; --green:#3DD68C; --red:#FF6B6B; --yellow:#FFC94D;
+  --text:#E7ECF3; --dim:#7C8899; --faint:#4A5464;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--disp)}
+body{padding:18px 16px 60px;max-width:1180px;margin:0 auto}
+
+/* ── masthead ── */
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.slate{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink);background:var(--yellow);padding:3px 8px;border-radius:3px;font-weight:600}
+h1{font-size:clamp(19px,4vw,27px);font-weight:700;letter-spacing:-.02em;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;margin-left:auto}
+
+/* ── stage ── */
+.stagewrap{margin-top:14px;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--stage)}
+svg#stage{display:block;width:100%;height:auto;background:
+  linear-gradient(rgba(76,141,255,.035) 1px,transparent 1px) 0 0/100% 36px,
+  linear-gradient(90deg,rgba(76,141,255,.035) 1px,transparent 1px) 0 0/36px 100%,
+  var(--stage)}
+.badge{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint)}
+.badge b{color:var(--blue);font-weight:600}
+
+/* ── ruler (signature) ── */
+.ruler{margin-top:12px}
+.secrow,.tickrow{display:flex;gap:2px}
+.secrow{margin-bottom:5px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--faint);border-top:1px solid var(--line);padding-top:4px;overflow:hidden;white-space:nowrap}
+.tick{height:26px;background:#131922;border:0;padding:0;border-radius:2px;position:relative;cursor:pointer;overflow:hidden}
+.tick:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tick i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:var(--faint)}
+.tick.done i{transform:scaleX(1)}
+.tick.now i{background:var(--blue)}
+.tick span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--dim)}
+.tick.now span{color:#fff}
+
+/* ── transport ── */
+.transport{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.ctl{font-family:var(--mono);font-size:12px;color:var(--text);background:#131922;border:1px solid var(--line);border-radius:6px;padding:9px 13px;cursor:pointer}
+button.ctl:hover{border-color:var(--faint)}
+button.ctl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.ctl.primary{background:var(--blue);color:#06101F;border-color:var(--blue);font-weight:600;min-width:96px}
+.rate{margin-left:auto;display:flex;gap:2px}
+.rate button{padding:9px 10px}
+.rate button[aria-pressed="true"]{background:#1B2431;border-color:var(--faint);color:var(--yellow)}
+
+/* ── spec sheet ── */
+.spec{margin-top:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.vo{border-left:2px solid var(--yellow);padding:2px 0 2px 14px}
+.vo .lab,.fld .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.vo p{margin:6px 0 0;font-size:clamp(16px,2.4vw,20px);line-height:1.45;letter-spacing:-.01em}
+.fields{display:grid;gap:10px}
+.fld{border-left:1px solid var(--line);padding-left:14px}
+.fld p{margin:4px 0 0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#B9C4D2}
+.fld.hold p{color:var(--green)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:760px){.spec{grid-template-columns:1fr}.meta{margin-left:0;width:100%}.tick span{display:none}}
+
+/* ── stage element transitions ── */
+.p{transition:transform .55s cubic-bezier(.2,.8,.25,1),opacity .4s ease,fill .3s ease,stroke .3s ease}
+.fast{transition:transform .25s ease,opacity .2s ease,fill .12s ease}
+.q{transition:none}
+@keyframes shake{0%,100%{transform:translate(var(--tx),var(--ty))}25%{transform:translate(calc(var(--tx) - 7px),var(--ty))}75%{transform:translate(calc(var(--tx) + 7px),var(--ty))}}
+.shake{animation:shake .28s 2}
+@media(prefers-reduced-motion:reduce){.p,.fast{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slate">VID 02</span>
+  <h1>What Makes One Algorithm Better Than Another?</h1>
+  <span class="meta">UNIT 1 · TARGET 9:00 · 31 BEATS · ANIMATIC v1</span>
+</header>
+
+<div class="stagewrap">
+  <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Animation stage"></svg>
+  <div class="badge">BEAT <b id="bn">01</b> · <span id="bt">0:00</span></div>
+</div>
+
+<div class="ruler">
+  <div class="secrow" id="secrow"></div>
+  <div class="tickrow" id="tickrow"></div>
+</div>
+
+<div class="transport">
+  <button class="ctl" id="prev" aria-label="Previous beat">◀ PREV</button>
+  <button class="ctl primary" id="play">▶ PLAY</button>
+  <button class="ctl" id="next" aria-label="Next beat">NEXT ▶</button>
+  <button class="ctl" id="replay">↻ BEAT</button>
+  <div class="rate" role="group" aria-label="Playback rate">
+    <button class="ctl" data-r="0.5">.5×</button>
+    <button class="ctl" data-r="1" aria-pressed="true">1×</button>
+    <button class="ctl" data-r="2">2×</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div class="vo"><span class="lab">VO</span><p id="f-vo"></p></div>
+  <div class="fields">
+    <div class="fld"><span class="lab">VIS</span><p id="f-vis"></p></div>
+    <div class="fld"><span class="lab">ACT</span><p id="f-act"></p></div>
+    <div class="fld hold"><span class="lab">HOLD</span><p id="f-hold"></p></div>
+  </div>
+</div>
+
+<footer>
+  ANIMATIC RUNS AT STORYBOARD PACE — REAL CUT IS TIMED TO VO (9:00).<br>
+  KEYS: SPACE PLAY/PAUSE · ← → STEP BEAT · R REPLAY BEAT.<br>
+  THIS FILE IS THE FORMAT SPEC. CLONE FOR VIDEOS 02–48; REPLACE THE BEATS ARRAY ONLY.
+</footer>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const stage=document.getElementById("stage");
+let layer=document.createElementNS(NS,"g");stage.appendChild(layer);
+
+/* ── primitive kit ── */
+function E(t,a={},p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);(p||layer).appendChild(n);return n}
+function G(a={},p){return E("g",a,p)}
+function move(n,x,y){n.style.setProperty("--tx",x+"px");n.style.setProperty("--ty",y+"px");n.style.transform=`translate(${x}px,${y}px)`}
+function cell(x,y,o={}){const w=o.w||46,h=o.h||46;
+  const g=G({class:o.cls||"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:o.rx??9,fill:o.fill||"var(--cellf)",stroke:o.stroke||"var(--cells)","stroke-width":1.5,class:o.cls||"p"},g);
+  if(o.label!=null)E("text",{x:w/2,y:h/2+5,fill:o.tf||"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g).textContent=o.label;
+  g.rect=r;g.opacity=v=>g.style.opacity=v;return g}
+function label(x,y,s,o={}){const t=E("text",{x,y,fill:o.fill||"var(--dim)","font-family":o.f||"IBM Plex Mono","font-size":o.size||13,"text-anchor":o.anchor||"middle","letter-spacing":o.ls||0,class:o.cls||"p","font-weight":o.w||400},o.p);t.textContent=s;if(o.o!=null)t.style.opacity=o.o;return t}
+function line(x1,y1,x2,y2,o={}){return E("line",{x1,y1,x2,y2,stroke:o.stroke||"var(--cells)","stroke-width":o.sw||2,"stroke-linecap":"round",class:"p",...(o.attrs||{})})}
+function drawIn(l,ms,delay){const len=Math.hypot(l.x2.baseVal.value-l.x1.baseVal.value,l.y2.baseVal.value-l.y1.baseVal.value);
+  l.style.strokeDasharray=len;l.style.strokeDashoffset=len;l.style.transition="none";
+  requestAnimationFrame(()=>{l.style.transition=`stroke-dashoffset ${ms||420}ms cubic-bezier(.3,.7,.3,1) ${delay||0}ms, stroke .3s`;l.style.strokeDashoffset=0});return l}
+function arrow(x1,y1,x2,y2,o={}){const l=line(x1,y1,x2,y2,o);l.setAttribute("marker-end","url(#ah)");return l}
+function chip(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||(s.length*8.4+22);
+  const r=E("rect",{width:w,height:28,rx:14,fill:o.fill||"#1A2230",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const t=E("text",{x:w/2,y:19,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;g.w=w;return g}
+function nodeBox(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||64,h=o.h||44;
+  const r=E("rect",{width:w,height:h,rx:8,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:w/2,y:h/2+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;return g}
+function circleNode(cx,cy,s,o={}){const g=G({class:"p"});
+  const c=E("circle",{cx,cy,r:o.r||24,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.c=c;g.txt=t;return g}
+function fadeUp(n,d){n.style.opacity=0;setTimeout(()=>n.style.opacity=1,d||0);return n}
+function defs(){const d=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"},d);
+  E("path",{d:"M0 0 L10 5 L0 10 z",fill:"var(--cells)"},m)}
+function clearStage(){layer.remove();layer=document.createElementNS(NS,"g");stage.appendChild(layer);defs()}
+const C={blue:"var(--blue)",green:"var(--green)",red:"var(--red)",yellow:"var(--yellow)",grey:"var(--cellf)"};
+
+/* ── beats ── */
+let at; // scheduler injected per beat
+
+/* ── extra primitives for Video 02 ── */
+function panel(x,y,w,h,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:10,fill:o.fill||"#131A24",stroke:o.stroke||"var(--line)","stroke-width":o.sw||1.5,class:"p"},g);
+  g.rect=r;g.w=w;g.h=h;return g}
+function code(g,lines,o={}){const out=[];lines.forEach((s,i)=>{
+  const n=E("text",{x:o.x||18,y:(o.y||36)+i*(o.lh||28),fill:o.fill||"#B9C4D2","font-family":"IBM Plex Mono","font-size":o.size||13,class:"p"},g);
+  n.textContent=s;out.push(n)});return out}
+function watch(cx,cy,r,o={}){const g=G({class:"p"});
+  E("line",{x1:cx-9,y1:cy-r-12,x2:cx+9,y2:cy-r-12,stroke:o.stroke||"var(--cells)","stroke-width":5,"stroke-linecap":"round",class:"p"},g);
+  E("line",{x1:cx,y1:cy-r-12,x2:cx,y2:cy-r+2,stroke:o.stroke||"var(--cells)","stroke-width":4,class:"p"},g);
+  const c=E("circle",{cx,cy,r,fill:"#141B25",stroke:o.stroke||"var(--cells)","stroke-width":3,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+7,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":18,"text-anchor":"middle",class:"p"},g);
+  t.textContent=o.text||"0.0s";g.c=c;g.txt=t;
+  g.tint=col=>{[...g.querySelectorAll("line,circle")].forEach(n=>n.setAttribute("stroke",col));t.setAttribute("fill",col)};
+  return g}
+function counter(t,from,to,n,start,dur,suf){for(let k=0;k<=n;k++)
+  at(start+k*(dur/n),()=>t.textContent=(from+(to-from)*k/n).toFixed(1)+(suf==null?"s":suf))}
+function ftable(x,y,rows,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||400,rh=44;
+  E("rect",{width:w,height:rh*(rows.length+1)+16,rx:10,fill:"#131A24",stroke:"var(--line)","stroke-width":1.5},g);
+  [["STATEMENT",18,"start"],["COST",w-160,"middle"],["TIMES",w-62,"middle"]].forEach(h=>{
+    const t=E("text",{x:h[1],y:30,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":10,"letter-spacing":"0.18em","text-anchor":h[2]},g);t.textContent=h[0]});
+  E("line",{x1:12,y1:44,x2:w-12,y2:44,stroke:"var(--line)","stroke-width":1},g);
+  g.rows=rows.map((r,i)=>{const yy=44+rh*(i+1)-12;
+    const a=E("text",{x:18,y:yy,fill:"#8A97A8","font-family":"IBM Plex Mono","font-size":12.5,class:"p"},g);a.textContent=r[0];
+    const b=E("text",{x:w-160,y:yy,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":12.5,"text-anchor":"middle"},g);b.textContent=r[1];
+    const c=E("text",{x:w-62,y:yy,fill:"var(--yellow)","font-family":"IBM Plex Mono","font-size":16,"text-anchor":"middle",class:"p"},g);c.textContent="";
+    return {stmt:a,cost:b,times:c,y:yy}});
+  g.w=w;g.rh=rh;return g}
+function listItem(x,y,n,txt,o={}){const g=G({class:"p"});move(g,x,y);
+  E("rect",{width:o.w||420,height:56,rx:10,fill:"#141B25",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const a=E("text",{x:20,y:35,fill:o.nf||"var(--blue)","font-family":"IBM Plex Mono","font-size":13,"font-weight":600,class:"p"},g);a.textContent="0"+n;
+  const b=E("text",{x:52,y:35,fill:"var(--text)","font-family":"Space Grotesk","font-size":19,"font-weight":500,class:"p"},g);b.textContent=txt;
+  g.rect=g.querySelector("rect");return g}
+
+const SRC1=["sum = 0","for i = 1 to n","    sum = sum + a[i]","return sum"];
+const SRC2=["for i = 1 to n","    for j = 1 to n","        c[i][j] = 0","return c"];
+const ROWS1=[["sum = 0","1"],["for i = 1 to n","1"],["sum = sum + a[i]","1"],["return sum","1"]];
+const ROWS2=[["outer: for i = 1 to n","1"],["inner: for j = 1 to n","1"],["c[i][j] = 0","1"]];
+
+const BEATS=[
+{s:"HOOK",t:"0:00",vo:"Here's a trap. You write two programs, you time both, one runs faster. So it's the better algorithm, right?",
+ vis:"Two code panels side by side, stopwatch above each. Left reads 0.4s, right reads 2.1s.",
+ act:"Both stopwatches count up, freeze. Left flashes green.",hold:"800ms",dur:6000,
+ build(){
+  const L=panel(80,220,340,240),R=panel(540,220,340,240);
+  code(L,["// version A","for i = 1 to n","   total += a[i]"],{y:44});
+  code(R,["// version B","for i = 1 to n","   for j = 1 to n","      total += a[j]"],{y:44});
+  label(250,500,"PROGRAM A",{ls:"0.2em",size:12});label(710,500,"PROGRAM B",{ls:"0.2em",size:12});
+  const w1=watch(250,130,46),w2=watch(710,130,46);
+  counter(w1.txt,0,0.4,8,500,2000);counter(w2.txt,0,2.1,16,500,3400);
+  at(4100,()=>{w1.tint("var(--green)");L.rect.setAttribute("stroke","var(--green)")});
+  at(4400,()=>{const p=E("path",{d:"M232 372 l14 15 l26 -30",stroke:C.green,"stroke-width":4,fill:"none","stroke-linecap":"round"});drawIn2(p,280)});
+  at(4700,()=>fadeUp(label(250,430,"faster — so, better?",{fill:C.green,size:14}),0));
+ }},
+{s:"HOOK",t:"0:09",vo:"Wrong. Run them on a different laptop and the result can flip. Wall-clock time measures your machine. It doesn't measure your algorithm.",
+ vis:"Same panels.",act:"Timings swap — left becomes 1.8s, right becomes 0.5s. Green check jumps sides, then both stopwatches fade red.",hold:"1000ms",dur:6400,
+ build(){
+  const L=panel(80,220,340,240),R=panel(540,220,340,240);
+  code(L,["// version A","for i = 1 to n","   total += a[i]"],{y:44});
+  code(R,["// version B","for i = 1 to n","   for j = 1 to n","      total += a[j]"],{y:44});
+  const w1=watch(250,130,46,{text:"0.4s"}),w2=watch(710,130,46,{text:"2.1s"});
+  const chk=E("path",{d:"M232 372 l14 15 l26 -30",stroke:C.green,"stroke-width":4,fill:"none","stroke-linecap":"round",class:"p"});
+  w1.tint("var(--green)");
+  const mach=label(480,500,"MACHINE 1  ·  8-core, 32 GB",{size:12,ls:"0.16em"});
+  at(700,()=>{mach.textContent="MACHINE 2  ·  older laptop";mach.setAttribute("fill",C.yellow)});
+  at(1100,()=>{w1.txt.textContent="1.8s";w2.txt.textContent="0.5s";w1.tint("var(--cells)");w1.txt.setAttribute("fill","var(--text)")});
+  at(1500,()=>{chk.style.opacity=0;setTimeout(()=>{chk.setAttribute("transform","translate(460,0)");chk.style.opacity=1},260);w2.tint("var(--green)")});
+  at(2900,()=>{w1.tint("var(--red)");w2.tint("var(--red)");chk.style.opacity=0});
+  at(3400,()=>fadeUp(label(480,430,"wall-clock time measures the machine, not the algorithm",{fill:C.red,size:15}),0));
+ }},
+{s:"HOOK",t:"0:20",vo:"So how do we compare algorithms honestly? That's this video.",
+ vis:"Title card.",act:'"ANALYSIS OF ALGORITHMS" types on, accent blue.',hold:"600ms",dur:4600,
+ build(){
+  const w=watch(480,180,54,{text:"0.4s"});
+  at(300,()=>{w.tint("var(--red)");const x=E("line",{x1:410,y1:110,x2:550,y2:250,stroke:C.red,"stroke-width":5,"stroke-linecap":"round"});drawIn(x,320)});
+  at(900,()=>{w.style.opacity=.25});
+  const t=label(480,340,"",{fill:C.blue,size:44,f:"Space Grotesk",w:700,ls:"0.02em"});
+  const full="ANALYSIS OF ALGORITHMS";
+  for(let i=0;i<=full.length;i++)at(1200+i*70,()=>t.textContent=full.slice(0,i)+(i<full.length?"▌":""));
+  at(1200+full.length*70+140,()=>{t.textContent=full;fadeUp(label(480,388,"compare on paper, not on hardware",{size:15,ls:"0.12em"}),0)});
+ }},
+{s:"PROMISE",t:"0:25",vo:"Three things: what actually counts as an algorithm, the five properties every one must have, and the counting method that replaces the stopwatch.",
+ vis:"Three chips slide in: Definition · Properties · Counting.",act:"Stagger 150ms.",hold:"500ms",dur:4400,
+ build(){
+  label(480,150,"IN THIS VIDEO",{ls:"0.28em",size:12});
+  ["Definition","Five properties","Counting method"].forEach((s,i)=>{
+    const c=chip(-320,236+i*62,s,{w:280});
+    c.rect.setAttribute("height",44);c.txt.setAttribute("y",27);
+    c.style.opacity=0;
+    const n=label(296,236+i*62+28,"0"+(i+1),{fill:C.blue,size:13});n.style.opacity=0;
+    at(200+i*150,()=>{move(c,340,236+i*62);c.style.opacity=1;n.style.opacity=1})});
+ }},
+{s:"CORE 1 · WHAT AN ALGORITHM IS",t:"0:45",vo:"An algorithm is a finite, ordered set of unambiguous steps that takes some input and produces the required output.",
+ vis:'Flow: INPUT cell → box labeled "ALGORITHM" → OUTPUT cell.',act:"Arrows draw left to right.",hold:"900ms",dur:5000,
+ build(){
+  const a=nodeBox(70,250,"INPUT",{w:150,h:70,stroke:C.blue});
+  const b=panel(340,225,280,120,{stroke:C.yellow});
+  label(480,278,"ALGORITHM",{fill:C.yellow,size:22,f:"Space Grotesk",w:700});
+  label(480,310,"finite · ordered · unambiguous",{size:12,ls:"0.06em"});
+  const c=nodeBox(740,250,"OUTPUT",{w:150,h:70,stroke:C.green});
+  b.style.opacity=0;c.style.opacity=0;
+  at(400,()=>drawIn(arrow(226,285,334,285,{stroke:C.blue}),320));
+  at(800,()=>b.style.opacity=1);
+  at(1300,()=>{drawIn(arrow(626,285,734,285,{stroke:C.green}),320);setTimeout(()=>c.style.opacity=1,200)});
+  at(2200,()=>fadeUp(label(480,430,"0 or more in  →  at least 1 out",{size:14,ls:"0.08em"}),0));
+ }},
+{s:"CORE 1 · WHAT AN ALGORITHM IS",t:"1:05",vo:"And it's not code. Code is one implementation of an algorithm in one language. The algorithm is the idea underneath.",
+ vis:'One "ALGORITHM" box at top, three code panels beneath labeled C, Java, Python.',act:"Three arrows draw downward, staggered.",hold:"900ms",dur:5400,
+ build(){
+  const top=panel(340,90,280,80,{stroke:C.yellow});
+  label(480,130,"ALGORITHM",{fill:C.yellow,size:22,f:"Space Grotesk",w:700});
+  label(480,158,"the idea",{size:12,ls:"0.16em"});
+  const langs=[["C",90,["int s=0;","for(i=0;i<n;i++)","  s+=a[i];"]],
+               ["Java",370,["int s=0;","for(int i=0;i<n;i++)","  s+=a[i];"]],
+               ["Python",650,["s = 0","for x in a:","    s += x"]]];
+  langs.forEach((L,i)=>{
+    const p=panel(L[1],290,220,150);p.style.opacity=0;
+    label(L[1]+110,270,L[0],{fill:C.blue,size:12,ls:"0.2em"});
+    code(p,L[2],{y:44,size:12});
+    at(400+i*220,()=>{drawIn(arrow(480,174,L[1]+110,284,{stroke:"var(--cells)"}),380);setTimeout(()=>p.style.opacity=1,260)})});
+  at(2000,()=>fadeUp(label(480,490,"three implementations · one algorithm",{size:14,ls:"0.08em"}),0));
+ }},
+{s:"CORE 1 · FIVE PROPERTIES",t:"1:35",vo:"Five properties. Miss any one and it isn't an algorithm. Property one: input — zero or more quantities supplied externally.",
+ vis:"Numbered list building in left column, work area right stays clear.",act:"Item 1 slides in, blue.",hold:"600ms",dur:4400,
+ build(){
+  label(60,80,"FIVE PROPERTIES",{fill:C.yellow,ls:"0.24em",size:12,anchor:"start"});
+  const it=listItem(-440,110,1,"Input",{stroke:C.blue});
+  at(300,()=>move(it,50,110));
+  at(900,()=>fadeUp(label(560,150,"zero or more quantities,",{size:16,anchor:"start"}),0));
+  at(1100,()=>fadeUp(label(560,180,"supplied externally",{size:16,anchor:"start"}),0));
+  at(1600,()=>fadeUp(label(560,240,"a[] , n",{fill:C.blue,size:20,anchor:"start",f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 1 · FIVE PROPERTIES",t:"1:52",vo:"Two: output — at least one quantity produced. An algorithm that produces nothing is pointless.",
+ vis:"List.",act:"Item 2 slides in.",hold:"600ms",dur:4200,
+ build(){
+  label(60,80,"FIVE PROPERTIES",{fill:C.yellow,ls:"0.24em",size:12,anchor:"start"});
+  listItem(50,110,1,"Input");
+  const it=listItem(-440,178,2,"Output",{stroke:C.blue});
+  at(300,()=>move(it,50,178));
+  at(900,()=>fadeUp(label(560,150,"at least one quantity",{size:16,anchor:"start"}),0));
+  at(1100,()=>fadeUp(label(560,180,"produced",{size:16,anchor:"start"}),0));
+  at(1600,()=>fadeUp(label(560,240,"return sum",{fill:C.green,size:20,anchor:"start",f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 1 · FIVE PROPERTIES",t:"2:08",vo:"Three: definiteness — every step is unambiguous. 'Add the numbers' is fine. 'Sort them nicely' is not.",
+ vis:"List, plus two example strips in work area — one green, one red.",act:"Item 3 slides in; red strip shakes.",hold:"800ms",dur:5200,
+ build(){
+  label(60,80,"FIVE PROPERTIES",{fill:C.yellow,ls:"0.24em",size:12,anchor:"start"});
+  listItem(50,110,1,"Input");listItem(50,178,2,"Output");
+  const it=listItem(-440,246,3,"Definiteness",{stroke:C.blue});
+  at(300,()=>move(it,50,246));
+  const ok=panel(540,140,380,64,{stroke:C.green});ok.style.opacity=0;
+  const okt=label(560,180,'"add a[i] to sum"',{fill:C.green,size:17,anchor:"start",f:"IBM Plex Mono"});okt.style.opacity=0;
+  const bad=panel(540,240,380,64,{stroke:C.red});bad.style.opacity=0;
+  const badt=label(560,280,'"sort them nicely"',{fill:C.red,size:17,anchor:"start",f:"IBM Plex Mono"});badt.style.opacity=0;
+  at(900,()=>{ok.style.opacity=1;okt.style.opacity=1});
+  at(1600,()=>{bad.style.opacity=1;badt.style.opacity=1});
+  at(2200,()=>{bad.classList.add("shake");setTimeout(()=>bad.classList.remove("shake"),620)});
+  at(2900,()=>fadeUp(label(730,350,"nicely = undefined",{fill:C.red,size:14}),0));
+ }},
+{s:"CORE 1 · FIVE PROPERTIES",t:"2:26",vo:"Four: finiteness — it terminates after a finite number of steps. An infinite loop is a program, not an algorithm.",
+ vis:"List, plus a loop arrow in work area.",act:"Item 4 slides in; loop arrow spins, turns red, fades.",hold:"800ms",dur:5200,
+ build(){
+  label(60,80,"FIVE PROPERTIES",{fill:C.yellow,ls:"0.24em",size:12,anchor:"start"});
+  listItem(50,110,1,"Input");listItem(50,178,2,"Output");listItem(50,246,3,"Definiteness");
+  const it=listItem(-440,314,4,"Finiteness",{stroke:C.blue});
+  at(300,()=>move(it,50,314));
+  const spin=G({class:"p"});spin.style.transformOrigin="730px 250px";
+  const arc=E("path",{d:"M730 170 A80 80 0 1 1 650 250",fill:"none",stroke:"var(--cells)","stroke-width":6,"stroke-linecap":"round",class:"p"},spin);
+  E("path",{d:"M640 232 L650 252 L670 244 z",fill:"var(--cells)",class:"p"},spin);
+  at(700,()=>{spin.style.transition="transform 2.2s linear, opacity .5s";spin.style.transform="rotate(1080deg)"});
+  at(1900,()=>{arc.setAttribute("stroke",C.red);spin.querySelector("path+path").setAttribute("fill",C.red)});
+  at(2700,()=>{spin.style.opacity=0;fadeUp(label(730,390,"while(true) — a program, not an algorithm",{fill:C.red,size:14,f:"IBM Plex Mono"}),200)});
+ }},
+{s:"CORE 1 · FIVE PROPERTIES",t:"2:44",vo:"Five: effectiveness — every operation must be basic enough to be carried out, in principle, with pencil and paper.",
+ vis:"List completes.",act:"Item 5 slides in; all five flash green once.",hold:"1000ms",dur:5200,
+ build(){
+  label(60,80,"FIVE PROPERTIES",{fill:C.yellow,ls:"0.24em",size:12,anchor:"start"});
+  const all=[listItem(50,110,1,"Input"),listItem(50,178,2,"Output"),listItem(50,246,3,"Definiteness"),listItem(50,314,4,"Finiteness")];
+  const it=listItem(-440,382,5,"Effectiveness",{stroke:C.blue});all.push(it);
+  at(300,()=>move(it,50,382));
+  at(1000,()=>{fadeUp(label(730,200,"basic enough to do",{size:17}),0);fadeUp(label(730,232,"with pencil and paper",{size:17}),120)});
+  at(1900,()=>all.forEach((n,i)=>setTimeout(()=>{n.rect.setAttribute("stroke",C.green);n.rect.setAttribute("fill","#122A21");
+    setTimeout(()=>{n.rect.setAttribute("stroke","var(--line)");n.rect.setAttribute("fill","#141B25")},700)},i*90)));
+  at(2600,()=>fadeUp(label(730,330,"miss one → not an algorithm",{fill:C.yellow,size:15,ls:"0.06em"}),0));
+ }},
+{s:"CORE 2 · TWO WAYS TO ANALYSE",t:"3:00",vo:"Now, measuring. There are two approaches, and exams ask you to name both.",
+ vis:"Clear canvas, two panels draw.",act:"Panels fade in.",hold:"500ms",dur:3600,
+ build(){
+  label(480,110,"TWO WAYS TO ANALYSE",{ls:"0.26em",size:13,fill:C.yellow});
+  const L=panel(70,180,380,260),R=panel(510,180,380,260);
+  L.style.opacity=0;R.style.opacity=0;
+  const a=label(260,240,"A POSTERIORI",{size:22,f:"Space Grotesk",w:700,fill:"var(--text)"});a.style.opacity=0;
+  const b=label(700,240,"A PRIORI",{size:22,f:"Space Grotesk",w:700,fill:"var(--text)"});b.style.opacity=0;
+  at(300,()=>{L.style.opacity=1;a.style.opacity=1});
+  at(600,()=>{R.style.opacity=1;b.style.opacity=1});
+  at(1200,()=>{fadeUp(label(260,290,"after running it",{size:14}),0);fadeUp(label(700,290,"before running it",{size:14}),150)});
+ }},
+{s:"CORE 2 · TWO WAYS TO ANALYSE",t:"3:15",vo:"A posteriori analysis — run the program, measure real time and real memory. Machine-dependent, language-dependent. Useful in practice, useless for comparison.",
+ vis:"Left panel: stopwatch icon + laptop icon.",act:"Panel lights, then dims to grey.",hold:"900ms",dur:5600,
+ build(){
+  const L=panel(70,180,380,260),R=panel(510,180,380,260);
+  label(260,230,"A POSTERIORI",{size:22,f:"Space Grotesk",w:700,fill:"var(--text)"});
+  label(700,230,"A PRIORI",{size:22,f:"Space Grotesk",w:700,fill:"var(--text)"});
+  R.style.opacity=.25;
+  const w=watch(190,320,34,{text:"2.1s"});
+  const lap=G({class:"p"});
+  E("rect",{x:290,y:296,width:96,height:60,rx:6,fill:"#1B2431",stroke:"var(--cells)","stroke-width":2,class:"p"},lap);
+  E("rect",{x:276,y:360,width:124,height:8,rx:4,fill:"var(--cells)",class:"p"},lap);
+  at(300,()=>{L.rect.setAttribute("stroke",C.yellow);w.tint(C.yellow)});
+  at(1000,()=>{fadeUp(label(260,410,"machine-dependent",{fill:C.yellow,size:14}),0);fadeUp(label(260,436,"language-dependent",{fill:C.yellow,size:14}),150)});
+  at(2600,()=>{L.rect.setAttribute("stroke","var(--line)");w.tint("var(--faint)");L.style.opacity=.4});
+  at(3200,()=>fadeUp(label(260,490,"useless for comparison",{fill:C.red,size:14,ls:"0.06em"}),0));
+ }},
+{s:"CORE 2 · TWO WAYS TO ANALYSE",t:"3:40",vo:"A priori analysis — study the algorithm on paper, before running anything. Machine-independent. This is what we do for the rest of the course.",
+ vis:"Right panel: paper + pencil icon.",act:"Panel lights accent blue and stays lit.",hold:"1000ms",dur:5600,
+ build(){
+  const L=panel(70,180,380,260),R=panel(510,180,380,260);
+  L.style.opacity=.28;
+  label(260,230,"A POSTERIORI",{size:22,f:"Space Grotesk",w:700,fill:"var(--faint)"});
+  label(700,230,"A PRIORI",{size:22,f:"Space Grotesk",w:700,fill:"var(--text)"});
+  const pg=G({class:"p"});
+  E("rect",{x:630,y:280,width:90,height:110,rx:6,fill:"#1B2431",stroke:"var(--cells)","stroke-width":2,class:"p"},pg);
+  [0,1,2,3].forEach(i=>E("line",{x1:646,y1:305+i*22,x2:704,y2:305+i*22,stroke:"var(--cells)","stroke-width":2,class:"p"},pg));
+  const pen=E("path",{d:"M756 380 L800 300 L812 308 L768 388 z",fill:"#1B2431",stroke:"var(--cells)","stroke-width":2,class:"p"});
+  at(400,()=>{R.rect.setAttribute("stroke",C.blue);R.rect.setAttribute("stroke-width",2.5);
+    [...pg.children].forEach(n=>n.setAttribute("stroke",C.blue));pen.setAttribute("stroke",C.blue)});
+  at(1200,()=>fadeUp(label(700,430,"machine-independent",{fill:C.blue,size:15}),0));
+  at(2400,()=>fadeUp(label(700,470,"↓ everything after this video",{fill:C.blue,size:13,ls:"0.08em"}),0));
+ }},
+{s:"CORE 3 · COUNTING",t:"4:15",vo:"The trick is this. Instead of measuring seconds, we count how many times each statement executes. Watch.",
+ vis:"Code panel left, frequency table right (columns: Statement · Cost · Times).",act:"Panels slide in.",hold:"600ms",dur:4200,
+ build(){
+  const P=panel(-420,150,380,240);
+  const T=ftable(980,150,ROWS1);
+  at(250,()=>move(P,50,150));
+  at(400,()=>move(T,510,150));
+  at(1400,()=>fadeUp(label(480,470,"count executions, not seconds",{fill:C.yellow,size:16,ls:"0.08em"}),0));
+ }},
+{s:"CORE 3 · COUNTING",t:"4:30",vo:"Simple sum. A loop that adds n numbers.",
+ vis:"Code panel shows four lines: sum = 0 / for i = 1 to n / sum = sum + a[i] / return sum.",act:"Lines type on.",hold:"800ms",dur:4400,
+ build(){
+  const P=panel(50,150,380,240);ftable(510,150,ROWS1);
+  const ls=code(P,["","","",""],{y:56,lh:44,size:15});
+  SRC1.forEach((s,i)=>at(300+i*450,()=>ls[i].textContent=s));
+  at(2300,()=>fadeUp(label(240,470,"n = size of the input",{size:14,ls:"0.08em"}),0));
+ }},
+{s:"CORE 3 · COUNTING",t:"4:45",vo:"Line one runs once.",
+ vis:"Line 1 highlights blue; table row 1 fills: 1.",act:"Highlight + row fill together.",hold:"700ms",dur:3400,
+ build(){
+  const P=panel(50,150,380,240);const ls=code(P,SRC1,{y:56,lh:44,size:15});
+  const T=ftable(510,150,ROWS1);
+  const hl=E("rect",{x:60,y:186,width:360,height:34,rx:6,fill:"rgba(76,141,255,.16)",class:"p"});hl.style.opacity=0;
+  at(500,()=>{hl.style.opacity=1;ls[0].setAttribute("fill",C.blue);T.rows[0].times.textContent="1";T.rows[0].stmt.setAttribute("fill","var(--text)")});
+ }},
+{s:"CORE 3 · COUNTING",t:"4:55",vo:"The loop header runs n plus one times — n times it succeeds, one final time it fails and exits. Students lose marks on that plus one.",
+ vis:"Line 2 highlights; table row 2 fills n + 1.",act:"The + 1 appears separately in yellow, 300ms after the n.",hold:"1100ms",dur:5600,
+ build(){
+  const P=panel(50,150,380,240);const ls=code(P,SRC1,{y:56,lh:44,size:15});
+  const T=ftable(510,150,ROWS1);
+  ls[0].setAttribute("fill",C.blue);T.rows[0].times.textContent="1";
+  const hl=E("rect",{x:60,y:230,width:360,height:34,rx:6,fill:"rgba(76,141,255,.16)",class:"p"});hl.style.opacity=0;
+  at(400,()=>{hl.style.opacity=1;ls[1].setAttribute("fill",C.blue);T.rows[1].times.textContent="n"});
+  at(900,()=>{T.rows[1].times.textContent="n + 1";T.rows[1].times.setAttribute("fill",C.yellow)});
+  at(1600,()=>fadeUp(label(480,470,"the last test fails — and it still costs a comparison",{fill:C.yellow,size:15}),0));
+  at(2600,()=>fadeUp(label(480,502,"this is where marks are lost",{fill:C.red,size:13,ls:"0.12em"}),0));
+ }},
+{s:"CORE 3 · COUNTING",t:"5:20",vo:"The body runs n times.",
+ vis:"Line 3 highlights; row 3 fills n.",act:"Highlight + fill.",hold:"700ms",dur:3400,
+ build(){
+  const P=panel(50,150,380,240);const ls=code(P,SRC1,{y:56,lh:44,size:15});
+  const T=ftable(510,150,ROWS1);
+  ls[0].setAttribute("fill",C.blue);ls[1].setAttribute("fill",C.blue);
+  T.rows[0].times.textContent="1";T.rows[1].times.textContent="n + 1";
+  const hl=E("rect",{x:60,y:274,width:360,height:34,rx:6,fill:"rgba(76,141,255,.16)",class:"p"});hl.style.opacity=0;
+  at(500,()=>{hl.style.opacity=1;ls[2].setAttribute("fill",C.blue);T.rows[2].times.textContent="n"});
+ }},
+{s:"CORE 3 · COUNTING",t:"5:32",vo:"And the return runs once. Total: two n plus three.",
+ vis:"Row 4 fills 1; total row draws beneath.",act:"All rows sum with a downward sweep; 2n + 3 writes in green.",hold:"1200ms",dur:5400,
+ build(){
+  const P=panel(50,150,380,240);const ls=code(P,SRC1,{y:56,lh:44,size:15});
+  const T=ftable(510,150,ROWS1);
+  ls.forEach(l=>l.setAttribute("fill",C.blue));
+  T.rows[0].times.textContent="1";T.rows[1].times.textContent="n + 1";T.rows[2].times.textContent="n";
+  at(400,()=>T.rows[3].times.textContent="1");
+  at(1000,()=>{const sw=E("rect",{x:790,y:194,width:110,height:0,rx:6,fill:"rgba(61,214,140,.14)",class:"p"});
+    sw.style.transition="height .9s ease";setTimeout(()=>sw.setAttribute("height",176),30)});
+  at(2100,()=>{drawIn(line(520,392,900,392,{stroke:C.green}),400);
+    setTimeout(()=>{fadeUp(label(560,424,"TOTAL",{fill:"var(--dim)",size:12,ls:"0.2em",anchor:"start"}),0);
+      fadeUp(label(848,428,"2n + 3",{fill:C.green,size:22,f:"IBM Plex Mono"}),200)},420)});
+  at(3400,()=>fadeUp(label(240,470,"a count, not a clock reading",{fill:C.green,size:14}),0));
+ }},
+{s:"CORE 3 · COUNTING",t:"5:55",vo:"Now a nested loop. Same method.",
+ vis:"Code panel swaps to a 2-level nested loop over an n×n matrix.",act:"Panel cross-fades.",hold:"600ms",dur:3800,
+ build(){
+  const P1=panel(50,150,380,240);code(P1,SRC1,{y:56,lh:44,size:15});
+  const P2=panel(50,150,380,240,{stroke:C.yellow});const ls=code(P2,SRC2,{y:56,lh:44,size:15});
+  P2.style.opacity=0;
+  const T=ftable(510,150,ROWS2);T.style.opacity=0;
+  at(500,()=>{P1.style.opacity=0;P2.style.opacity=1});
+  at(1100,()=>T.style.opacity=1);
+  at(1700,()=>fadeUp(label(240,470,"n × n matrix fill",{fill:C.yellow,size:14,ls:"0.1em"}),0));
+ }},
+{s:"CORE 3 · COUNTING",t:"6:10",vo:"The outer header runs n plus one times. The inner header runs n plus one times, but for every outer pass — so n times n plus one. The body runs n squared times.",
+ vis:"Table fills three rows in sequence.",act:"Each row fills on its own beat, 400ms apart.",hold:"1200ms",dur:6400,
+ build(){
+  const P=panel(50,150,380,240,{stroke:C.yellow});const ls=code(P,SRC2,{y:56,lh:44,size:15});
+  const T=ftable(510,150,ROWS2);
+  const hl=E("rect",{x:60,y:186,width:360,height:34,rx:6,fill:"rgba(76,141,255,.16)",class:"p"});hl.style.opacity=0;
+  at(500,()=>{hl.style.opacity=1;ls[0].setAttribute("fill",C.blue);T.rows[0].times.textContent="n + 1"});
+  at(1600,()=>{hl.setAttribute("y",230);ls[1].setAttribute("fill",C.blue);T.rows[1].times.textContent="n(n + 1)";T.rows[1].times.setAttribute("fill",C.yellow)});
+  at(2200,()=>fadeUp(label(480,442,"inner header re-runs on every outer pass",{fill:C.yellow,size:14}),0));
+  at(3200,()=>{hl.setAttribute("y",274);ls[2].setAttribute("fill",C.blue);T.rows[2].times.textContent="n²"});
+  at(4000,()=>fadeUp(label(480,474,"nesting multiplies — it does not add",{fill:C.red,size:14,ls:"0.06em"}),0));
+ }},
+{s:"CORE 3 · COUNTING",t:"6:40",vo:"Total comes out around two n squared plus three n plus one. And here's the payoff.",
+ vis:"Both totals stack: 2n + 3 above, 2n² + 3n + 1 below.",act:"Second expression writes in green.",hold:"900ms",dur:4800,
+ build(){
+  label(480,120,"FREQUENCY COUNT",{ls:"0.26em",size:12,fill:"var(--dim)"});
+  const a=panel(180,180,600,90);
+  label(230,238,"simple loop",{size:16,anchor:"start"});
+  const t1=label(720,242,"2n + 3",{fill:C.blue,size:28,f:"IBM Plex Mono",anchor:"end"});
+  const b=panel(180,300,600,90,{stroke:C.green});b.style.opacity=0;
+  const lb=label(230,358,"nested loop",{size:16,anchor:"start"});lb.style.opacity=0;
+  const t2=label(760,362,"",{fill:C.green,size:28,f:"IBM Plex Mono",anchor:"end"});
+  at(600,()=>{b.style.opacity=1;lb.style.opacity=1});
+  const full="2n² + 3n + 1";
+  for(let i=0;i<=full.length;i++)at(1100+i*70,()=>t2.textContent=full.slice(0,i));
+  at(2400,()=>fadeUp(label(480,450,"same machine, same language — different growth",{size:14,ls:"0.06em"}),0));
+ }},
+{s:"CORE 3 · COUNTING",t:"6:55",vo:"Set n to a thousand. The first does about two thousand operations. The second does two million. That gap exists on every machine, in every language, forever.",
+ vis:"Two bars grow in the work area, wildly unequal.",act:"Left bar grows small; right bar grows off-frame top.",hold:"1300ms",dur:6200,
+ build(){
+  label(480,90,"n = 1,000",{fill:C.yellow,size:22,f:"IBM Plex Mono"});
+  line(120,470,840,470,{stroke:"var(--line)",sw:1});
+  const b1=E("rect",{x:250,y:470,width:120,height:0,rx:4,fill:C.blue,class:"p"});
+  const b2=E("rect",{x:590,y:470,width:120,height:0,rx:4,fill:C.red,class:"p"});
+  label(310,498,"2n + 3",{size:13,f:"IBM Plex Mono"});label(650,498,"2n² + 3n + 1",{size:13,f:"IBM Plex Mono"});
+  at(600,()=>{b1.style.transition="height .8s ease, y .8s ease";b1.setAttribute("height",6);b1.setAttribute("y",464)});
+  at(900,()=>fadeUp(label(310,440,"2,003 ops",{fill:C.blue,size:15,f:"IBM Plex Mono"}),0));
+  at(1800,()=>{b2.style.transition="height 1.6s cubic-bezier(.4,0,.7,1), y 1.6s cubic-bezier(.4,0,.7,1)";
+    b2.setAttribute("height",560);b2.setAttribute("y",-90)});
+  at(3000,()=>fadeUp(label(650,120,"2,003,001 ops ↑",{fill:C.red,size:16,f:"IBM Plex Mono"}),0));
+  at(3900,()=>fadeUp(label(480,512,"1,000× more work — on every machine that exists",{fill:C.red,size:14}),0));
+ }},
+{s:"CORE 3 · COUNTING",t:"7:15",vo:"That's why we count instead of timing. The count is a property of the algorithm. The seconds are a property of your laptop.",
+ vis:"Bars hold; laptop icon fades out, paper icon stays.",act:"Fade.",hold:"1000ms",dur:5000,
+ build(){
+  line(120,470,840,470,{stroke:"var(--line)",sw:1});
+  E("rect",{x:250,y:464,width:120,height:6,rx:4,fill:C.blue});
+  E("rect",{x:590,y:-90,width:120,height:560,rx:4,fill:C.red,opacity:.55});
+  const lap=G({class:"p"});
+  E("rect",{x:180,y:170,width:120,height:76,rx:6,fill:"#1B2431",stroke:"var(--cells)","stroke-width":2,class:"p"},lap);
+  E("rect",{x:162,y:250,width:156,height:9,rx:4,fill:"var(--cells)",class:"p"},lap);
+  const lt=label(240,300,"seconds — your laptop",{size:13});
+  const pg=G({class:"p"});
+  E("rect",{x:660,y:160,width:100,height:120,rx:6,fill:"#1B2431",stroke:C.blue,"stroke-width":2,class:"p"},pg);
+  [0,1,2,3].forEach(i=>E("line",{x1:678,y1:188+i*24,x2:742,y2:188+i*24,stroke:C.blue,"stroke-width":2,class:"p"},pg));
+  const pt=label(710,310,"count — the algorithm",{fill:C.blue,size:13});
+  at(900,()=>{lap.style.opacity=0;lt.style.opacity=.25});
+  at(2000,()=>fadeUp(label(480,360,"we count. we don't time.",{fill:C.blue,size:20,f:"Space Grotesk",w:700}),0));
+ }},
+{s:"CORE 4 · BEST / AVERAGE / WORST",t:"7:30",vo:"One complication. The same algorithm can take different counts on different inputs of the same size.",
+ vis:"Row of 8 cells, target value 7.",act:"Search scans and finds 7 at position 1 — one comparison, green.",hold:"800ms",dur:4600,
+ build(){
+  label(480,120,"LINEAR SEARCH · target = 7",{ls:"0.16em",size:13,fill:C.yellow});
+  const V=[7,3,9,1,5,8,2,4];
+  const cs=V.map((v,i)=>cell(180+i*78,250,{w:62,h:62,label:v}));
+  at(700,()=>{cs[0].rect.setAttribute("stroke",C.blue);cs[0].rect.setAttribute("fill","#12213A")});
+  at(1400,()=>{cs[0].rect.setAttribute("stroke",C.green);cs[0].rect.setAttribute("fill","#122A21")});
+  at(1700,()=>fadeUp(label(211,360,"✓",{fill:C.green,size:26}),0));
+  at(2100,()=>fadeUp(label(480,440,"1 comparison",{fill:C.green,size:20,f:"IBM Plex Mono"}),0));
+  at(2600,()=>fadeUp(label(480,478,"BEST CASE",{fill:C.green,size:12,ls:"0.28em"}),0));
+ }},
+{s:"CORE 4 · BEST / AVERAGE / WORST",t:"7:45",vo:"Found immediately — one comparison. That's the best case. Found last, or not at all — n comparisons. That's the worst case.",
+ vis:"Same row, target now at position 8.",act:"Scan runs all 8 cells, blue each, ends green.",hold:"1000ms",dur:6000,
+ build(){
+  label(480,120,"LINEAR SEARCH · target = 7",{ls:"0.16em",size:13,fill:C.yellow});
+  const V=[3,9,1,5,8,2,4,7];
+  const cs=V.map((v,i)=>cell(180+i*78,250,{w:62,h:62,label:v}));
+  const cnt=label(480,440,"0 comparisons",{fill:C.blue,size:20,f:"IBM Plex Mono"});
+  for(let i=0;i<8;i++)at(600+i*340,()=>{
+    if(i)cs[i-1].rect.setAttribute("fill","var(--cellf)");
+    cs[i].rect.setAttribute("stroke",i===7?C.green:C.blue);
+    cs[i].rect.setAttribute("fill",i===7?"#122A21":"#12213A");
+    cnt.textContent=(i+1)+" comparison"+(i?"s":"")});
+  at(3600,()=>{cnt.setAttribute("fill",C.red);cnt.textContent="n comparisons"});
+  at(4000,()=>fadeUp(label(480,478,"WORST CASE",{fill:C.red,size:12,ls:"0.28em"}),0));
+ }},
+{s:"CORE 4 · BEST / AVERAGE / WORST",t:"8:00",vo:"Average case sits between them. In practice we design for the worst case — it's the only guarantee you can actually make a promise about.",
+ vis:"Three chips: Best · Average · Worst.",act:"Worst chip enlarges and turns accent blue.",hold:"1100ms",dur:5400,
+ build(){
+  label(480,130,"WHICH ONE DO WE QUOTE?",{ls:"0.24em",size:12});
+  const D=[["Best","1 comparison",C.green],["Average","n / 2",C.yellow],["Worst","n",C.red]];
+  const gs=D.map((d,i)=>{const g=panel(80+i*280,220,240,140);g.style.opacity=0;g.style.transformOrigin=(200+i*280)+"px 290px";
+    const a=label(200+i*280,272,d[0],{size:24,f:"Space Grotesk",w:700,fill:d[2]});
+    const b=label(200+i*280,310,d[1],{size:15,f:"IBM Plex Mono"});
+    at(300+i*180,()=>g.style.opacity=1);return {g,a,b}});
+  at(1800,()=>{gs[2].g.style.transform="translate(640px,220px) scale(1.14)";gs[2].g.rect.setAttribute("stroke",C.blue);gs[2].g.rect.setAttribute("stroke-width",2.5);
+    gs[2].a.setAttribute("fill",C.blue);gs[0].g.style.opacity=.35;gs[1].g.style.opacity=.35});
+  at(2900,()=>fadeUp(label(480,430,"the worst case is the only thing you can promise",{fill:C.blue,size:16}),0));
+ }},
+{s:"CLOSE",t:"8:15",vo:"Recap. An algorithm needs input, output, definiteness, finiteness, effectiveness. We analyse a priori, not a posteriori. We count statement frequencies, not seconds. And we quote best, average, worst.",
+ vis:"Four-item summary card.",act:"Instant draw, no stagger.",hold:"1600ms",dur:6000,
+ build(){
+  label(480,80,"RECAP",{fill:C.yellow,ls:"0.3em",size:13});
+  const D=[["01","Five properties","input · output · definiteness · finiteness · effectiveness"],
+           ["02","A priori, not a posteriori","study it on paper, before running anything"],
+           ["03","Count frequencies, not seconds","2n + 3   ·   2n² + 3n + 1"],
+           ["04","Quote best, average, worst","design for the worst case"]];
+  D.forEach((d,i)=>{const y=120+i*96;
+    panel(90,y,780,80);
+    label(122,y+50,d[0],{fill:C.blue,size:14,anchor:"start",f:"IBM Plex Mono"});
+    label(166,y+38,d[1],{fill:"var(--text)",size:19,anchor:"start",f:"Space Grotesk",w:500});
+    label(166,y+62,d[2],{size:13,anchor:"start"})});
+ }},
+{s:"CLOSE",t:"8:35",vo:"Exam question: find the frequency count of a nested loop where the inner loop runs from i to n, not 1 to n. Pause and try it — the answer isn't n squared.",
+ vis:"Question card with the code snippet shown.",act:"Card slides up.",hold:"2200ms",dur:6400,
+ build(){
+  const g=G({class:"p"});move(g,140,560);
+  E("rect",{width:680,height:340,rx:16,fill:"#141B25",stroke:C.yellow,"stroke-width":2},g);
+  const t1=E("text",{x:36,y:50,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":12,"letter-spacing":"0.24em"},g);t1.textContent="EXAM QUESTION · 5 MARKS";
+  ["Find the frequency count of this loop.","Careful — the inner loop starts at i."].forEach((s,i)=>{
+    const t=E("text",{x:36,y:96+i*34,fill:"var(--text)","font-family":"Space Grotesk","font-size":22,"font-weight":500},g);t.textContent=s});
+  E("rect",{x:36,y:158,width:608,height:110,rx:8,fill:"#0F151E",stroke:"var(--line)","stroke-width":1.5},g);
+  ["for i = 1 to n","    for j = i to n","        x = x + 1"].forEach((s,i)=>{
+    const t=E("text",{x:58,y:186+i*30,fill:"#B9C4D2","font-family":"IBM Plex Mono","font-size":15},g);t.textContent=s});
+  const t3=E("text",{x:36,y:306,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);t3.textContent="⏸  Pause and try it — the answer isn't n².";
+  at(300,()=>move(g,140,110));
+  at(3600,()=>{const bar=E("rect",{x:176,y:478,width:0,height:4,rx:2,fill:C.yellow});bar.style.transition="width 2.2s linear";setTimeout(()=>bar.setAttribute("width",608),30)});
+ }},
+{s:"CLOSE",t:"8:50",vo:"Next video: time versus space, and why you can usually buy one with the other.",
+ vis:"End card.",act:"Fade.",hold:"End.",dur:6000,
+ build(){
+  const l=label(110,220,"NEXT",{fill:"var(--dim)",size:14,anchor:"start",ls:"0.3em"});
+  const a=label(110,282,"Time versus Space",{fill:"var(--text)",size:36,f:"Space Grotesk",w:700,anchor:"start"});
+  const b=label(110,330,"and how to trade one for the other",{fill:"var(--dim)",size:17,anchor:"start"});
+  const c=label(110,382,"VIDEO 03 · COMPLEXITY",{fill:C.blue,size:13,anchor:"start",ls:"0.16em"});
+  [l,a,b,c].forEach((n,i)=>{n.style.opacity=0;at(200+i*160,()=>n.style.opacity=1)});
+  const g=G({class:"p"});move(g,560,160);g.style.opacity=0;
+  E("rect",{width:320,height:200,rx:12,fill:"#101722",stroke:"var(--line)","stroke-width":1.5},g);
+  const beam=E("rect",{x:50,y:96,width:220,height:8,rx:4,fill:"var(--cells)",class:"p"},g);
+  beam.style.transformOrigin="160px 100px";
+  E("path",{d:"M160 100 L146 150 L174 150 z",fill:"var(--cells)"},g);
+  const t1=E("text",{x:64,y:74,fill:C.blue,"font-family":"IBM Plex Mono","font-size":13},g);t1.textContent="TIME";
+  const t2=E("text",{x:222,y:74,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":13},g);t2.textContent="SPACE";
+  at(900,()=>g.style.opacity=1);
+  at(1600,()=>{beam.style.transition="transform 1.1s cubic-bezier(.4,0,.3,1)";beam.style.transform="rotate(-11deg)"});
+  at(3000,()=>{beam.style.transform="rotate(11deg)"});
+  at(4200,()=>fadeUp(label(480,500,"SUBSCRIBE · UNIT 1 PLAYLIST IN DESCRIPTION",{size:12,ls:"0.2em"}),0));
+ }}
+];
+
+/* small helper used by beat 1 for the check path */
+function drawIn2(p,ms){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{p.style.transition=`stroke-dashoffset ${ms}ms ease`;p.style.strokeDashoffset=0})}
+
+/* ── runner ── */
+let idx=0,elapsed=0,playing=false,rate=1,queue=[],last=0;
+const tickrow=document.getElementById("tickrow"),secrow=document.getElementById("secrow");
+const total=BEATS.reduce((a,b)=>a+b.dur,0);
+BEATS.forEach((b,i)=>{const t=document.createElement("button");t.className="tick";
+  t.style.flex=b.dur;t.innerHTML='<i></i><span>'+(i+1)+'</span>';
+  t.title="Beat "+(i+1)+" — "+b.s;t.onclick=()=>go(i,playing);tickrow.appendChild(t)});
+let cur=null;BEATS.forEach(b=>{if(!cur||cur.s!==b.s){cur={s:b.s,d:0};const el=document.createElement("div");el.className="sec";el.textContent=b.s;el.dataset.s=b.s;secrow.appendChild(el)}
+  cur.d+=b.dur;secrow.lastChild.style.flex=cur.d});
+
+function go(i,autoplay){
+  idx=Math.max(0,Math.min(BEATS.length-1,i));elapsed=0;queue=[];
+  clearStage();const b=BEATS[idx];
+  at=(ms,fn)=>queue.push({ms,fn,done:false});
+  b.build();
+  document.getElementById("bn").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("bt").textContent=b.t;
+  document.getElementById("f-vo").textContent=b.vo;
+  document.getElementById("f-vis").textContent=b.vis;
+  document.getElementById("f-act").textContent=b.act;
+  document.getElementById("f-hold").textContent=b.hold;
+  [...tickrow.children].forEach((t,k)=>{t.classList.toggle("now",k===idx);t.classList.toggle("done",k<idx)});
+  playing=!!autoplay;paint();
+}
+function paint(){document.getElementById("play").textContent=playing?"❚❚ PAUSE":"▶ PLAY";
+  const t=tickrow.children[idx];t.querySelector("i").style.transform=`scaleX(${elapsed/BEATS[idx].dur})`}
+function frame(ts){const dt=Math.min(64,ts-(last||ts));last=ts;
+  if(playing){elapsed+=dt*rate;
+    queue.forEach(q=>{if(!q.done&&elapsed>=q.ms){q.done=true;q.fn()}});
+    if(elapsed>=BEATS[idx].dur){if(idx<BEATS.length-1)go(idx+1,true);else{playing=false;elapsed=BEATS[idx].dur}}
+    paint()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+document.getElementById("play").onclick=()=>{if(!playing&&elapsed>=BEATS[idx].dur)go(idx,true);else{playing=!playing;paint()}};
+document.getElementById("next").onclick=()=>go(idx+1,playing);
+document.getElementById("prev").onclick=()=>go(idx-1,playing);
+document.getElementById("replay").onclick=()=>go(idx,true);
+document.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>{rate=parseFloat(b.dataset.r);
+  document.querySelectorAll(".rate button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;
+  if(e.key===" "){e.preventDefault();document.getElementById("play").click()}
+  if(e.key==="ArrowRight")go(idx+1,playing);if(e.key==="ArrowLeft")go(idx-1,playing);
+  if(e.key.toLowerCase()==="r")go(idx,true)});
+
+go(0,false);
+</script>
+</body>
+</html>

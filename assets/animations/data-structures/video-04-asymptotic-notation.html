@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video 04 — Big-O, Omega, Theta · Animatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080A0D; --panel:#0D1116; --stage:#12161C; --line:#1E252E;
+  --cellf:#28313D; --cells:#3B4756;
+  --blue:#4C8DFF; --green:#3DD68C; --red:#FF6B6B; --yellow:#FFC94D;
+  --text:#E7ECF3; --dim:#7C8899; --faint:#4A5464;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--disp)}
+body{padding:18px 16px 60px;max-width:1180px;margin:0 auto}
+
+/* ── masthead ── */
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.slate{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink);background:var(--yellow);padding:3px 8px;border-radius:3px;font-weight:600}
+h1{font-size:clamp(19px,4vw,27px);font-weight:700;letter-spacing:-.02em;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;margin-left:auto}
+
+/* ── stage ── */
+.stagewrap{margin-top:14px;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--stage)}
+svg#stage{display:block;width:100%;height:auto;background:
+  linear-gradient(rgba(76,141,255,.035) 1px,transparent 1px) 0 0/100% 36px,
+  linear-gradient(90deg,rgba(76,141,255,.035) 1px,transparent 1px) 0 0/36px 100%,
+  var(--stage)}
+.badge{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint)}
+.badge b{color:var(--blue);font-weight:600}
+
+/* ── ruler (signature) ── */
+.ruler{margin-top:12px}
+.secrow,.tickrow{display:flex;gap:2px}
+.secrow{margin-bottom:5px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--faint);border-top:1px solid var(--line);padding-top:4px;overflow:hidden;white-space:nowrap}
+.tick{height:26px;background:#131922;border:0;padding:0;border-radius:2px;position:relative;cursor:pointer;overflow:hidden}
+.tick:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tick i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:var(--faint)}
+.tick.done i{transform:scaleX(1)}
+.tick.now i{background:var(--blue)}
+.tick span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--dim)}
+.tick.now span{color:#fff}
+
+/* ── transport ── */
+.transport{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.ctl{font-family:var(--mono);font-size:12px;color:var(--text);background:#131922;border:1px solid var(--line);border-radius:6px;padding:9px 13px;cursor:pointer}
+button.ctl:hover{border-color:var(--faint)}
+button.ctl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.ctl.primary{background:var(--blue);color:#06101F;border-color:var(--blue);font-weight:600;min-width:96px}
+.rate{margin-left:auto;display:flex;gap:2px}
+.rate button{padding:9px 10px}
+.rate button[aria-pressed="true"]{background:#1B2431;border-color:var(--faint);color:var(--yellow)}
+
+/* ── spec sheet ── */
+.spec{margin-top:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.vo{border-left:2px solid var(--yellow);padding:2px 0 2px 14px}
+.vo .lab,.fld .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.vo p{margin:6px 0 0;font-size:clamp(16px,2.4vw,20px);line-height:1.45;letter-spacing:-.01em}
+.fields{display:grid;gap:10px}
+.fld{border-left:1px solid var(--line);padding-left:14px}
+.fld p{margin:4px 0 0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#B9C4D2}
+.fld.hold p{color:var(--green)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:760px){.spec{grid-template-columns:1fr}.meta{margin-left:0;width:100%}.tick span{display:none}}
+
+/* ── stage element transitions ── */
+.p{transition:transform .55s cubic-bezier(.2,.8,.25,1),opacity .4s ease,fill .3s ease,stroke .3s ease}
+.fast{transition:transform .25s ease,opacity .2s ease,fill .12s ease}
+.q{transition:none}
+@keyframes shake{0%,100%{transform:translate(var(--tx),var(--ty))}25%{transform:translate(calc(var(--tx) - 7px),var(--ty))}75%{transform:translate(calc(var(--tx) + 7px),var(--ty))}}
+.shake{animation:shake .28s 2}
+@media(prefers-reduced-motion:reduce){.p,.fast{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slate">VID 04</span>
+  <h1>Big-O, Omega, Theta: Asymptotic Notation</h1>
+  <span class="meta">UNIT 1 · TARGET 10:00 · 35 BEATS · UNIT 1 FINALE</span>
+</header>
+
+<div class="stagewrap">
+  <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Animation stage"></svg>
+  <div class="badge">BEAT <b id="bn">01</b> · <span id="bt">0:00</span></div>
+</div>
+
+<div class="ruler">
+  <div class="secrow" id="secrow"></div>
+  <div class="tickrow" id="tickrow"></div>
+</div>
+
+<div class="transport">
+  <button class="ctl" id="prev" aria-label="Previous beat">◀ PREV</button>
+  <button class="ctl primary" id="play">▶ PLAY</button>
+  <button class="ctl" id="next" aria-label="Next beat">NEXT ▶</button>
+  <button class="ctl" id="replay">↻ BEAT</button>
+  <div class="rate" role="group" aria-label="Playback rate">
+    <button class="ctl" data-r="0.5">.5×</button>
+    <button class="ctl" data-r="1" aria-pressed="true">1×</button>
+    <button class="ctl" data-r="2">2×</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div class="vo"><span class="lab">VO</span><p id="f-vo"></p></div>
+  <div class="fields">
+    <div class="fld"><span class="lab">VIS</span><p id="f-vis"></p></div>
+    <div class="fld"><span class="lab">ACT</span><p id="f-act"></p></div>
+    <div class="fld hold"><span class="lab">HOLD</span><p id="f-hold"></p></div>
+  </div>
+</div>
+
+<footer>
+  ANIMATIC RUNS AT STORYBOARD PACE — REAL CUT IS TIMED TO VO (10:00).<br>
+  KEYS: SPACE PLAY/PAUSE · ← → STEP BEAT · R REPLAY BEAT.<br>
+  THIS FILE IS THE FORMAT SPEC. CLONE FOR VIDEOS 02–48; REPLACE THE BEATS ARRAY ONLY.
+</footer>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const stage=document.getElementById("stage");
+let layer=document.createElementNS(NS,"g");stage.appendChild(layer);
+
+/* ── primitive kit ── */
+function E(t,a={},p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);(p||layer).appendChild(n);return n}
+function G(a={},p){return E("g",a,p)}
+function move(n,x,y){n.style.setProperty("--tx",x+"px");n.style.setProperty("--ty",y+"px");n.style.transform=`translate(${x}px,${y}px)`}
+function cell(x,y,o={}){const w=o.w||46,h=o.h||46;
+  const g=G({class:o.cls||"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:o.rx??9,fill:o.fill||"var(--cellf)",stroke:o.stroke||"var(--cells)","stroke-width":1.5,class:o.cls||"p"},g);
+  if(o.label!=null)E("text",{x:w/2,y:h/2+5,fill:o.tf||"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g).textContent=o.label;
+  g.rect=r;g.opacity=v=>g.style.opacity=v;return g}
+function label(x,y,s,o={}){const t=E("text",{x,y,fill:o.fill||"var(--dim)","font-family":o.f||"IBM Plex Mono","font-size":o.size||13,"text-anchor":o.anchor||"middle","letter-spacing":o.ls||0,class:o.cls||"p","font-weight":o.w||400},o.p);t.textContent=s;if(o.o!=null)t.style.opacity=o.o;return t}
+function line(x1,y1,x2,y2,o={}){return E("line",{x1,y1,x2,y2,stroke:o.stroke||"var(--cells)","stroke-width":o.sw||2,"stroke-linecap":"round",class:"p",...(o.attrs||{})})}
+function drawIn(l,ms,delay){const len=Math.hypot(l.x2.baseVal.value-l.x1.baseVal.value,l.y2.baseVal.value-l.y1.baseVal.value);
+  l.style.strokeDasharray=len;l.style.strokeDashoffset=len;l.style.transition="none";
+  requestAnimationFrame(()=>{l.style.transition=`stroke-dashoffset ${ms||420}ms cubic-bezier(.3,.7,.3,1) ${delay||0}ms, stroke .3s`;l.style.strokeDashoffset=0});return l}
+function arrow(x1,y1,x2,y2,o={}){const l=line(x1,y1,x2,y2,o);l.setAttribute("marker-end","url(#ah)");return l}
+function chip(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||(s.length*8.4+22);
+  const r=E("rect",{width:w,height:28,rx:14,fill:o.fill||"#1A2230",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const t=E("text",{x:w/2,y:19,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;g.w=w;return g}
+function nodeBox(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||64,h=o.h||44;
+  const r=E("rect",{width:w,height:h,rx:8,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:w/2,y:h/2+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;return g}
+function circleNode(cx,cy,s,o={}){const g=G({class:"p"});
+  const c=E("circle",{cx,cy,r:o.r||24,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.c=c;g.txt=t;return g}
+function fadeUp(n,d){n.style.opacity=0;setTimeout(()=>n.style.opacity=1,d||0);return n}
+function defs(){const d=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"},d);
+  E("path",{d:"M0 0 L10 5 L0 10 z",fill:"var(--cells)"},m)}
+function clearStage(){layer.remove();layer=document.createElementNS(NS,"g");stage.appendChild(layer);defs()}
+const C={blue:"var(--blue)",green:"var(--green)",red:"var(--red)",yellow:"var(--yellow)",grey:"var(--cellf)"};
+
+/* ── beats ── */
+let at; // scheduler injected per beat
+
+/* ── extra primitives for Video 04 ── */
+function panel(x,y,w,h,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:10,fill:o.fill||"#131A24",stroke:o.stroke||"var(--line)","stroke-width":o.sw||1.5,class:"p"},g);
+  g.rect=r;g.w=w;g.h=h;return g}
+function graph(x,y,w,h,o={}){const g=G({class:"p"});
+  E("path",{d:`M${x} ${y-10} L${x} ${y+h} L${x+w+14} ${y+h}`,stroke:"var(--cells)","stroke-width":2,fill:"none",class:"p"},g);
+  const xl=E("text",{x:x+w+14,y:y+h+26,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"end"},g);
+  xl.textContent=o.xlab||"input size  n →";
+  const yl=E("text",{x:x-14,y:y+4,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"end"},g);
+  yl.textContent=o.ylab||"operations";
+  g.px=t=>x+t*w;g.py=v=>y+h-Math.min(v,1.9)*h;g.x0=x;g.y0=y;g.w=w;g.h=h;
+  g.curve=(fn,col,oo={})=>{let d="";for(let i=0;i<=64;i++){const t=i/64;d+=(i?" L":"M")+g.px(t).toFixed(1)+" "+g.py(fn(t)).toFixed(1)}
+    const p=E("path",{d,stroke:col,"stroke-width":oo.sw||2.6,fill:"none","stroke-linecap":"round",class:"p"},g);
+    if(oo.dash)p.setAttribute("stroke-dasharray",oo.dash);return p};
+  g.band=(f1,f2,col)=>{let d="";for(let i=0;i<=64;i++){const t=i/64;d+=(i?" L":"M")+g.px(t).toFixed(1)+" "+g.py(f1(t)).toFixed(1)}
+    for(let i=64;i>=0;i--){const t=i/64;d+=" L"+g.px(t).toFixed(1)+" "+g.py(f2(t)).toFixed(1)}
+    return E("path",{d:d+" Z",fill:col,stroke:"none",class:"p"},g)};
+  return g}
+function dtable(x,y,w,rowCount,headers,colx,o={}){const g=G({class:"p"});move(g,x,y);const rh=o.rh||54;
+  E("rect",{width:w,height:52+rh*rowCount,rx:10,fill:"#131A24",stroke:"var(--line)","stroke-width":1.5},g);
+  headers.forEach((h,i)=>{const t=E("text",{x:colx[i],y:34,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":11,"letter-spacing":"0.18em","text-anchor":"middle"},g);t.textContent=h});
+  E("line",{x1:12,y1:50,x2:w-12,y2:50,stroke:"var(--line)","stroke-width":1},g);
+  g.cell=(r,c,txt,col,size)=>{const t=E("text",{x:colx[c],y:50+rh*(r+1)-18,fill:col||"var(--text)","font-family":"IBM Plex Mono","font-size":size||17,"text-anchor":"middle",class:"p"},g);
+    t.textContent=txt;return t};
+  g.rh=rh;return g}
+function ceiling(g,v,col,lab){const y=g.py(v);
+  const l=E("line",{x1:g.x0,y1:y,x2:g.x0+g.w,y2:y,stroke:col,"stroke-width":2.5,"stroke-dasharray":"7 6",class:"p"});
+  const t=E("text",{x:g.x0+g.w+8,y:y+5,fill:col,"font-family":"IBM Plex Mono","font-size":14,"text-anchor":"start",class:"p"});
+  t.textContent=lab;return {l,t}}
+
+/* growth shapes, normalised to graph height */
+const F={
+  one:t=>0.05,
+  log:t=>0.06+0.24*Math.log(1+18*t)/Math.log(19),
+  lin:t=>0.58*t,
+  nlogn:t=>0.92*t*Math.log(1+18*t)/Math.log(19),
+  sq:t=>1.15*t*t,
+  cube:t=>1.6*t*t*t,
+  exp:t=>2.0*(Math.exp(6*t)-1)/(Math.exp(6)-1),
+  fact:t=>3.2*(Math.exp(9*t)-1)/(Math.exp(9)-1)
+};
+
+const BEATS=[
+{s:"HOOK",t:"0:00",vo:"Two algorithms. One does 100n operations. The other does n squared. Which is faster?",
+ vis:"Two expressions centered: 100n and n².",act:"Expressions type on.",hold:"800ms",dur:5000,
+ build(){
+  const a=label(300,280,"",{fill:C.blue,size:56,f:"IBM Plex Mono"});
+  const b=label(680,280,"",{fill:C.yellow,size:56,f:"IBM Plex Mono"});
+  const vs=label(480,282,"vs",{fill:"var(--faint)",size:22});vs.style.opacity=0;
+  "100n".split("").forEach((ch,i)=>at(400+i*130,()=>a.textContent+=ch));
+  "n²".split("").forEach((ch,i)=>at(1200+i*130,()=>b.textContent+=ch));
+  at(1700,()=>vs.style.opacity=1);
+  at(2400,()=>fadeUp(label(480,400,"which one is faster?",{size:18}),0));
+ }},
+{s:"HOOK",t:"0:07",vo:"For n equals ten, the second one wins — a hundred operations against a thousand. For n equals fifty, they tie.",
+ vis:"Small table, two rows filling: n=10 → 1000 vs 100; n=50 → 5000 vs 2500.",act:"Rows fill, second column flashes green each time.",hold:"900ms",dur:5600,
+ build(){
+  const T=dtable(230,130,500,3,["n","100n","n²"],[80,240,400]);
+  T.cell(0,0,"10");T.cell(1,0,"50");
+  at(500,()=>{T.cell(0,1,"1,000");T.cell(0,2,"100",C.green)});
+  at(1000,()=>fadeUp(label(760,240,"◀ n² wins",{fill:C.green,size:14,anchor:"start"}),0));
+  at(2000,()=>{T.cell(1,1,"5,000");T.cell(1,2,"2,500",C.green)});
+  at(2600,()=>fadeUp(label(760,294,"◀ closing",{fill:C.yellow,size:14,anchor:"start"}),0));
+  at(3400,()=>fadeUp(label(480,420,"small inputs favour n²",{fill:C.yellow,size:17}),0));
+ }},
+{s:"HOOK",t:"0:16",vo:"For n equals a million, the first does a hundred million operations and the second does a trillion. It's not close, and it never will be again.",
+ vis:"Third row fills; two bars grow beside it.",act:"100n bar grows small; n² bar shoots off-frame top. Green check moves to the first column and locks.",hold:"1200ms",dur:6600,
+ build(){
+  const T=dtable(120,130,460,3,["n","100n","n²"],[70,220,370]);
+  T.cell(0,0,"10");T.cell(0,1,"1,000");T.cell(0,2,"100",C.green);
+  T.cell(1,0,"50");T.cell(1,1,"5,000");T.cell(1,2,"2,500",C.green);
+  line(660,470,900,470,{stroke:"var(--line)",sw:1});
+  const b1=E("rect",{x:690,y:470,width:60,height:0,rx:4,fill:C.blue,class:"p"});
+  const b2=E("rect",{x:810,y:470,width:60,height:0,rx:4,fill:C.yellow,class:"p"});
+  label(720,496,"100n",{size:12,f:"IBM Plex Mono"});label(840,496,"n²",{size:12,f:"IBM Plex Mono"});
+  at(600,()=>{T.cell(2,0,"1,000,000",C.yellow);T.cell(2,1,"100 million",C.green,15)});
+  at(1400,()=>T.cell(2,2,"1 trillion",C.red,15));
+  at(1700,()=>{b1.style.transition="height .9s ease, y .9s ease";b1.setAttribute("height",10);b1.setAttribute("y",460)});
+  at(2200,()=>{b2.style.transition="height 1.5s cubic-bezier(.4,0,.7,1), y 1.5s cubic-bezier(.4,0,.7,1)";
+    b2.setAttribute("height",600);b2.setAttribute("y",-130)});
+  at(3600,()=>{const p=E("path",{d:"M300 400 l14 15 l26 -30",stroke:C.green,"stroke-width":4,fill:"none","stroke-linecap":"round"});drawIn2(p,300)});
+  at(4000,()=>fadeUp(label(340,468,"100n wins from here on — permanently",{fill:C.green,size:15}),0));
+ }},
+{s:"HOOK",t:"0:26",vo:"Small inputs lie. Asymptotic notation is how we stop listening to them.",
+ vis:"Title card.",act:'"ASYMPTOTIC NOTATION" types on, accent blue.',hold:"600ms",dur:5000,
+ build(){
+  const g=graph(300,120,380,180,{xlab:"n →",ylab:""});
+  g.curve(F.lin,"#2C3644");g.curve(F.sq,"#2C3644");
+  at(300,()=>fadeUp(label(480,90,"SMALL INPUTS LIE",{fill:C.red,size:16,ls:"0.24em"}),0));
+  const t=label(480,400,"",{fill:C.blue,size:42,f:"Space Grotesk",w:700,ls:"0.02em"});
+  const full="ASYMPTOTIC NOTATION";
+  for(let i=0;i<=full.length;i++)at(900+i*75,()=>t.textContent=full.slice(0,i)+(i<full.length?"▌":""));
+  at(900+full.length*75+140,()=>{t.textContent=full;
+    fadeUp(label(480,448,"the behaviour as n → ∞",{size:16,ls:"0.1em"}),0)});
+ }},
+{s:"PROMISE",t:"0:30",vo:"Three things: the two rules for simplifying any count, the three notations and what each one actually claims, and the growth hierarchy you need memorized.",
+ vis:"Three chips slide in: Rules · O, Ω, Θ · Hierarchy.",act:"Stagger 150ms.",hold:"500ms",dur:4400,
+ build(){
+  label(480,150,"IN THIS VIDEO",{ls:"0.28em",size:12});
+  ["Two simplifying rules","O, Ω and Θ","The growth hierarchy"].forEach((s,i)=>{
+    const c=chip(-320,236+i*62,s,{w:280});c.rect.setAttribute("height",44);c.txt.setAttribute("y",27);c.style.opacity=0;
+    const n=label(296,236+i*62+28,"0"+(i+1),{fill:C.blue,size:13});n.style.opacity=0;
+    at(200+i*150,()=>{move(c,340,236+i*62);c.style.opacity=1;n.style.opacity=1})});
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"0:50",vo:"Video two left us with an exact count: two n squared plus three n plus one. Nobody uses that. Here's why.",
+ vis:"Expression 2n² + 3n + 1 centered, three terms visually separated.",act:"Terms space apart.",hold:"700ms",dur:5000,
+ build(){
+  label(480,140,"FROM VIDEO 02",{ls:"0.24em",size:12});
+  const t1=label(400,280,"2n²",{fill:"var(--text)",size:46,f:"IBM Plex Mono"});
+  const p1=label(462,280,"+",{fill:"var(--faint)",size:38,f:"IBM Plex Mono"});
+  const t2=label(516,280,"3n",{fill:"var(--text)",size:46,f:"IBM Plex Mono"});
+  const p2=label(566,280,"+",{fill:"var(--faint)",size:38,f:"IBM Plex Mono"});
+  const t3=label(606,280,"1",{fill:"var(--text)",size:46,f:"IBM Plex Mono"});
+  at(700,()=>{move(t1,-180,0);move(p1,-120,0);move(p2,120,0);move(t3,180,0)});
+  at(1500,()=>{fadeUp(label(220,340,"dominant term",{fill:C.blue,size:13}),0);
+    fadeUp(label(516,340,"lower order",{fill:"var(--dim)",size:13}),150);
+    fadeUp(label(786,340,"constant",{fill:"var(--dim)",size:13}),300)});
+  at(2800,()=>fadeUp(label(480,440,"nobody quotes this — here's why",{size:15}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"1:10",vo:"Rule one: drop the lower-order terms. Watch what each term contributes as n grows.",
+ vis:"Three stacked bars, one per term, labeled.",act:"Slider n moves right; 2n² bar dominates and the other two shrink to slivers.",hold:"1200ms",dur:6400,
+ build(){
+  label(480,100,"RULE 1 · DROP LOWER-ORDER TERMS",{fill:C.blue,ls:"0.16em",size:13});
+  const rows=[["2n²",C.blue],["3n",C.yellow],["1","var(--dim)"]];
+  const bars=rows.map((r,i)=>{const y=170+i*80;
+    label(160,y+28,r[0],{fill:r[1],size:22,f:"IBM Plex Mono"});
+    E("rect",{x:220,y,width:620,height:38,rx:6,fill:"#141B25",stroke:"var(--line)","stroke-width":1});
+    return E("rect",{x:222,y:y+2,width:120,height:34,rx:5,fill:r[1],class:"p"})});
+  line(220,470,840,470,{stroke:"var(--line)",sw:2});
+  const knob=E("circle",{cx:260,cy:470,r:11,fill:C.blue,class:"p"});
+  const nl=label(260,500,"n = 10",{fill:C.blue,size:14,f:"IBM Plex Mono"});
+  at(900,()=>{knob.style.transition="cx 2.6s ease";knob.setAttribute("cx",830);
+    nl.style.transition="transform 2.6s ease";move(nl,560,0);
+    bars.forEach(b=>b.style.transition="width 2.6s ease");
+    bars[0].setAttribute("width",616);bars[1].setAttribute("width",14);bars[2].setAttribute("width",4)});
+  at(1600,()=>nl.textContent="n = 200");
+  at(2600,()=>nl.textContent="n = 1,000");
+  at(3800,()=>fadeUp(label(480,510,"one term takes the whole bar",{fill:C.blue,size:15}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"1:35",vo:"At n equals a thousand, n squared contributes two million. The 3n contributes three thousand. It's noise.",
+ vis:"Numbers label each bar.",act:"3n and 1 bars fade red and vanish.",hold:"1000ms",dur:6000,
+ build(){
+  label(480,100,"n = 1,000",{fill:C.yellow,ls:"0.16em",size:16,f:"IBM Plex Mono"});
+  const rows=[["2n²",C.blue,616,"2,000,000"],["3n",C.yellow,14,"3,000"],["1","var(--dim)",4,"1"]];
+  const gs=rows.map((r,i)=>{const y=170+i*80;
+    label(160,y+28,r[0],{fill:r[1],size:22,f:"IBM Plex Mono"});
+    E("rect",{x:220,y,width:620,height:38,rx:6,fill:"#141B25",stroke:"var(--line)","stroke-width":1});
+    const b=E("rect",{x:222,y:y+2,width:r[2],height:34,rx:5,fill:r[1],class:"p"});
+    const v=label(880,y+28,"",{fill:r[1],size:16,f:"IBM Plex Mono",anchor:"end"});
+    at(400+i*400,()=>v.textContent=r[3]);
+    return {b,v,y}});
+  at(2000,()=>fadeUp(label(480,470,"0.15% of the total work",{fill:"var(--dim)",size:14}),0));
+  at(2800,()=>[1,2].forEach(k=>setTimeout(()=>{gs[k].b.setAttribute("fill",C.red);gs[k].v.setAttribute("fill",C.red)},k*200)));
+  at(3600,()=>[1,2].forEach(k=>setTimeout(()=>{gs[k].b.style.opacity=0;gs[k].v.style.opacity=0},k*200)));
+  at(4200,()=>fadeUp(label(480,510,"noise — drop it",{fill:C.red,size:16,ls:"0.1em"}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"1:55",vo:"Rule two: drop the constant coefficient. Two n squared and five n squared and n squared all grow the same shape — doubling n quadruples all of them.",
+ vis:"Three curves plotted together, same shape, different scale.",act:"Curves compress onto one another; coefficients fade grey.",hold:"1200ms",dur:6600,
+ build(){
+  label(480,100,"RULE 2 · DROP THE CONSTANT",{fill:C.blue,ls:"0.16em",size:13});
+  const g=graph(180,150,560,280);
+  const c5=g.curve(t=>F.sq(t)*1.55,C.red);
+  const c2=g.curve(t=>F.sq(t)*1.0,C.yellow);
+  const c1=g.curve(t=>F.sq(t)*0.5,C.green);
+  const l5=label(760,g.py(F.sq(1)*1.55)+5,"5n²",{fill:C.red,size:15,anchor:"start",f:"IBM Plex Mono"});
+  const l2=label(760,g.py(F.sq(1)*1.0)+5,"2n²",{fill:C.yellow,size:15,anchor:"start",f:"IBM Plex Mono"});
+  const l1=label(760,g.py(F.sq(1)*0.5)+5,"n²",{fill:C.green,size:15,anchor:"start",f:"IBM Plex Mono"});
+  [c5,c2,c1].forEach((p,i)=>at(300+i*300,()=>drawIn2(p,700)));
+  at(2400,()=>{[c5,c2,c1].forEach(p=>p.style.transition="opacity .6s");
+    fadeUp(label(480,470,"double n  →  4× the work, in all three",{fill:C.blue,size:16}),0)});
+  at(3400,()=>{[l5,l2,l1].forEach(l=>l.setAttribute("fill","var(--faint)"));
+    c5.setAttribute("stroke","var(--faint)");c2.setAttribute("stroke","var(--faint)");
+    c1.setAttribute("stroke",C.green);c1.setAttribute("stroke-width",3.5);l1.setAttribute("fill",C.green)});
+  at(4200,()=>fadeUp(label(480,506,"same shape · different scale",{size:14,ls:"0.06em"}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"2:20",vo:"The constant depends on your machine and your language. The shape doesn't. So we keep the shape and throw away everything else.",
+ vis:"2n² + 3n + 1 → n².",act:"Expression collapses term by term, 300ms apart, landing on n² in green.",hold:"1300ms",dur:6000,
+ build(){
+  const t1=label(300,260,"2n²",{fill:"var(--text)",size:50,f:"IBM Plex Mono"});
+  const p1=label(392,260,"+",{fill:"var(--faint)",size:40,f:"IBM Plex Mono"});
+  const t2=label(470,260,"3n",{fill:"var(--text)",size:50,f:"IBM Plex Mono"});
+  const p2=label(546,260,"+",{fill:"var(--faint)",size:40,f:"IBM Plex Mono"});
+  const t3=label(610,260,"1",{fill:"var(--text)",size:50,f:"IBM Plex Mono"});
+  at(600,()=>{t3.setAttribute("fill",C.red);p2.setAttribute("fill",C.red)});
+  at(900,()=>{t3.style.opacity=0;p2.style.opacity=0});
+  at(1200,()=>{t2.setAttribute("fill",C.red);p1.setAttribute("fill",C.red)});
+  at(1500,()=>{t2.style.opacity=0;p1.style.opacity=0});
+  at(2100,()=>{t1.textContent="2n²";t1.setAttribute("fill",C.yellow)});
+  at(2500,()=>{t1.textContent="n²";t1.setAttribute("fill",C.green);move(t1,180,0)});
+  at(3000,()=>fadeUp(label(480,340,"O(n²)",{fill:C.green,size:34,f:"IBM Plex Mono"}),0));
+  at(3600,()=>fadeUp(label(480,430,"the constant is your machine · the shape is your algorithm",{size:15}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"2:40",vo:"One warning. This does not mean constants are irrelevant in real code — a 100× constant matters enormously in production. It means constants don't decide which algorithm wins as n grows. Different question.",
+ vis:'Two panels: "ENGINEERING" and "ANALYSIS".',act:"Both light, neither dims.",hold:"1300ms",dur:6400,
+ build(){
+  const L=panel(70,160,380,260,{stroke:C.yellow}),R=panel(510,160,380,260,{stroke:C.blue});
+  label(260,215,"ENGINEERING",{size:22,f:"Space Grotesk",w:700,fill:C.yellow});
+  label(700,215,"ANALYSIS",{size:22,f:"Space Grotesk",w:700,fill:C.blue});
+  [L,R].forEach(p=>p.style.opacity=0);
+  at(300,()=>L.style.opacity=1);at(600,()=>R.style.opacity=1);
+  at(1200,()=>{fadeUp(label(260,275,"constants matter",{fill:"var(--text)",size:17}),0);
+    fadeUp(label(260,305,"100× is 100× of your day",{size:14}),150)});
+  at(2200,()=>{fadeUp(label(700,275,"constants don't decide",{fill:"var(--text)",size:17}),0);
+    fadeUp(label(700,305,"who wins as n grows",{size:14}),150)});
+  at(3200,()=>{fadeUp(label(260,375,"both true",{fill:C.green,size:15}),0);fadeUp(label(700,375,"both true",{fill:C.green,size:15}),0)});
+  at(3800,()=>fadeUp(label(480,470,"different questions — neither one cancels the other",{size:15}),0));
+ }},
+{s:"CORE 2 · BIG-O",t:"3:00",vo:"Now the three notations. Each one makes a different claim, and mixing them up is the most common exam error in this unit.",
+ vis:"Clear canvas, three empty slots.",act:"Fade out.",hold:"400ms",dur:4000,
+ build(){
+  const old=G({class:"p"});
+  const p1=panel(70,160,380,260,{stroke:C.yellow});old.appendChild(p1);
+  const p2=panel(510,160,380,260,{stroke:C.blue});old.appendChild(p2);
+  at(300,()=>old.style.opacity=0);
+  at(1000,()=>fadeUp(label(480,130,"THREE NOTATIONS · THREE CLAIMS",{fill:C.yellow,ls:"0.2em",size:13}),0));
+  [["O","upper bound"],["Ω","lower bound"],["Θ","both"]].forEach((d,i)=>at(1500+i*260,()=>{
+    const p=panel(80+i*280,200,240,200);p.style.opacity=0;setTimeout(()=>p.style.opacity=1,20);
+    label(200+i*280,300,d[0],{fill:"var(--faint)",size:52,f:"IBM Plex Mono"});
+    label(200+i*280,350,d[1],{size:13,ls:"0.1em"})}));
+ }},
+{s:"CORE 2 · BIG-O",t:"3:15",vo:"Big-O is the upper bound. It says: my algorithm will never grow faster than this.",
+ vis:"Graph axes. Algorithm curve f(n) draws in blue.",act:"Curve draws left to right.",hold:"700ms",dur:4400,
+ build(){
+  label(480,90,"BIG-O · UPPER BOUND",{fill:C.blue,ls:"0.22em",size:14});
+  const g=graph(180,140,560,300);
+  const f=g.curve(t=>F.sq(t)*0.62,C.blue,{sw:3});
+  at(400,()=>drawIn2(f,1100));
+  at(1600,()=>fadeUp(label(760,g.py(F.sq(1)*0.62)+5,"f(n)",{fill:C.blue,size:15,anchor:"start",f:"IBM Plex Mono"}),0));
+  at(2200,()=>fadeUp(label(480,500,"it will never grow faster than this",{size:16}),0));
+ }},
+{s:"CORE 2 · BIG-O",t:"3:30",vo:"Formally: f of n is O of g of n if there's a constant c and a point n-naught, beyond which f of n stays at or below c times g of n.",
+ vis:"Second curve c·g(n) draws above in yellow; vertical dashed line marks n₀.",act:"Yellow curve draws; dashed line drops; region right of n₀ shades faint green.",hold:"1400ms",dur:7000,
+ build(){
+  label(480,90,"BIG-O · UPPER BOUND",{fill:C.blue,ls:"0.22em",size:14});
+  const g=graph(180,140,560,300);
+  const f=g.curve(t=>F.sq(t)*0.62,C.blue,{sw:3});
+  label(760,g.py(F.sq(1)*0.62)+5,"f(n)",{fill:C.blue,size:15,anchor:"start",f:"IBM Plex Mono"});
+  const cg=g.curve(t=>0.10+F.sq(t)*0.78,C.yellow,{sw:3});
+  cg.style.opacity=0;
+  at(400,()=>{cg.style.opacity=1;drawIn2(cg,1000)});
+  at(1500,()=>fadeUp(label(760,g.py(0.10+F.sq(1)*0.78)+5,"c · g(n)",{fill:C.yellow,size:15,anchor:"start",f:"IBM Plex Mono"}),0));
+  const nx=g.px(0.34);
+  at(2200,()=>{const d=line(nx,140,nx,440,{stroke:"var(--dim)",sw:2,attrs:{"stroke-dasharray":"6 6"}});
+    move(d,0,-300);d.style.opacity=0;setTimeout(()=>{d.style.opacity=1;move(d,0,0)},20);
+    setTimeout(()=>fadeUp(label(nx,466,"n₀",{fill:"var(--dim)",size:15,f:"IBM Plex Mono"}),0),500)});
+  at(3300,()=>{const r=E("rect",{x:nx,y:140,width:740-nx,height:300,fill:"rgba(61,214,140,.10)",class:"p"});
+    r.style.opacity=0;setTimeout(()=>r.style.opacity=1,20)});
+  at(4000,()=>fadeUp(label(560,190,"f(n)  ≤  c · g(n)  for all n ≥ n₀",{fill:C.green,size:16,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 2 · BIG-O",t:"3:55",vo:"Read that carefully. Beyond n-naught. Before that point the curves can cross however they like — we genuinely don't care.",
+ vis:"Same graph.",act:"Region left of n₀ shades grey and dims; the crossing there is visibly ignored.",hold:"1200ms",dur:6000,
+ build(){
+  const g=graph(180,140,560,300);
+  const f=g.curve(t=>0.16*Math.sin(t*9)+F.sq(t)*0.62+0.04,C.blue,{sw:3});
+  const cg=g.curve(t=>0.10+F.sq(t)*0.78,C.yellow,{sw:3});
+  const nx=g.px(0.34);
+  line(nx,140,nx,440,{stroke:"var(--dim)",sw:2,attrs:{"stroke-dasharray":"6 6"}});
+  label(nx,466,"n₀",{fill:"var(--dim)",size:15,f:"IBM Plex Mono"});
+  E("rect",{x:nx,y:140,width:740-nx,height:300,fill:"rgba(61,214,140,.10)"});
+  at(600,()=>{const r=E("rect",{x:180,y:140,width:nx-180,height:300,fill:"rgba(10,12,16,.72)",class:"p"});
+    r.style.opacity=0;setTimeout(()=>r.style.opacity=1,20)});
+  at(1400,()=>fadeUp(label(260,200,"cross all you like",{fill:"var(--faint)",size:14}),0));
+  at(2200,()=>fadeUp(label(280,490,"we don't care",{fill:"var(--faint)",size:15,ls:"0.08em"}),0));
+  at(3000,()=>fadeUp(label(600,490,"we only care out here",{fill:C.green,size:15,ls:"0.08em"}),0));
+ }},
+{s:"CORE 2 · BIG-O",t:"4:15",vo:"In practice: Big-O describes the worst case. 'Quick sort is O of n squared' means it can't do worse than that.",
+ vis:"Chip: O(n²) with a ceiling icon.",act:"Ceiling bar drops onto the curve from above and stops.",hold:"1000ms",dur:5400,
+ build(){
+  const g=graph(180,150,560,290);
+  const f=g.curve(t=>F.sq(t)*0.7,C.blue,{sw:3});
+  const bar=E("rect",{x:180,y:60,width:560,height:12,rx:6,fill:C.yellow,class:"p"});
+  at(700,()=>{bar.style.transition="y .7s cubic-bezier(.4,0,.4,1)";bar.setAttribute("y",g.py(0.72))});
+  at(1500,()=>fadeUp(label(480,g.py(0.72)-22,"CEILING",{fill:C.yellow,size:12,ls:"0.24em"}),0));
+  at(2100,()=>{const c=chip(700,90,"O(n²)",{w:150,stroke:C.yellow,tf:C.yellow});c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(2800,()=>fadeUp(label(480,500,"quick sort can't do worse than n²",{size:16}),0));
+ }},
+{s:"CORE 2 · BIG-O",t:"4:35",vo:"And here's the technicality students trip on. An O of n algorithm is also O of n squared. Also O of n cubed. All of those are true upper bounds — just uselessly loose ones.",
+ vis:"One linear curve, three ceilings stacked above it.",act:"Three ceilings appear; the tightest stays blue, the looser two dim grey.",hold:"1400ms",dur:7000,
+ build(){
+  const g=graph(180,140,540,300);
+  const f=g.curve(F.lin,C.blue,{sw:3});
+  label(742,g.py(F.lin(1))+5,"f(n) = n",{fill:C.blue,size:14,anchor:"start",f:"IBM Plex Mono"});
+  const cs=[[0.68,"O(n)",C.blue],[0.86,"O(n²)",C.yellow],[1.02,"O(n³)",C.red]];
+  const made=[];
+  cs.forEach((c,i)=>at(600+i*700,()=>{const o=ceiling(g,c[0],c[2],c[1]);made.push(o);
+    o.l.style.opacity=0;o.t.style.opacity=0;setTimeout(()=>{o.l.style.opacity=1;o.t.style.opacity=1},20)}));
+  at(3200,()=>fadeUp(label(480,505,"all three are true upper bounds",{fill:C.green,size:16}),0));
+  at(4200,()=>{made.slice(1).forEach(o=>{o.l.setAttribute("stroke","var(--faint)");o.t.setAttribute("fill","var(--faint)")});
+    fadeUp(label(480,520,"— but two of them are useless",{fill:"var(--faint)",size:14}),0)});
+ }},
+{s:"CORE 2 · BIG-O",t:"4:50",vo:"So we always quote the tightest upper bound we can. Saying quick sort is O of n factorial is technically correct and completely worthless.",
+ vis:"Tightest ceiling flashes green.",act:"Flash.",hold:"1000ms",dur:5200,
+ build(){
+  const g=graph(180,140,540,300);
+  g.curve(F.lin,C.blue,{sw:3});
+  const a=ceiling(g,0.68,C.blue,"O(n)");
+  const b=ceiling(g,0.86,"var(--faint)","O(n²)");
+  const c=ceiling(g,1.02,"var(--faint)","O(n³)");
+  at(600,()=>{a.l.setAttribute("stroke",C.green);a.t.setAttribute("fill",C.green);a.l.setAttribute("stroke-width",4)});
+  at(1000,()=>{a.l.setAttribute("stroke",C.blue);a.t.setAttribute("fill",C.blue)});
+  at(1400,()=>{a.l.setAttribute("stroke",C.green);a.t.setAttribute("fill",C.green)});
+  at(1900,()=>fadeUp(label(480,505,"always quote the tightest bound you can prove",{fill:C.green,size:16}),0));
+  at(2900,()=>fadeUp(label(480,520,"\"quick sort is O(n!)\" — correct, and worthless",{fill:C.red,size:14}),0));
+ }},
+{s:"CORE 3 · OMEGA & THETA",t:"5:00",vo:"Omega is the mirror image — the lower bound. My algorithm will never grow slower than this.",
+ vis:"Fresh graph, f(n) in blue, c·g(n) drawn below in yellow.",act:"Lower curve draws; n₀ marked; region above shades green.",hold:"1200ms",dur:6400,
+ build(){
+  label(480,90,"OMEGA · LOWER BOUND",{fill:C.green,ls:"0.22em",size:14});
+  const g=graph(180,140,560,300);
+  const f=g.curve(t=>0.08+F.sq(t)*0.72,C.blue,{sw:3});
+  at(300,()=>drawIn2(f,900));
+  const cg=g.curve(t=>F.sq(t)*0.42,C.yellow,{sw:3});cg.style.opacity=0;
+  at(1300,()=>{cg.style.opacity=1;drawIn2(cg,900)});
+  at(2200,()=>{fadeUp(label(760,g.py(0.80)+5,"f(n)",{fill:C.blue,size:14,anchor:"start",f:"IBM Plex Mono"}),0);
+    fadeUp(label(760,g.py(0.42)+5,"c · g(n)",{fill:C.yellow,size:14,anchor:"start",f:"IBM Plex Mono"}),150)});
+  const nx=g.px(0.3);
+  at(2800,()=>{const d=line(nx,140,nx,440,{stroke:"var(--dim)",sw:2,attrs:{"stroke-dasharray":"6 6"}});
+    move(d,0,-300);d.style.opacity=0;setTimeout(()=>{d.style.opacity=1;move(d,0,0)},20);
+    setTimeout(()=>fadeUp(label(nx,466,"n₀",{fill:"var(--dim)",size:15,f:"IBM Plex Mono"}),0),500)});
+  at(3600,()=>{const b=g.band(t=>0.08+F.sq(t)*0.72,t=>F.sq(t)*0.42,"rgba(61,214,140,.12)");
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(4200,()=>fadeUp(label(560,200,"f(n)  ≥  c · g(n)  for all n ≥ n₀",{fill:C.green,size:16,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 3 · OMEGA & THETA",t:"5:20",vo:"It describes the best case. Linear search is Omega of 1 — if the target sits first, you're done in one comparison.",
+ vis:"Row of 8 cells, target found at position 1.",act:"First cell flashes green immediately.",hold:"900ms",dur:4800,
+ build(){
+  label(480,120,"LINEAR SEARCH · target = 7",{ls:"0.16em",size:13,fill:C.green});
+  const V=[7,3,9,1,5,8,2,4];
+  const cs=V.map((v,i)=>cell(180+i*78,220,{w:62,h:62,label:v}));
+  at(500,()=>{cs[0].rect.setAttribute("stroke",C.green);cs[0].rect.setAttribute("fill","#122A21")});
+  at(800,()=>{cs[0].rect.setAttribute("fill","var(--cellf)")});
+  at(1100,()=>{cs[0].rect.setAttribute("fill","#122A21")});
+  at(1600,()=>fadeUp(label(480,340,"1 comparison",{fill:C.green,size:20,f:"IBM Plex Mono"}),0));
+  at(2200,()=>{const c=chip(390,400,"Ω(1)",{w:180,stroke:C.green,tf:C.green});c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(2800,()=>fadeUp(label(480,490,"it can never do better than this",{size:15}),0));
+ }},
+{s:"CORE 3 · OMEGA & THETA",t:"5:40",vo:"Theta is the strong one. It's both bounds at once — the algorithm is sandwiched, growing exactly at this rate.",
+ vis:"Graph with three curves: c₁·g(n) below, f(n) blue in the middle, c₂·g(n) above.",act:"Both bounding curves draw, then the band between them shades accent blue.",hold:"1400ms",dur:7000,
+ build(){
+  label(480,90,"THETA · BOTH BOUNDS",{fill:C.yellow,ls:"0.22em",size:14});
+  const g=graph(180,140,560,300);
+  const hi=t=>0.10+F.sq(t)*0.86, lo=t=>F.sq(t)*0.46, mid=t=>0.04+F.sq(t)*0.66;
+  const f=g.curve(mid,C.blue,{sw:3});
+  at(300,()=>drawIn2(f,900));
+  const c2=g.curve(hi,C.yellow,{sw:2.4});c2.style.opacity=0;
+  const c1=g.curve(lo,C.yellow,{sw:2.4});c1.style.opacity=0;
+  at(1300,()=>{c2.style.opacity=1;drawIn2(c2,800)});
+  at(2000,()=>{c1.style.opacity=1;drawIn2(c1,800)});
+  at(2900,()=>{const b=g.band(hi,lo,"rgba(76,141,255,.16)");b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(3400,()=>{fadeUp(label(762,g.py(hi(1))+5,"c₂ · g(n)",{fill:C.yellow,size:13,anchor:"start",f:"IBM Plex Mono"}),0);
+    fadeUp(label(762,g.py(lo(1))+5,"c₁ · g(n)",{fill:C.yellow,size:13,anchor:"start",f:"IBM Plex Mono"}),150)});
+  at(4200,()=>fadeUp(label(480,500,"sandwiched — growing exactly at this rate",{fill:C.blue,size:16}),0));
+ }},
+{s:"CORE 3 · OMEGA & THETA",t:"6:00",vo:"Theta is the strongest claim and the most honest one. If you can say Theta, say Theta — it tells the listener there's no gap left.",
+ vis:"Band holds.",act:"Band pulses once.",hold:"1000ms",dur:5200,
+ build(){
+  const g=graph(180,140,560,300);
+  const hi=t=>0.10+F.sq(t)*0.86, lo=t=>F.sq(t)*0.46, mid=t=>0.04+F.sq(t)*0.66;
+  const b=g.band(hi,lo,"rgba(76,141,255,.16)");
+  g.curve(hi,C.yellow,{sw:2.4});g.curve(lo,C.yellow,{sw:2.4});g.curve(mid,C.blue,{sw:3});
+  at(700,()=>{b.setAttribute("fill","rgba(76,141,255,.42)")});
+  at(1300,()=>b.setAttribute("fill","rgba(76,141,255,.16)"));
+  at(1900,()=>fadeUp(label(480,500,"no gap left between the bounds",{fill:C.blue,size:16}),0));
+  at(2700,()=>{const c=chip(370,60,"Θ(g(n))",{w:200,stroke:C.blue,tf:C.blue});c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(3300,()=>fadeUp(label(480,520,"if you can say Θ, say Θ",{fill:C.green,size:15,ls:"0.08em"}),0));
+ }},
+{s:"CORE 3 · OMEGA & THETA",t:"6:20",vo:"Merge sort is Theta of n log n. Best case, worst case, average case — all the same. There's no input that saves you and none that ruins you.",
+ vis:"Three chips: Best · Average · Worst, all reading n log n.",act:"All three fill green simultaneously.",hold:"1100ms",dur:5600,
+ build(){
+  label(480,120,"MERGE SORT",{fill:C.green,ls:"0.28em",size:15});
+  const D=["Best","Average","Worst"];
+  const gs=D.map((d,i)=>{const p=panel(70+i*290,190,250,170);p.style.opacity=0;
+    const a=label(195+i*290,240,d,{size:20,f:"Space Grotesk",w:700,fill:"var(--dim)"});
+    const b=label(195+i*290,300,"",{size:24,f:"IBM Plex Mono",fill:C.green});
+    at(300+i*160,()=>p.style.opacity=1);return {p,a,b}});
+  at(1400,()=>gs.forEach(x=>{x.b.textContent="n log n";x.p.rect.setAttribute("stroke",C.green);x.a.setAttribute("fill","var(--text)")}));
+  at(2400,()=>{const c=chip(360,400,"Θ(n log n)",{w:240,stroke:C.green,tf:C.green});c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(3200,()=>fadeUp(label(480,500,"no input saves you · no input ruins you",{size:15}),0));
+ }},
+{s:"CORE 3 · OMEGA & THETA",t:"6:35",vo:"Quick sort, by contrast, is O of n squared but Theta of n log n on average — the gap between those two is exactly why the notation exists.",
+ vis:"Two chips side by side: O(n²) yellow, Θ(n log n) green.",act:"Chips appear staggered.",hold:"1200ms",dur:5600,
+ build(){
+  label(480,120,"QUICK SORT",{fill:C.yellow,ls:"0.28em",size:15});
+  const a=panel(90,190,340,180,{stroke:C.yellow});a.style.opacity=0;
+  const b=panel(530,190,340,180,{stroke:C.green});b.style.opacity=0;
+  const t1=label(260,270,"O(n²)",{fill:C.yellow,size:34,f:"IBM Plex Mono"});t1.style.opacity=0;
+  const s1=label(260,320,"worst case",{size:14});s1.style.opacity=0;
+  const t2=label(700,270,"Θ(n log n)",{fill:C.green,size:34,f:"IBM Plex Mono"});t2.style.opacity=0;
+  const s2=label(700,320,"average case",{size:14});s2.style.opacity=0;
+  at(400,()=>{a.style.opacity=1;t1.style.opacity=1;s1.style.opacity=1});
+  at(1100,()=>{b.style.opacity=1;t2.style.opacity=1;s2.style.opacity=1});
+  at(2100,()=>{const d=line(430,280,530,280,{stroke:"var(--dim)",sw:2,attrs:{"stroke-dasharray":"5 5"}});fadeUp(d,0);
+    setTimeout(()=>fadeUp(label(480,258,"the gap",{fill:"var(--dim)",size:13}),0),350)});
+  at(3000,()=>fadeUp(label(480,440,"that gap is exactly why we need three notations",{size:16}),0));
+ }},
+{s:"CORE 3 · OMEGA & THETA",t:"6:50",vo:"One myth to kill: Big-O does not mean worst case and Theta does not mean average case. They're bound types, not case types. You can state a Big-O of the best case perfectly legitimately.",
+ vis:"Two-column grid: BOUNDS (O, Ω, Θ) versus CASES (best, average, worst).",act:"Grid draws; a red X strikes through arrows connecting the columns one-to-one.",hold:"1500ms",dur:7000,
+ build(){
+  label(480,80,"MYTH TO KILL",{fill:C.red,ls:"0.28em",size:13});
+  label(250,140,"BOUND TYPES",{fill:C.blue,ls:"0.16em",size:12});
+  label(710,140,"CASE TYPES",{fill:C.yellow,ls:"0.16em",size:12});
+  const B=["O","Ω","Θ"],Cs=["best","average","worst"];
+  const bl=B.map((s,i)=>{const p=panel(150,180+i*90,200,70,{stroke:C.blue});
+    label(250,225+i*90,s,{fill:C.blue,size:30,f:"IBM Plex Mono"});return p});
+  const cl=Cs.map((s,i)=>{const p=panel(610,180+i*90,200,70,{stroke:C.yellow});
+    label(710,224+i*90,s,{fill:C.yellow,size:20,f:"IBM Plex Mono"});return p});
+  const arrows=[];
+  at(700,()=>[0,1,2].forEach(i=>setTimeout(()=>arrows.push(drawIn(arrow(356,215+i*90,604,215+i*90,{stroke:"var(--faint)"}),380)),i*220)));
+  at(2200,()=>{const x1=line(400,180,560,430,{stroke:C.red,sw:6});drawIn(x1,400);
+    const x2=line(560,180,400,430,{stroke:C.red,sw:6});drawIn(x2,400,180)});
+  at(3400,()=>fadeUp(label(480,480,"they are bound types, not case types",{fill:C.red,size:17}),0));
+  at(4400,()=>fadeUp(label(480,516,'"the best case is O(1)" is a perfectly legal sentence',{size:14}),0));
+ }},
+{s:"CORE 4 · THE HIERARCHY",t:"7:00",vo:"Finally, the growth hierarchy. Memorize this order — half of every exam depends on it.",
+ vis:"Clear canvas, blank graph axes.",act:"Fade out.",hold:"400ms",dur:3800,
+ build(){
+  const old=G({class:"p"});
+  [0,1,2].forEach(i=>{old.appendChild(panel(150,180+i*90,200,70,{stroke:C.blue}));old.appendChild(panel(610,180+i*90,200,70,{stroke:C.yellow}))});
+  at(300,()=>old.style.opacity=0);
+  at(1000,()=>fadeUp(label(480,90,"THE GROWTH HIERARCHY",{fill:C.yellow,ls:"0.24em",size:14}),0));
+  at(1400,()=>{const g=graph(150,130,620,320);g.style.opacity=0;setTimeout(()=>g.style.opacity=1,20)});
+  at(2200,()=>fadeUp(label(480,510,"memorize the order — half the exam depends on it",{size:15}),0));
+ }},
+{s:"CORE 4 · THE HIERARCHY",t:"7:12",vo:"Constant. O of 1. Array access by index — the array's size is irrelevant.",
+ vis:"Flat line draws at the bottom, labeled.",act:"Line draws green.",hold:"700ms",dur:4000,
+ build(){
+  label(480,90,"THE GROWTH HIERARCHY",{fill:C.yellow,ls:"0.24em",size:14});
+  const g=graph(150,130,620,320);
+  const p=g.curve(F.one,C.green,{sw:3});
+  at(300,()=>drawIn2(p,800));
+  at(1100,()=>fadeUp(label(790,g.py(F.one(1))+5,"O(1)",{fill:C.green,size:15,anchor:"start",f:"IBM Plex Mono"}),0));
+  at(1700,()=>fadeUp(label(480,500,"array access by index — size is irrelevant",{fill:C.green,size:15}),0));
+ }},
+{s:"CORE 4 · THE HIERARCHY",t:"7:22",vo:"Logarithmic. O of log n. Binary search — each step halves what's left.",
+ vis:"Log curve draws.",act:"Curve draws green.",hold:"700ms",dur:4000,
+ build(){
+  label(480,90,"THE GROWTH HIERARCHY",{fill:C.yellow,ls:"0.24em",size:14});
+  const g=graph(150,130,620,320);
+  g.curve(F.one,C.green,{sw:3});label(790,g.py(F.one(1))+5,"O(1)",{fill:C.green,size:14,anchor:"start",f:"IBM Plex Mono"});
+  const p=g.curve(F.log,C.green,{sw:3});
+  at(300,()=>drawIn2(p,900));
+  at(1200,()=>fadeUp(label(790,g.py(F.log(1))+5,"O(log n)",{fill:C.green,size:15,anchor:"start",f:"IBM Plex Mono"}),0));
+  at(1800,()=>fadeUp(label(480,500,"binary search — each step halves what's left",{fill:C.green,size:15}),0));
+ }},
+{s:"CORE 4 · THE HIERARCHY",t:"7:34",vo:"Linear, O of n. Then n log n — the good sorts. Then quadratic, n squared — the nested loops and the simple sorts.",
+ vis:"Three more curves draw in sequence.",act:"Each draws 400ms apart; n log n yellow, n² orange.",hold:"900ms",dur:6000,
+ build(){
+  label(480,90,"THE GROWTH HIERARCHY",{fill:C.yellow,ls:"0.24em",size:14});
+  const g=graph(150,130,620,320);
+  g.curve(F.one,"#2C6E52",{sw:2.4});g.curve(F.log,"#2C6E52",{sw:2.4});
+  const D=[[F.lin,C.blue,"O(n)"],[F.nlogn,C.yellow,"O(n log n)"],[F.sq,"#FF9F45","O(n²)"]];
+  D.forEach((d,i)=>{const p=g.curve(d[0],d[1],{sw:3});p.style.opacity=0;
+    at(400+i*700,()=>{p.style.opacity=1;drawIn2(p,700);
+      setTimeout(()=>fadeUp(label(790,g.py(d[0](1))+5,d[2],{fill:d[1],size:14,anchor:"start",f:"IBM Plex Mono"}),0),600)})});
+  at(3200,()=>fadeUp(label(480,500,"n log n is the good sorts · n² is the nested loops",{size:15}),0));
+ }},
+{s:"CORE 4 · THE HIERARCHY",t:"7:52",vo:"Then cubic. Then exponential, two to the n. Then factorial — which is unusable past about eleven items.",
+ vis:"Final three curves, near-vertical.",act:"All three shoot off-frame; red.",hold:"1000ms",dur:6000,
+ build(){
+  label(480,90,"THE GROWTH HIERARCHY",{fill:C.yellow,ls:"0.24em",size:14});
+  const g=graph(150,130,620,320);
+  [[F.one,"#2C6E52"],[F.log,"#2C6E52"],[F.lin,"#2E4E7E"],[F.nlogn,"#7A6320"],[F.sq,"#8A4E2A"]].forEach(d=>g.curve(d[0],d[1],{sw:2.2}));
+  const D=[[F.cube,"#FF8A5B","O(n³)"],[F.exp,C.red,"O(2ⁿ)"],[F.fact,"#FF3B6B","O(n!)"]];
+  D.forEach((d,i)=>{const p=g.curve(d[0],d[1],{sw:3.2});p.style.opacity=0;
+    at(400+i*650,()=>{p.style.opacity=1;drawIn2(p,650)})});
+  at(2600,()=>{fadeUp(label(300,170,"n³",{fill:"#FF8A5B",size:15,f:"IBM Plex Mono"}),0);
+    fadeUp(label(232,170,"2ⁿ",{fill:C.red,size:15,f:"IBM Plex Mono"}),150);
+    fadeUp(label(180,170,"n!",{fill:"#FF3B6B",size:15,f:"IBM Plex Mono"}),300)});
+  at(3600,()=>fadeUp(label(480,500,"n! is unusable past about eleven items",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 4 · THE HIERARCHY",t:"8:10",vo:"Feel the gap. At n equals a million, log n is twenty. n log n is twenty million. n squared is a trillion. Two to the n has more digits than there are atoms nearby.",
+ vis:"Table with n = 1,000,000 and four result rows.",act:"Rows fill; last row overflows its cell and gets truncated with an ellipsis.",hold:"1500ms",dur:7400,
+ build(){
+  label(480,90,"n = 1,000,000",{fill:C.yellow,size:22,f:"IBM Plex Mono"});
+  const T=dtable(150,140,660,4,["GROWTH","OPERATIONS AT n = 10⁶"],[150,470],{rh:60});
+  const R=[["log n","20",C.green],["n log n","20,000,000",C.blue],["n²","1,000,000,000,000",C.yellow],["2ⁿ","10³⁰¹⁰²⁹…",C.red]];
+  R.forEach((r,i)=>at(600+i*900,()=>{T.cell(i,0,r[0],r[2],19);T.cell(i,1,r[1],r[2],r[1].length>16?16:19)}));
+  at(3700,()=>fadeUp(label(830,398,"◀ truncated",{fill:C.red,size:13,anchor:"start"}),0));
+  at(4400,()=>fadeUp(label(480,470,"more digits than atoms within reach of you",{fill:C.red,size:16}),0));
+  at(5200,()=>fadeUp(label(480,506,"20  vs  10³⁰¹⁰²⁹  — same input",{fill:"var(--dim)",size:14,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 4 · THE HIERARCHY",t:"8:30",vo:"That's the whole reason we do any of this. Choosing the right structure moves you down that list — and moving down that list is the difference between instant and never.",
+ vis:"Full hierarchy graph, all curves.",act:"Hold, no motion.",hold:"1300ms",dur:5600,
+ build(){
+  label(480,80,"WHY ANY OF THIS MATTERS",{fill:C.yellow,ls:"0.22em",size:13});
+  const g=graph(150,120,620,320);
+  [[F.fact,"#FF3B6B"],[F.exp,C.red],[F.cube,"#FF8A5B"],[F.sq,"#FF9F45"],[F.nlogn,C.yellow],[F.lin,C.blue],[F.log,C.green],[F.one,C.green]]
+    .forEach(d=>g.curve(d[0],d[1],{sw:2.6}));
+  at(600,()=>fadeUp(label(880,180,"never",{fill:C.red,size:15,anchor:"end"}),0));
+  at(900,()=>fadeUp(label(880,420,"instant",{fill:C.green,size:15,anchor:"end"}),0));
+  at(1500,()=>{const a=arrow(870,210,870,395,{stroke:"var(--dim)"});drawIn(a,700)});
+  at(2400,()=>fadeUp(label(480,500,"choosing the right structure moves you down this list",{size:16}),0));
+ }},
+{s:"CLOSE",t:"8:45",vo:"Recap. Drop lower-order terms, drop constants. Big-O is the upper bound, Omega the lower, Theta both. Always quote the tightest bound. And bounds are not cases.",
+ vis:"Five-item summary card.",act:"Instant draw, no stagger.",hold:"1800ms",dur:6600,
+ build(){
+  label(480,58,"RECAP",{fill:C.yellow,ls:"0.3em",size:13});
+  const D=[["01","Drop lower-order terms","2n² + 3n + 1  →  n²"],
+           ["02","Drop the constant","the shape survives, the coefficient doesn't"],
+           ["03","O upper · Ω lower · Θ both","Θ means there's no gap left"],
+           ["04","Always quote the tightest bound","O(n!) is true and worthless"],
+           ["05","Bounds are not cases","you can state a Big-O of the best case"]];
+  D.forEach((d,i)=>{const y=90+i*88;
+    panel(90,y,780,74);
+    label(122,y+46,d[0],{fill:C.blue,size:14,anchor:"start",f:"IBM Plex Mono"});
+    label(166,y+34,d[1],{fill:"var(--text)",size:18,anchor:"start",f:"Space Grotesk",w:500});
+    label(166,y+58,d[2],{size:12.5,anchor:"start"})});
+ }},
+{s:"CLOSE",t:"9:20",vo:"Exam question: prove that 3n squared plus 5n plus 2 is O of n squared, by finding a c and an n-naught that work. There are infinitely many valid answers — you need one. Pause and try it.",
+ vis:"Question card with the expression.",act:"Card slides up.",hold:"2400ms",dur:6800,
+ build(){
+  const g=G({class:"p"});move(g,140,560);
+  E("rect",{width:680,height:330,rx:16,fill:"#141B25",stroke:C.yellow,"stroke-width":2},g);
+  const t1=E("text",{x:36,y:50,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":12,"letter-spacing":"0.24em"},g);
+  t1.textContent="EXAM QUESTION · 5 MARKS";
+  ["Prove that 3n² + 5n + 2 is O(n²)."].forEach((s,i)=>{
+    const t=E("text",{x:36,y:100,fill:"var(--text)","font-family":"Space Grotesk","font-size":24,"font-weight":500},g);t.textContent=s});
+  E("rect",{x:36,y:130,width:608,height:110,rx:8,fill:"#0F151E",stroke:"var(--line)","stroke-width":1.5},g);
+  ["Find a constant c and a point n₀ such that","3n² + 5n + 2  ≤  c · n²   for all n ≥ n₀"].forEach((s,i)=>{
+    const t=E("text",{x:58,y:166+i*34,fill:"#B9C4D2","font-family":"IBM Plex Mono","font-size":15},g);t.textContent=s});
+  const t4=E("text",{x:36,y:274,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t4.textContent="Infinitely many answers are valid — you need one.";
+  const t3=E("text",{x:36,y:304,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t3.textContent="⏸  Pause and try it.";
+  at(300,()=>move(g,140,110));
+  at(3800,()=>{const bar=E("rect",{x:176,y:474,width:0,height:4,rx:2,fill:C.yellow});
+    bar.style.transition="width 2.4s linear";setTimeout(()=>bar.setAttribute("width",608),30)});
+ }},
+{s:"CLOSE",t:"9:40",vo:"That closes Unit One. Next video, Unit Two: arrays — and the index formula everyone gets wrong by one.",
+ vis:"End card, Unit 2 color bar.",act:"Fade.",hold:"End.",dur:6400,
+ build(){
+  const done=label(110,150,"UNIT 1 — COMPLETE",{fill:C.green,size:13,anchor:"start",ls:"0.24em"});
+  const bar=E("rect",{x:110,y:170,width:0,height:5,rx:3,fill:C.green,class:"p"});
+  at(300,()=>{bar.style.transition="width 1s ease";bar.setAttribute("width",360)});
+  const l=label(110,250,"NEXT · UNIT 2",{fill:"var(--dim)",size:14,anchor:"start",ls:"0.3em"});
+  const a=label(110,310,"Arrays",{fill:"var(--text)",size:42,f:"Space Grotesk",w:700,anchor:"start"});
+  const b=label(110,354,"and the index formula everyone",{fill:"var(--dim)",size:17,anchor:"start"});
+  const b2=label(110,380,"gets wrong by one",{fill:"var(--dim)",size:17,anchor:"start"});
+  const c=label(110,430,"VIDEO 05 · LINEAR STRUCTURES",{fill:C.yellow,size:13,anchor:"start",ls:"0.16em"});
+  [l,a,b,b2,c].forEach((n,i)=>{n.style.opacity=0;at(900+i*160,()=>n.style.opacity=1)});
+  const g=G({class:"p"});move(g,560,180);g.style.opacity=0;
+  E("rect",{width:330,height:170,rx:12,fill:"#101722",stroke:"var(--line)","stroke-width":1.5},g);
+  for(let i=0;i<5;i++){E("rect",{x:26+i*58,y:56,width:48,height:48,rx:8,fill:"#1B2431",stroke:C.yellow,"stroke-width":1.8},g);
+    const t=E("text",{x:50+i*58,y:126,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle"},g);t.textContent="["+i+"]"}
+  const off=E("text",{x:165,y:36,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g);
+  off.textContent="base + i × size";
+  at(1400,()=>g.style.opacity=1);
+  at(4400,()=>fadeUp(label(480,500,"SUBSCRIBE · UNIT 2 STARTS NEXT",{size:12,ls:"0.2em"}),0));
+ }}
+];
+
+/* small helper used by beat 1 for the check path */
+function drawIn2(p,ms){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{p.style.transition=`stroke-dashoffset ${ms}ms ease`;p.style.strokeDashoffset=0})}
+
+/* ── runner ── */
+let idx=0,elapsed=0,playing=false,rate=1,queue=[],last=0;
+const tickrow=document.getElementById("tickrow"),secrow=document.getElementById("secrow");
+const total=BEATS.reduce((a,b)=>a+b.dur,0);
+BEATS.forEach((b,i)=>{const t=document.createElement("button");t.className="tick";
+  t.style.flex=b.dur;t.innerHTML='<i></i><span>'+(i+1)+'</span>';
+  t.title="Beat "+(i+1)+" — "+b.s;t.onclick=()=>go(i,playing);tickrow.appendChild(t)});
+let cur=null;BEATS.forEach(b=>{if(!cur||cur.s!==b.s){cur={s:b.s,d:0};const el=document.createElement("div");el.className="sec";el.textContent=b.s;el.dataset.s=b.s;secrow.appendChild(el)}
+  cur.d+=b.dur;secrow.lastChild.style.flex=cur.d});
+
+function go(i,autoplay){
+  idx=Math.max(0,Math.min(BEATS.length-1,i));elapsed=0;queue=[];
+  clearStage();const b=BEATS[idx];
+  at=(ms,fn)=>queue.push({ms,fn,done:false});
+  b.build();
+  document.getElementById("bn").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("bt").textContent=b.t;
+  document.getElementById("f-vo").textContent=b.vo;
+  document.getElementById("f-vis").textContent=b.vis;
+  document.getElementById("f-act").textContent=b.act;
+  document.getElementById("f-hold").textContent=b.hold;
+  [...tickrow.children].forEach((t,k)=>{t.classList.toggle("now",k===idx);t.classList.toggle("done",k<idx)});
+  playing=!!autoplay;paint();
+}
+function paint(){document.getElementById("play").textContent=playing?"❚❚ PAUSE":"▶ PLAY";
+  const t=tickrow.children[idx];t.querySelector("i").style.transform=`scaleX(${elapsed/BEATS[idx].dur})`}
+function frame(ts){const dt=Math.min(64,ts-(last||ts));last=ts;
+  if(playing){elapsed+=dt*rate;
+    queue.forEach(q=>{if(!q.done&&elapsed>=q.ms){q.done=true;q.fn()}});
+    if(elapsed>=BEATS[idx].dur){if(idx<BEATS.length-1)go(idx+1,true);else{playing=false;elapsed=BEATS[idx].dur}}
+    paint()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+document.getElementById("play").onclick=()=>{if(!playing&&elapsed>=BEATS[idx].dur)go(idx,true);else{playing=!playing;paint()}};
+document.getElementById("next").onclick=()=>go(idx+1,playing);
+document.getElementById("prev").onclick=()=>go(idx-1,playing);
+document.getElementById("replay").onclick=()=>go(idx,true);
+document.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>{rate=parseFloat(b.dataset.r);
+  document.querySelectorAll(".rate button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;
+  if(e.key===" "){e.preventDefault();document.getElementById("play").click()}
+  if(e.key==="ArrowRight")go(idx+1,playing);if(e.key==="ArrowLeft")go(idx-1,playing);
+  if(e.key.toLowerCase()==="r")go(idx,true)});
+
+go(0,false);
+</script>
+</body>
+</html>
