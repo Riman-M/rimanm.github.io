@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animation — Dr. Riman Mandal</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
+<link rel="stylesheet" href="assets/style.css?v=5">
+<style>
+  html,body{height:100%;margin:0;background:#0C141B}
+  .playerbar{display:flex;align-items:center;gap:1rem;height:48px;padding:0 var(--pad);
+    background:var(--surface);border-bottom:1px solid var(--rule);position:relative;z-index:5}
+  .playerbar a.back{font-family:var(--mono);font-size:.74rem;color:var(--muted);text-decoration:none;letter-spacing:.03em}
+  .playerbar a.back:hover{color:var(--active-ink)}
+  .playerbar .ptitle{font-family:var(--mono);font-size:.72rem;color:var(--faint);letter-spacing:.04em;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .playerbar button{font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;background:transparent;
+    border:1px solid var(--rule);color:var(--muted);padding:.32rem .6rem;border-radius:2px;cursor:pointer}
+  .playerbar button:hover{border-color:var(--active);color:var(--active-ink)}
+  .playerstage{position:fixed;top:48px;left:0;right:0;bottom:0;background:#0C141B}
+  .playerstage iframe{width:100%;height:100%;border:0;display:block}
+  [data-theme="light"] .playerbar,body{color-scheme:light dark}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="playerbar">
+  <a class="back" id="p-back" href="teaching.html">← Back to course</a>
+  <span class="ptitle" id="p-title"></span>
+  <button id="p-fullscreen" type="button">Fullscreen</button>
+</div>
+<div class="playerstage">
+  <iframe id="p-frame" title="Animation" allow="fullscreen"></iframe>
+</div>
+
+<script>
+(function(){
+  var params=new URLSearchParams(location.search);
+  var course=params.get('c')||'';
+  var file=params.get('f')||'';
+  var title=params.get('t')||'';
+
+  // Only allow simple filenames — no path traversal, no external URLs.
+  var safe=/^[a-z0-9_-]+\.html$/i.test(file) && /^[a-z0-9-]+$/i.test(course);
+  var frame=document.getElementById('p-frame');
+  var back=document.getElementById('p-back');
+  if(course) back.href='course.html?c='+encodeURIComponent(course);
+
+  if(safe){
+    frame.src='assets/animations/'+course+'/'+file;
+    document.getElementById('p-title').textContent=title||file;
+    if(title) document.title=title+' — Dr. Riman Mandal';
+  } else {
+    document.getElementById('p-title').textContent='Animation not found';
+  }
+
+  document.getElementById('p-fullscreen').addEventListener('click',function(){
+    if(frame.requestFullscreen) frame.requestFullscreen();
+    else if(frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+  });
+})();
+</script>
+</body>
+</html>
