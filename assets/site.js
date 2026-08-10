@@ -172,17 +172,17 @@ function renderTeachingFull(){
     }
     if(cornerHost){
       d.studentsCorner.forEach(function(c){
-        var e=el('div','ccourse');
+        var live=(c.status==='live');
+        var e=live?el('a','ccourse'):el('div','ccourse');
+        if(live) e.setAttribute('href','course.html?c='+encodeURIComponent(c.id));
         var top=el('div','top');
         top.appendChild(el('h3',null,esc(c.course)));
-        top.appendChild(el('span','status '+(c.status==='live'?'live':'soon'),c.status==='live'?'Materials':'Coming soon'));
+        top.appendChild(el('span','status '+(live?'live':'soon'),live?'Open':'Coming soon'));
         e.appendChild(top);
-        if(c.materials && c.materials.length){
+        if(c.institution) e.appendChild(el('div','cinst',esc(c.institution)));
+        if(c.has && c.has.length){
           var ul=el('ul','matlist');
-          c.materials.forEach(function(m){
-            var li=el('li',m.available?'on':null,esc(m.label));
-            ul.appendChild(li);
-          });
+          c.has.forEach(function(h){ul.appendChild(el('li','on',esc(h)));});
           e.appendChild(ul);
         }
         cornerHost.appendChild(e);
@@ -223,6 +223,92 @@ function renderImpact(){
     });
     if(!any) host.parentNode.style.display='none';
   }).catch(function(){});
+}
+
+/* ---------- course detail page ---------- */
+var KIND_ICON={videos:'▶',notes:'▤',slides:'▦',assignments:'✎',pyq:'⌛',labs:'⌨',animations:'◆',other:'▤'};
+
+function courseItem(kind,it,courseId){
+  var isVideo=(kind==='videos');
+  var isAnim=(kind==='animations');
+  var href;
+  if(isAnim && it.file){
+    href='animation.html?c='+encodeURIComponent(courseId)+'&f='+encodeURIComponent(it.file)+'&t='+encodeURIComponent(it.title);
+  } else {
+    href=it.file||it.url||(it.youtube?('https://www.youtube.com/watch?v='+it.youtube):'');
+  }
+  var node=href?el('a','citem kind-'+kind):el('div','citem disabled kind-'+kind);
+  if(href){node.setAttribute('href',href);
+    if(!isAnim && !it.file){node.setAttribute('target','_blank');node.setAttribute('rel','noopener');}
+    else if(!isAnim && it.file){node.setAttribute('download','');}
+  }
+  node.appendChild(el('span','cicon',KIND_ICON[kind]||KIND_ICON.other));
+  var mid=el('span','ctext');
+  mid.appendChild(el('span','ctitle',esc(it.title)));
+  if(it.meta) mid.appendChild(el('span','cmeta',esc(it.meta)));
+  node.appendChild(mid);
+  node.appendChild(el('span','caction',href?(isAnim?'Play':(isVideo?'Watch':'Download')):'Soon'));
+  return node;
+}
+
+function renderCourse(){
+  var body=document.getElementById('c-body'); if(!body) return;
+  var id=new URLSearchParams(location.search).get('c')||'';
+  if(!/^[a-z0-9-]+$/.test(id)){ document.getElementById('c-missing').hidden=false; return; }
+
+  getJSON('data/courses/'+id+'.json').then(function(c){
+    document.title=c.title+' — Dr. Riman Mandal';
+    document.getElementById('c-title').textContent=c.title;
+    var bits=[c.institution,c.level,c.term].filter(Boolean).join(' · ');
+    document.getElementById('c-meta').textContent=bits;
+    document.getElementById('c-summary').textContent=c.summary||'';
+
+    // chips: what this course actually offers
+    var has=document.getElementById('c-has');
+    (c.sections||[]).forEach(function(s){
+      if(s.items && s.items.length) has.appendChild(el('span','chip',esc(s.label)));
+    });
+
+    // outcomes
+    if(c.outcomes && c.outcomes.length){
+      var sec=el('section','band');
+      var w=el('div','wrap');
+      w.appendChild(el('p','kicker','Learning outcomes'));
+      w.appendChild(el('h2',null,'By the end of this course you should be able to'));
+      var ul=el('ul','outcomes');
+      c.outcomes.forEach(function(o){ul.appendChild(el('li',null,esc(o)));});
+      w.appendChild(ul);
+      sec.appendChild(w); body.appendChild(sec);
+    }
+
+    // material sections — only those with items
+    (c.sections||[]).forEach(function(s){
+      if(!s.items || !s.items.length) return;
+      var sec=el('section','band');
+      var w=el('div','wrap');
+      w.appendChild(el('p','kicker',esc(s.label)+' · '+s.items.length));
+      w.appendChild(el('h2',null,esc(s.label)));
+      if(s.note) w.appendChild(el('p','snote',esc(s.note)));
+      var list=el('div','clist');
+      s.items.forEach(function(it){list.appendChild(courseItem(s.kind,it,c.id));});
+      w.appendChild(list);
+      sec.appendChild(w); body.appendChild(sec);
+    });
+
+    // reading list
+    if(c.reading && c.reading.length){
+      var sec2=el('section','band');
+      var w2=el('div','wrap');
+      w2.appendChild(el('p','kicker','Reading'));
+      w2.appendChild(el('h2',null,'Recommended texts'));
+      var ul2=el('ul','outcomes');
+      c.reading.forEach(function(r){ul2.appendChild(el('li',null,esc(r)));});
+      w2.appendChild(ul2);
+      sec2.appendChild(w2); body.appendChild(sec2);
+    }
+  }).catch(function(){
+    document.getElementById('c-missing').hidden=false;
+  });
 }
 
 /* ---------- profile links (contact + hero buttons) ---------- */
@@ -335,6 +421,7 @@ document.addEventListener('DOMContentLoaded',function(){
   renderPatents();
   renderTeachingFull();
   runConsolidation();
+  renderCourse();
   var btn=document.querySelector('.themetoggle');
   if(btn) btn.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'Light':'Dark';
 });

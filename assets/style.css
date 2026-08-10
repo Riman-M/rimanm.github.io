@@ -177,6 +177,37 @@ section.band{padding:clamp(2.5rem,6vw,4rem) 0;border-top:1px solid var(--rule)}
 .matlist li.on{color:var(--active-ink);border-color:color-mix(in srgb,var(--active) 40%,var(--rule))}
 .matlist a{text-decoration:none;color:inherit}
 
+/* ---------- course pages ---------- */
+.backlink{color:var(--active-ink);text-decoration:none}
+.backlink:hover{border-bottom:1px solid var(--active)}
+.chipbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1.2rem}
+.chip{font-family:var(--mono);font-size:.66rem;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--active-ink);border:1px solid color-mix(in srgb,var(--active) 40%,var(--rule));
+  padding:.25rem .55rem;border-radius:2px}
+.snote{color:var(--muted);font-size:.94rem;margin-top:.5rem;max-width:56ch}
+.outcomes{margin:1.1rem 0 0;padding-left:1.1rem;max-width:60ch}
+.outcomes li{margin-bottom:.5rem;color:var(--ink)}
+.clist{display:grid;grid-template-columns:1fr;gap:1px;background:var(--rule);
+  border:1px solid var(--rule);border-radius:3px;overflow:hidden;margin-top:1.3rem}
+.citem{background:var(--surface);padding:.9rem 1.05rem;display:flex;align-items:center;gap:.9rem;
+  text-decoration:none;color:inherit;transition:background .2s}
+.citem:hover{background:var(--surface-2)}
+.citem.disabled{opacity:.55;cursor:default}
+.cicon{font-size:.95rem;color:var(--active);flex:none;width:1.2rem;text-align:center}
+.ctext{display:flex;flex-direction:column;gap:.15rem;flex:1;min-width:0}
+.ctitle{font-family:var(--display);font-weight:600;font-size:1rem;line-height:1.3}
+.cmeta{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.caction{font-family:var(--mono);font-size:.66rem;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);flex:none;border:1px solid var(--rule);padding:.22rem .5rem;border-radius:2px}
+.citem:hover .caction{color:var(--active-ink);border-color:color-mix(in srgb,var(--active) 45%,var(--rule))}
+.citem.kind-animations .cicon{color:var(--draw)}
+.citem.kind-animations .caction{color:var(--draw)}
+.citem.kind-animations:hover .caction{color:var(--draw);border-color:color-mix(in srgb,var(--draw) 45%,var(--rule))}
+
+.cinst{font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;color:var(--faint);margin-top:.3rem}
+a.ccourse{text-decoration:none;color:inherit;transition:background .2s}
+a.ccourse:hover{background:var(--surface-2)}
+
 /* research impact by source */
 .impact{display:grid;grid-template-columns:1fr;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:3px;overflow:hidden;margin-top:1.3rem}
 @media(min-width:640px){.impact{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
