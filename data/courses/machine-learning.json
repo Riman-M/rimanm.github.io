@@ -1,0 +1,48 @@
+{
+  "id": "machine-learning",
+  "title": "Machine Learning",
+  "institution": "Galgotias University",
+  "level": "B.Tech CSE",
+  "term": "2025–26",
+  "summary": "From linear models to neural networks, with an emphasis on why a method works and when it fails. Lectures are recorded; slides and lab notebooks accompany each unit.",
+  "outcomes": [
+    "Frame a problem as supervised, unsupervised, or reinforcement learning",
+    "Train and evaluate models while recognising overfitting and leakage",
+    "Explain gradient descent and backpropagation",
+    "Select metrics appropriate to imbalanced and real-world data"
+  ],
+  "sections": [
+    {
+      "kind": "videos",
+      "label": "Recorded lectures",
+      "note": "Recorded during the 2025–26 term.",
+      "items": [
+        { "title": "What machine learning is, and is not", "youtube": "", "url": "", "meta": "Unit 1 · 42 min" },
+        { "title": "Linear and logistic regression", "youtube": "", "url": "", "meta": "Unit 1 · 55 min" },
+        { "title": "Overfitting, regularisation, cross-validation", "youtube": "", "url": "", "meta": "Unit 2 · 48 min" },
+        { "title": "Neural networks and backpropagation", "youtube": "", "url": "", "meta": "Unit 4 · 61 min" }
+      ]
+    },
+    {
+      "kind": "slides",
+      "label": "Slides",
+      "items": [
+        { "title": "Unit 1 — Foundations", "file": "assets/course-materials/machine-learning/unit1-slides.pdf" },
+        { "title": "Unit 2 — Model selection", "file": "assets/course-materials/machine-learning/unit2-slides.pdf" }
+      ]
+    },
+    {
+      "kind": "labs",
+      "label": "Lab notebooks",
+      "items": [
+        { "title": "Lab 1 — Regression from scratch in NumPy", "file": "assets/course-materials/machine-learning/lab1.ipynb" },
+        { "title": "Lab 2 — Classification with scikit-learn", "file": "assets/course-materials/machine-learning/lab2.ipynb" }
+      ]
+    }
+  ],
+  "reading": [
+    "Bishop — Pattern Recognition and Machine Learning",
+    "Géron — Hands-On Machine Learning with Scikit-Learn and TensorFlow",
+    "Goodfellow, Bengio & Courville — Deep Learning (free online)"
+  ]
+}

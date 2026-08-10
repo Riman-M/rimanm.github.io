@@ -1,0 +1,48 @@
+{
+  "id": "operating-systems",
+  "title": "Operating Systems",
+  "institution": "Galgotias University",
+  "level": "B.Tech CSE",
+  "term": "2025–26",
+  "summary": "How an operating system shares one machine among many programs: processes and scheduling, memory, concurrency, and the file system. The course pairs each idea with the system calls that expose it.",
+  "outcomes": [
+    "Explain how the kernel schedules processes and switches between them",
+    "Reason about deadlock, race conditions, and the tools that prevent them",
+    "Describe virtual memory, paging, and page-replacement behaviour",
+    "Use system calls to create processes, manage files, and synchronise threads"
+  ],
+  "sections": [
+    {
+      "kind": "notes",
+      "label": "Lecture notes",
+      "items": [
+        { "title": "Unit 1 — Introduction and system structure", "file": "assets/course-materials/operating-systems/unit1-introduction.pdf" },
+        { "title": "Unit 2 — Processes and scheduling", "file": "assets/course-materials/operating-systems/unit2-processes.pdf" },
+        { "title": "Unit 3 — Synchronisation and deadlock", "file": "assets/course-materials/operating-systems/unit3-synchronisation.pdf" },
+        { "title": "Unit 4 — Memory management", "file": "assets/course-materials/operating-systems/unit4-memory.pdf" },
+        { "title": "Unit 5 — File systems and I/O", "file": "assets/course-materials/operating-systems/unit5-filesystems.pdf" }
+      ]
+    },
+    {
+      "kind": "assignments",
+      "label": "Assignments",
+      "items": [
+        { "title": "Assignment 1 — Process scheduling simulation", "file": "assets/course-materials/operating-systems/assignment-1.pdf", "meta": "Due week 5" },
+        { "title": "Assignment 2 — Producer–consumer with semaphores", "file": "assets/course-materials/operating-systems/assignment-2.pdf", "meta": "Due week 9" }
+      ]
+    },
+    {
+      "kind": "pyq",
+      "label": "Previous year questions",
+      "items": [
+        { "title": "End-semester paper", "file": "assets/course-materials/operating-systems/pyq-2024.pdf", "meta": "2024" },
+        { "title": "End-semester paper", "file": "assets/course-materials/operating-systems/pyq-2023.pdf", "meta": "2023" }
+      ]
+    }
+  ],
+  "reading": [
+    "Silberschatz, Galvin & Gagne — Operating System Concepts",
+    "Tanenbaum & Bos — Modern Operating Systems",
+    "Arpaci-Dusseau — Operating Systems: Three Easy Pieces (free online)"
+  ]
+}
