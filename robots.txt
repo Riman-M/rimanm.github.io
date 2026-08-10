@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Course slide decks — shared for enrolled students, not for public search indexing.
+# Some of these were authored by colleagues/the department, not solely by the site owner.
+Disallow: /assets/course-materials/data-structures/slides/

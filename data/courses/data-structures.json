@@ -6,10 +6,10 @@
   "term": "2025–26",
   "summary": "Arrays, linked lists, stacks, queues, trees, heaps, and graphs — chosen and analysed by the operations a problem actually needs.",
   "outcomes": [
-   "Develop programs for functions like traversal, searching, and sorting over Arrays and Linked Lists using iterative and recursive techniques.",
-   "Convert iterative programs using Arrays and Linked Lists into equivalent Recursive versions and vice versa.",
-   "Implement Stack, Queue, and Binary Tree data structures using Array and Linked Structures.",
-   "Develop programs to solve computing problems using multiple data structures (Stack, Queue, and Binary Tree)"
+    "Develop programs for functions like traversal, searching, and sorting over Arrays and Linked Lists using iterative and recursive techniques.",
+    "Convert iterative programs using Arrays and Linked Lists into equivalent Recursive versions and vice versa.",
+    "Implement Stack, Queue, and Binary Tree data structures using Array and Linked Structures.",
+    "Develop programs to solve computing problems using multiple data structures (Stack, Queue, and Binary Tree)"
   ],
   "sections": [
     {
@@ -17,18 +17,215 @@
       "label": "Animated walkthroughs",
       "note": "Interactive animations, viewable in-browser. Narrated video versions are coming to YouTube — these will stay up alongside them.",
       "items": [
-        { "title": "What is a data structure?", "file": "video-01-what-is-a-data-structure.html", "meta": "Unit 1 · ~8:30" },
-        { "title": "What makes one algorithm better than another?", "file": "video-02-analysis-of-algorithms.html", "meta": "Unit 1 · ~9:00" },
-        { "title": "Time vs space: the trade-off", "file": "video-03-time-vs-space.html", "meta": "Unit 1 · ~8:45" },
-        { "title": "Big-O, Omega, Theta: asymptotic notation", "file": "video-04-asymptotic-notation.html", "meta": "Unit 1 · ~10:00" }
+        {
+          "title": "What is a data structure?",
+          "file": "video-01-what-is-a-data-structure.html",
+          "meta": "Unit 1 · ~8:30"
+        },
+        {
+          "title": "What makes one algorithm better than another?",
+          "file": "video-02-analysis-of-algorithms.html",
+          "meta": "Unit 1 · ~9:00"
+        },
+        {
+          "title": "Time vs space: the trade-off",
+          "file": "video-03-time-vs-space.html",
+          "meta": "Unit 1 · ~8:45"
+        },
+        {
+          "title": "Big-O, Omega, Theta: asymptotic notation",
+          "file": "video-04-asymptotic-notation.html",
+          "meta": "Unit 1 · ~10:00"
+        }
+      ]
+    },
+    {
+      "kind": "slides",
+      "label": "Lecture slides",
+      "note": "Shared for students in this course. Some decks are co-authored; not all material here originates with the instructor.",
+      "items": [
+        {
+          "title": "Lecture 01",
+          "file": "assets/course-materials/data-structures/slides/lec-01.pptx"
+        },
+        {
+          "title": "Lecture 02",
+          "file": "assets/course-materials/data-structures/slides/lec-02.pptx"
+        },
+        {
+          "title": "Lecture 03",
+          "file": "assets/course-materials/data-structures/slides/lec-03.pptx"
+        },
+        {
+          "title": "Lecture 04",
+          "file": "assets/course-materials/data-structures/slides/lec-04.pptx"
+        },
+        {
+          "title": "Lecture 05",
+          "file": "assets/course-materials/data-structures/slides/lec-05.pptx"
+        },
+        {
+          "title": "Lecture 06",
+          "file": "assets/course-materials/data-structures/slides/lec-06.pptx"
+        },
+        {
+          "title": "Lecture 07",
+          "file": "assets/course-materials/data-structures/slides/lec-07.pptx"
+        },
+        {
+          "title": "Lecture 08",
+          "file": "assets/course-materials/data-structures/slides/lec-08.pptx"
+        },
+        {
+          "title": "Lecture 09",
+          "file": "assets/course-materials/data-structures/slides/lec-09.pptx"
+        },
+        {
+          "title": "Lecture 10",
+          "file": "assets/course-materials/data-structures/slides/lec-10.pptx"
+        },
+        {
+          "title": "Lecture 11",
+          "file": "assets/course-materials/data-structures/slides/lec-11.pptx"
+        },
+        {
+          "title": "Lecture 12",
+          "file": "assets/course-materials/data-structures/slides/lec-12.pptx"
+        },
+        {
+          "title": "Lecture 13",
+          "file": "assets/course-materials/data-structures/slides/lec-13.pptx"
+        },
+        {
+          "title": "Lecture 14",
+          "file": "assets/course-materials/data-structures/slides/lec-14.pptx"
+        },
+        {
+          "title": "Lecture 15",
+          "file": "assets/course-materials/data-structures/slides/lec-15.pptx"
+        },
+        {
+          "title": "Lecture 16",
+          "file": "assets/course-materials/data-structures/slides/lec-16.pptx"
+        },
+        {
+          "title": "Lecture 17",
+          "file": "assets/course-materials/data-structures/slides/lec-17.pptx"
+        },
+        {
+          "title": "Lecture 18",
+          "file": "assets/course-materials/data-structures/slides/lec-18.pptx"
+        },
+        {
+          "title": "Lecture 19",
+          "file": "assets/course-materials/data-structures/slides/lec-19.pptx"
+        },
+        {
+          "title": "Lecture 20",
+          "file": "assets/course-materials/data-structures/slides/lec-20.pptx"
+        },
+        {
+          "title": "Lecture 21",
+          "file": "assets/course-materials/data-structures/slides/lec-21.pptx"
+        },
+        {
+          "title": "Lecture 22",
+          "file": "assets/course-materials/data-structures/slides/lec-22.pptx"
+        },
+        {
+          "title": "Lecture 23",
+          "file": "assets/course-materials/data-structures/slides/lec-23.pptx"
+        },
+        {
+          "title": "Lecture 24",
+          "file": "assets/course-materials/data-structures/slides/lec-24.pptx"
+        },
+        {
+          "title": "Lecture 25",
+          "file": "assets/course-materials/data-structures/slides/lec-25.pptx"
+        },
+        {
+          "title": "Lecture 26",
+          "file": "assets/course-materials/data-structures/slides/lec-26.pptx"
+        },
+        {
+          "title": "Lecture 27",
+          "file": "assets/course-materials/data-structures/slides/lec-27.pptx"
+        },
+        {
+          "title": "Lecture 28",
+          "file": "assets/course-materials/data-structures/slides/lec-28.pptx"
+        },
+        {
+          "title": "Lecture 29",
+          "file": "assets/course-materials/data-structures/slides/lec-29.pptx"
+        },
+        {
+          "title": "Lecture 30",
+          "file": "assets/course-materials/data-structures/slides/lec-30.pptx"
+        },
+        {
+          "title": "Lecture 31",
+          "file": "assets/course-materials/data-structures/slides/lec-31.pptx"
+        },
+        {
+          "title": "Lecture 32",
+          "file": "assets/course-materials/data-structures/slides/lec-32.pptx"
+        },
+        {
+          "title": "Lecture 33",
+          "file": "assets/course-materials/data-structures/slides/lec-33.pptx"
+        },
+        {
+          "title": "Lecture 34",
+          "file": "assets/course-materials/data-structures/slides/lec-34.pptx"
+        },
+        {
+          "title": "Lecture 35",
+          "file": "assets/course-materials/data-structures/slides/lec-35.pptx"
+        },
+        {
+          "title": "Lecture 36",
+          "file": "assets/course-materials/data-structures/slides/lec-36.pptx"
+        },
+        {
+          "title": "Lecture 37",
+          "file": "assets/course-materials/data-structures/slides/lec-37.pptx"
+        },
+        {
+          "title": "Lecture 38",
+          "file": "assets/course-materials/data-structures/slides/lec-38.pptx"
+        },
+        {
+          "title": "Lecture 39",
+          "file": "assets/course-materials/data-structures/slides/lec-39.pptx"
+        },
+        {
+          "title": "Lecture 40",
+          "file": "assets/course-materials/data-structures/slides/lec-40.pptx"
+        },
+        {
+          "title": "Circular linked lists (supplementary)",
+          "file": "assets/course-materials/data-structures/slides/lec-07-circular-linked-list.pptx"
+        },
+        {
+          "title": "Recursion",
+          "file": "assets/course-materials/data-structures/slides/recursion.pptx"
+        }
       ]
     },
     {
       "kind": "notes",
       "label": "Lecture notes",
       "items": [
-        { "title": "Unit 1 — Arrays, linked lists, complexity", "file": "assets/course-materials/data-structures/unit1.pdf" },
-        { "title": "Unit 2 — Stacks and queues", "file": "assets/course-materials/data-structures/unit2.pdf" }
+        {
+          "title": "Unit 1 — Arrays, linked lists, complexity",
+          "file": "assets/course-materials/data-structures/unit1.pdf"
+        },
+        {
+          "title": "Unit 2 — Stacks and queues",
+          "file": "assets/course-materials/data-structures/unit2.pdf"
+        }
       ]
     }
   ],

@@ -1,0 +1,39 @@
+{
+  "id": "data-structures",
+  "title": "Data Structures",
+  "institution": "Galgotias University",
+  "level": "B.Tech CSE",
+  "term": "2025–26",
+  "summary": "Arrays, linked lists, stacks, queues, trees, heaps, and graphs — chosen and analysed by the operations a problem actually needs.",
+  "outcomes": [
+   "Develop programs for functions like traversal, searching, and sorting over Arrays and Linked Lists using iterative and recursive techniques.",
+   "Convert iterative programs using Arrays and Linked Lists into equivalent Recursive versions and vice versa.",
+   "Implement Stack, Queue, and Binary Tree data structures using Array and Linked Structures.",
+   "Develop programs to solve computing problems using multiple data structures (Stack, Queue, and Binary Tree)"
+  ],
+  "sections": [
+    {
+      "kind": "animations",
+      "label": "Animated walkthroughs",
+      "note": "Interactive animations, viewable in-browser. Narrated video versions are coming to YouTube — these will stay up alongside them.",
+      "items": [
+        { "title": "What is a data structure?", "file": "video-01-what-is-a-data-structure.html", "meta": "Unit 1 · ~8:30" },
+        { "title": "What makes one algorithm better than another?", "file": "video-02-analysis-of-algorithms.html", "meta": "Unit 1 · ~9:00" },
+        { "title": "Time vs space: the trade-off", "file": "video-03-time-vs-space.html", "meta": "Unit 1 · ~8:45" },
+        { "title": "Big-O, Omega, Theta: asymptotic notation", "file": "video-04-asymptotic-notation.html", "meta": "Unit 1 · ~10:00" }
+      ]
+    },
+    {
+      "kind": "notes",
+      "label": "Lecture notes",
+      "items": [
+        { "title": "Unit 1 — Arrays, linked lists, complexity", "file": "assets/course-materials/data-structures/unit1.pdf" },
+        { "title": "Unit 2 — Stacks and queues", "file": "assets/course-materials/data-structures/unit2.pdf" }
+      ]
+    }
+  ],
+  "reading": [
+    "Tenenbaum, A. M. (1990). Data structures using C. Pearson Education India.",
+    "Sahni, S. (2000). Data structures, algorithms, and applications in Java. Universities Press."
+  ]
+}
