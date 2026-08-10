@@ -27,6 +27,13 @@
   ],
   "studentsCorner": [
     {
+      "id": "data-structures",
+      "course": "Data Structures",
+      "status": "live",
+      "institution": "Galgotias University",
+      "has": ["Animations", "Notes"]
+    },
+    {
       "id": "operating-systems",
       "course": "Operating Systems",
       "status": "live",
@@ -39,13 +46,6 @@
       "status": "live",
       "institution": "Galgotias University",
       "has": ["Videos", "Slides", "Labs"]
-    },
-    {
-      "id": "data-structures",
-      "course": "Data Structures",
-      "status": "live",
-      "institution": "Galgotias University",
-      "has": ["Animations", "Notes"]
     }
   ]
 }

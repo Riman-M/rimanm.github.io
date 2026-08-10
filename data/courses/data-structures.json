@@ -6,10 +6,10 @@
   "term": "2025–26",
   "summary": "Arrays, linked lists, stacks, queues, trees, heaps, and graphs — chosen and analysed by the operations a problem actually needs.",
   "outcomes": [
-    "Choose a data structure by the cost of the operations a problem requires",
-    "Analyse time and space complexity with asymptotic notation",
-    "Implement and traverse trees and graphs",
-    "Apply sorting and searching techniques appropriately"
+   "Develop programs for functions like traversal, searching, and sorting over Arrays and Linked Lists using iterative and recursive techniques.",
+  "Convert iterative programs using Arrays and Linked Lists into equivalent Recursive versions and vice versa.",
+  "Implement Stack, Queue, and Binary Tree data structures using Array and Linked Structures.",
+  "Develop programs to solve computing problems using multiple data structures (Stack, Queue, and Binary Tree)"
   ],
   "sections": [
     {
@@ -33,7 +33,7 @@
     }
   ],
   "reading": [
-    "Cormen, Leiserson, Rivest & Stein — Introduction to Algorithms",
-    "Weiss — Data Structures and Algorithm Analysis"
+    "Tenenbaum, A. M. (1990). Data structures using C. Pearson Education India.",
+    "Sahni, S. (2000). Data structures, algorithms, and applications in Java. Universities Press."
   ]
 }
