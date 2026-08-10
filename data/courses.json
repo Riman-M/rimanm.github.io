@@ -27,26 +27,25 @@
   ],
   "studentsCorner": [
     {
+      "id": "operating-systems",
       "course": "Operating Systems",
       "status": "live",
-      "folder": "operating-systems",
-      "materials": [
-        { "label": "Lecture notes", "available": false },
-        { "label": "Assignments", "available": false },
-        { "label": "Previous year questions", "available": false }
-      ]
+      "institution": "Galgotias University",
+      "has": ["Notes", "Assignments", "PYQs"]
     },
     {
+      "id": "machine-learning",
+      "course": "Machine Learning",
+      "status": "live",
+      "institution": "Galgotias University",
+      "has": ["Videos", "Slides", "Labs"]
+    },
+    {
+      "id": "data-structures",
       "course": "Data Structures",
-      "status": "coming-soon",
-      "folder": "data-structures",
-      "materials": []
-    },
-    {
-      "course": "Cloud Computing",
-      "status": "coming-soon",
-      "folder": "cloud-computing",
-      "materials": []
+      "status": "live",
+      "institution": "Galgotias University",
+      "has": ["Animations", "Notes"]
     }
   ]
 }
