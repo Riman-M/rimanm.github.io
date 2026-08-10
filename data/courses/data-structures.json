@@ -7,9 +7,9 @@
   "summary": "Arrays, linked lists, stacks, queues, trees, heaps, and graphs — chosen and analysed by the operations a problem actually needs.",
   "outcomes": [
    "Develop programs for functions like traversal, searching, and sorting over Arrays and Linked Lists using iterative and recursive techniques.",
-  "Convert iterative programs using Arrays and Linked Lists into equivalent Recursive versions and vice versa.",
-  "Implement Stack, Queue, and Binary Tree data structures using Array and Linked Structures.",
-  "Develop programs to solve computing problems using multiple data structures (Stack, Queue, and Binary Tree)"
+   "Convert iterative programs using Arrays and Linked Lists into equivalent Recursive versions and vice versa.",
+   "Implement Stack, Queue, and Binary Tree data structures using Array and Linked Structures.",
+   "Develop programs to solve computing problems using multiple data structures (Stack, Queue, and Binary Tree)"
   ],
   "sections": [
     {
