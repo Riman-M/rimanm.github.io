@@ -46,6 +46,36 @@
           "title": "The index formula: derived, not memorized",
           "file": "video-06-index-formula.html",
           "meta": "Unit 2 · ~10:30"
+        },
+        {
+          "title": "What arrays are actually for",
+          "file": "video-07-array-applications.html",
+          "meta": "Unit 2 · ~9:00"
+        },
+        {
+          "title": "Sparse matrices: storing only what exists",
+          "file": "video-08-sparse-matrices.html",
+          "meta": "Unit 2 · ~10:00"
+        },
+        {
+        "title": "Matrix Arithmetic: Why Multiplication Costs So Much",
+        "file": "video-09-matrix-arithmetic.html",
+        "meta": "Unit 2 · ~9:30"
+        },
+        {
+            "title": "How Recursion Actually Works",
+            "file": "video-10-recursion-call-stack.html",
+            "meta": "Unit 3 · ~10:00"
+        },
+        {
+            "title": "Tail, Head, and Nested Recursion",
+            "file": "video-11-types-of-recursion.html",
+            "meta": "Unit 3 · ~9:30"
+        },
+        {
+            "title": "Fibonacci and Towers of Hanoi",
+            "file": "video-12-fibonacci-hanoi.html",
+            "meta": "Unit 3 · ~10:30"
         }
       ]
     },

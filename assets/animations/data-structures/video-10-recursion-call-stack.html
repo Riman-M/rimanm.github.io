@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video 10 — How Recursion Actually Works · Animatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080A0D; --panel:#0D1116; --stage:#12161C; --line:#1E252E;
+  --cellf:#28313D; --cells:#3B4756;
+  --blue:#4C8DFF; --green:#3DD68C; --red:#FF6B6B; --yellow:#FFC94D;
+  --text:#E7ECF3; --dim:#7C8899; --faint:#4A5464;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--disp)}
+body{padding:18px 16px 60px;max-width:1180px;margin:0 auto}
+
+/* ── masthead ── */
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.slate{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink);background:var(--yellow);padding:3px 8px;border-radius:3px;font-weight:600}
+h1{font-size:clamp(19px,4vw,27px);font-weight:700;letter-spacing:-.02em;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;margin-left:auto}
+
+/* ── stage ── */
+.stagewrap{margin-top:14px;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--stage)}
+svg#stage{display:block;width:100%;height:auto;background:
+  linear-gradient(rgba(76,141,255,.035) 1px,transparent 1px) 0 0/100% 36px,
+  linear-gradient(90deg,rgba(76,141,255,.035) 1px,transparent 1px) 0 0/36px 100%,
+  var(--stage)}
+.badge{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint)}
+.badge b{color:var(--blue);font-weight:600}
+
+/* ── ruler (signature) ── */
+.ruler{margin-top:12px}
+.secrow,.tickrow{display:flex;gap:2px}
+.secrow{margin-bottom:5px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--faint);border-top:1px solid var(--line);padding-top:4px;overflow:hidden;white-space:nowrap}
+.tick{height:26px;background:#131922;border:0;padding:0;border-radius:2px;position:relative;cursor:pointer;overflow:hidden}
+.tick:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tick i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:var(--faint)}
+.tick.done i{transform:scaleX(1)}
+.tick.now i{background:var(--blue)}
+.tick span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--dim)}
+.tick.now span{color:#fff}
+
+/* ── transport ── */
+.transport{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.ctl{font-family:var(--mono);font-size:12px;color:var(--text);background:#131922;border:1px solid var(--line);border-radius:6px;padding:9px 13px;cursor:pointer}
+button.ctl:hover{border-color:var(--faint)}
+button.ctl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.ctl.primary{background:var(--blue);color:#06101F;border-color:var(--blue);font-weight:600;min-width:96px}
+.rate{margin-left:auto;display:flex;gap:2px}
+.rate button{padding:9px 10px}
+.rate button[aria-pressed="true"]{background:#1B2431;border-color:var(--faint);color:var(--yellow)}
+
+/* ── spec sheet ── */
+.spec{margin-top:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.vo{border-left:2px solid var(--yellow);padding:2px 0 2px 14px}
+.vo .lab,.fld .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.vo p{margin:6px 0 0;font-size:clamp(16px,2.4vw,20px);line-height:1.45;letter-spacing:-.01em}
+.fields{display:grid;gap:10px}
+.fld{border-left:1px solid var(--line);padding-left:14px}
+.fld p{margin:4px 0 0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#B9C4D2}
+.fld.hold p{color:var(--green)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:760px){.spec{grid-template-columns:1fr}.meta{margin-left:0;width:100%}.tick span{display:none}}
+
+/* ── stage element transitions ── */
+.p{transition:transform .55s cubic-bezier(.2,.8,.25,1),opacity .4s ease,fill .3s ease,stroke .3s ease}
+.fast{transition:transform .25s ease,opacity .2s ease,fill .12s ease}
+.q{transition:none}
+@keyframes shake{0%,100%{transform:translate(var(--tx),var(--ty))}25%{transform:translate(calc(var(--tx) - 7px),var(--ty))}75%{transform:translate(calc(var(--tx) + 7px),var(--ty))}}
+.shake{animation:shake .28s 2}
+@media(prefers-reduced-motion:reduce){.p,.fast{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slate">VID 10</span>
+  <h1>How Recursion Actually Works</h1>
+  <span class="meta">UNIT 3 · TARGET 10:00 · 34 BEATS · UNIT 3 OPENER</span>
+</header>
+
+<div class="stagewrap">
+  <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Animation stage"></svg>
+  <div class="badge">BEAT <b id="bn">01</b> · <span id="bt">0:00</span></div>
+</div>
+
+<div class="ruler">
+  <div class="secrow" id="secrow"></div>
+  <div class="tickrow" id="tickrow"></div>
+</div>
+
+<div class="transport">
+  <button class="ctl" id="prev" aria-label="Previous beat">◀ PREV</button>
+  <button class="ctl primary" id="play">▶ PLAY</button>
+  <button class="ctl" id="next" aria-label="Next beat">NEXT ▶</button>
+  <button class="ctl" id="replay">↻ BEAT</button>
+  <div class="rate" role="group" aria-label="Playback rate">
+    <button class="ctl" data-r="0.5">.5×</button>
+    <button class="ctl" data-r="1" aria-pressed="true">1×</button>
+    <button class="ctl" data-r="2">2×</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div class="vo"><span class="lab">VO</span><p id="f-vo"></p></div>
+  <div class="fields">
+    <div class="fld"><span class="lab">VIS</span><p id="f-vis"></p></div>
+    <div class="fld"><span class="lab">ACT</span><p id="f-act"></p></div>
+    <div class="fld hold"><span class="lab">HOLD</span><p id="f-hold"></p></div>
+  </div>
+</div>
+
+<footer>
+  ANIMATIC RUNS AT STORYBOARD PACE — REAL CUT IS TIMED TO VO (10:00).<br>
+  KEYS: SPACE PLAY/PAUSE · ← → STEP BEAT · R REPLAY BEAT.<br>
+  THIS FILE IS THE FORMAT SPEC. CLONE FOR VIDEOS 02–48; REPLACE THE BEATS ARRAY ONLY.
+</footer>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const stage=document.getElementById("stage");
+let layer=document.createElementNS(NS,"g");stage.appendChild(layer);
+
+/* ── primitive kit ── */
+function E(t,a={},p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);(p||layer).appendChild(n);return n}
+function G(a={},p){return E("g",a,p)}
+function move(n,x,y){n.style.setProperty("--tx",x+"px");n.style.setProperty("--ty",y+"px");n.style.transform=`translate(${x}px,${y}px)`}
+function cell(x,y,o={}){const w=o.w||46,h=o.h||46;
+  const g=G({class:o.cls||"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:o.rx??9,fill:o.fill||"var(--cellf)",stroke:o.stroke||"var(--cells)","stroke-width":1.5,class:o.cls||"p"},g);
+  if(o.label!=null)E("text",{x:w/2,y:h/2+5,fill:o.tf||"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g).textContent=o.label;
+  g.rect=r;g.opacity=v=>g.style.opacity=v;return g}
+function label(x,y,s,o={}){const t=E("text",{x,y,fill:o.fill||"var(--dim)","font-family":o.f||"IBM Plex Mono","font-size":o.size||13,"text-anchor":o.anchor||"middle","letter-spacing":o.ls||0,class:o.cls||"p","font-weight":o.w||400},o.p);t.textContent=s;if(o.o!=null)t.style.opacity=o.o;return t}
+function line(x1,y1,x2,y2,o={}){return E("line",{x1,y1,x2,y2,stroke:o.stroke||"var(--cells)","stroke-width":o.sw||2,"stroke-linecap":"round",class:"p",...(o.attrs||{})})}
+function drawIn(l,ms,delay){const len=Math.hypot(l.x2.baseVal.value-l.x1.baseVal.value,l.y2.baseVal.value-l.y1.baseVal.value);
+  l.style.strokeDasharray=len;l.style.strokeDashoffset=len;l.style.transition="none";
+  requestAnimationFrame(()=>{l.style.transition=`stroke-dashoffset ${ms||420}ms cubic-bezier(.3,.7,.3,1) ${delay||0}ms, stroke .3s`;l.style.strokeDashoffset=0});return l}
+function arrow(x1,y1,x2,y2,o={}){const l=line(x1,y1,x2,y2,o);l.setAttribute("marker-end","url(#ah)");return l}
+function chip(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||(s.length*8.4+22);
+  const r=E("rect",{width:w,height:28,rx:14,fill:o.fill||"#1A2230",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const t=E("text",{x:w/2,y:19,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;g.w=w;return g}
+function nodeBox(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||64,h=o.h||44;
+  const r=E("rect",{width:w,height:h,rx:8,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:w/2,y:h/2+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;return g}
+function circleNode(cx,cy,s,o={}){const g=G({class:"p"});
+  const c=E("circle",{cx,cy,r:o.r||24,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.c=c;g.txt=t;return g}
+function fadeUp(n,d){n.style.opacity=0;setTimeout(()=>n.style.opacity=1,d||0);return n}
+function defs(){const d=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"},d);
+  E("path",{d:"M0 0 L10 5 L0 10 z",fill:"var(--cells)"},m)}
+function clearStage(){layer.remove();layer=document.createElementNS(NS,"g");stage.appendChild(layer);defs()}
+const C={blue:"var(--blue)",green:"var(--green)",red:"var(--red)",yellow:"var(--yellow)",grey:"var(--cellf)"};
+
+/* ── beats ── */
+let at; // scheduler injected per beat
+
+/* ── extra primitives for Video 10 ── */
+function panel(x,y,w,h,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:10,fill:o.fill||"#131A24",stroke:o.stroke||"var(--line)","stroke-width":o.sw||1.5,class:"p"},g);
+  g.rect=r;g.w=w;g.h=h;return g}
+function code(g,lines,o={}){const out=[];lines.forEach((s,i)=>{
+  const n=E("text",{x:o.x||18,y:(o.y||36)+i*(o.lh||28),fill:o.fill||"#B9C4D2","font-family":"IBM Plex Mono","font-size":o.size||13,class:"p"},g);
+  n.textContent=s;out.push(n)});return out}
+function bracket(x1,x2,y,txt,col,o={}){const g=G({class:"p"});const d=o.down?-1:1;
+  E("path",{d:`M${x1} ${y} v${-10*d} H${x2} v${10*d}`,stroke:col,"stroke-width":2,fill:"none",class:"p"},g);
+  const t=E("text",{x:(x1+x2)/2,y:y-16*d+(o.down?14:0),fill:col,"font-family":"IBM Plex Mono",
+    "font-size":o.size||13,"text-anchor":"middle",class:"p"},g);t.textContent=txt;g.txt=t;return g}
+function vbracket(y1,y2,x,txt,col){const g=G({class:"p"});
+  E("path",{d:`M${x} ${y1} h10 V${y2} h-10`,stroke:col,"stroke-width":2,fill:"none",class:"p"},g);
+  const t=E("text",{x:x+22,y:(y1+y2)/2+5,fill:col,"font-family":"IBM Plex Mono","font-size":13,"text-anchor":"start",class:"p"});
+  t.textContent=txt;g.txt=t;return g}
+function bar(x,y,w,col){const r=E("rect",{x,y,width:w,height:0,rx:6,fill:col,class:"p"});
+  r.grow=(h,ms)=>{r.style.transition=`height ${ms||900}ms ease, y ${ms||900}ms ease, fill .4s`;
+    r.setAttribute("height",h);r.setAttribute("y",y-h)};return r}
+function terms(cx,y,parts,size,o={}){const cw=size*0.6;
+  const total=parts.reduce((a,p)=>a+p.t.length,0)*cw;
+  let x=(o.anchor==="start")?cx:cx-total/2;const out=[];
+  parts.forEach(p=>{const t=E("text",{x,y,fill:p.c||"var(--text)","font-family":"IBM Plex Mono",
+    "font-size":size,"text-anchor":"start",class:"p"});t.textContent=p.t;out.push(t);x+=p.t.length*cw});
+  return out}
+/* stack frame plate: .expr text is the half-finished calculation */
+function fplate(x,y,w,h,ntxt,col,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:8,fill:o.fill||"#1B2431",stroke:col,"stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:18,y:h/2+6,fill:col,"font-family":"IBM Plex Mono","font-size":o.size||16,class:"p"},g);
+  t.textContent=ntxt;
+  const e=E("text",{x:w-18,y:h/2+6,fill:o.ef||"var(--dim)","font-family":"IBM Plex Mono",
+    "font-size":o.size||16,"text-anchor":"end",class:"p"},g);
+  e.textContent=o.expr||"";
+  g.rect=r;g.txt=t;g.expr=e;
+  g.tint=c=>{r.setAttribute("stroke",c);t.setAttribute("fill",c);
+    r.setAttribute("fill",c===C.green?"#122A21":c===C.red?"#2A1618":"#1B2431")};
+  return g}
+/* activation record with three compartments */
+function record(x,y,w,rows,col){const g=G({class:"p"});move(g,x,y);const rh=58;
+  E("rect",{width:w,height:rh*rows.length,rx:10,fill:"#1B2431",stroke:col,"stroke-width":2,class:"p"},g);
+  g.parts=rows.map((r,i)=>{
+    if(i)E("line",{x1:0,y1:i*rh,x2:w,y2:i*rh,stroke:col,"stroke-width":1.2,"stroke-dasharray":"4 4",class:"p"},g);
+    const a=E("text",{x:20,y:i*rh+35,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":13,class:"p"},g);
+    a.textContent=r[0];
+    const b=E("text",{x:w-20,y:i*rh+35,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":16,"text-anchor":"end",class:"p"},g);
+    b.textContent=r[1];
+    return {lab:a,val:b,y:i*rh}});
+  g.rh=rh;return g}
+
+const SY=i=>410-i*62;          /* stack slot y, index 0 = bottom */
+
+const BEATS=[
+{s:"HOOK",t:"0:00",vo:"A function calls itself. Then that copy calls itself. Then that one does too — five levels deep, ten, a hundred.",
+ vis:"A single frame plate in the centre.",act:"Plate spawns a copy beneath it, which spawns another, five deep, 250ms apart.",hold:"900ms",dur:5800,
+ build(){
+  label(480,90,"fact(5)",{fill:C.blue,size:22,f:"IBM Plex Mono"});
+  const fs=[];
+  for(let i=0;i<5;i++)at(400+i*250,()=>{
+    const f=fplate(330,150+i*66,300,54,"fact("+(5-i)+")",C.blue);
+    f.style.opacity=0;move(f,330,120+i*66);
+    setTimeout(()=>{f.style.opacity=1;move(f,330,150+i*66)},20);fs.push(f)});
+  at(2200,()=>{const a=arrow(300,180,300,460,{stroke:"var(--faint)"});drawIn(a,900)});
+  at(3200,()=>fadeUp(label(200,320,"it calls",{fill:"var(--faint)",size:14,anchor:"end"}),0));
+  at(3400,()=>fadeUp(label(200,346,"itself",{fill:"var(--faint)",size:14,anchor:"end"}),0));
+  at(4200,()=>fadeUp(label(480,510,"five deep · ten · a hundred",{size:16}),0));
+ }},
+{s:"HOOK",t:"0:10",vo:"Every one of them has its own value of n. Its own half-finished calculation. So where is all that being kept?",
+ vis:"Five plates, each labeled n = 5 down to n = 1.",act:"Labels write in; each plate's n pulses.",hold:"1100ms",dur:6400,
+ build(){
+  const fs=[];
+  for(let i=0;i<5;i++)fs.push(fplate(300,140+i*66,360,54,"fact("+(5-i)+")",C.blue));
+  fs.forEach((f,i)=>at(500+i*280,()=>{f.expr.textContent="n = "+(5-i);f.expr.setAttribute("fill",C.yellow)}));
+  at(2200,()=>fs.forEach((f,i)=>setTimeout(()=>{
+    f.expr.setAttribute("fill","var(--text)");
+    setTimeout(()=>f.expr.setAttribute("fill",C.yellow),300)},i*140)));
+  at(3400,()=>fadeUp(label(480,500,"five different values of n, all alive at once",{fill:C.yellow,size:17}),0));
+  at(4400,()=>fadeUp(label(480,90,"so where is all of that being kept?",{size:19}),0));
+ }},
+{s:"HOOK",t:"0:20",vo:"Not in your code. Your code has one copy of that function. The memory is somewhere else — and once you can see it, recursion stops being magic.",
+ vis:"Title card.",act:'"RECURSION & THE CALL STACK" types on, Unit 3 accent.',hold:"600ms",dur:5600,
+ build(){
+  const P=panel(320,120,320,120,{stroke:"var(--line)"});
+  code(P,["int fact(int n){","  ...","}"],{y:38,lh:32,size:15});
+  at(500,()=>fadeUp(label(480,272,"one copy of the code",{fill:"var(--dim)",size:14}),0));
+  const t=label(480,370,"",{fill:C.blue,size:36,f:"Space Grotesk",w:700,ls:"0.02em"});
+  const full="RECURSION & THE CALL STACK";
+  for(let i=0;i<=full.length;i++)at(1200+i*66,()=>t.textContent=full.slice(0,i)+(i<full.length?"▌":""));
+  at(1200+full.length*66+140,()=>{t.textContent=full;
+    fadeUp(label(480,418,"UNIT 3",{size:13,ls:"0.3em"}),0)});
+  at(4400,()=>fadeUp(label(480,478,"once you can see the stack, it stops being magic",{size:15}),0));
+ }},
+{s:"PROMISE",t:"0:30",vo:"The two mandatory parts of any recursive function, the call stack traced frame by frame, the two phases people miss, and what happens when it goes wrong.",
+ vis:"Four chips: Structure · Stack · Two Phases · Failure.",act:"Stagger 150ms.",hold:"500ms",dur:4600,
+ build(){
+  label(480,130,"IN THIS VIDEO",{ls:"0.28em",size:12});
+  ["The two mandatory parts","The call stack, traced","The two phases","When it goes wrong"].forEach((s,i)=>{
+    const c=chip(-360,200+i*66,s,{w:320});c.rect.setAttribute("height",46);c.txt.setAttribute("y",28);c.style.opacity=0;
+    const n=label(276,200+i*66+29,"0"+(i+1),{fill:C.blue,size:13});n.style.opacity=0;
+    at(200+i*150,()=>{move(c,320,200+i*66);c.style.opacity=1;n.style.opacity=1})});
+ }},
+{s:"CORE 1 · THE TWO PARTS",t:"0:50",vo:"Every recursive function has exactly two parts. Miss either and it breaks.",
+ vis:"Code panel, empty, two labeled regions.",act:"Regions outline.",hold:"500ms",dur:4000,
+ build(){
+  label(480,110,"EXACTLY TWO PARTS",{fill:C.blue,ls:"0.26em",size:14});
+  [["BASE CASE",C.green],["RECURSIVE CASE",C.blue]].forEach((d,i)=>at(400+i*400,()=>{
+    const r=E("rect",{x:130,y:180+i*130,width:700,height:110,rx:12,fill:"#101720",stroke:"var(--line)",
+      "stroke-width":2,"stroke-dasharray":"7 7",class:"p"});
+    r.style.opacity=0;setTimeout(()=>r.style.opacity=1,20);
+    label(480,242+i*130,d[0],{fill:"var(--faint)",size:20,ls:"0.16em"})}));
+  at(1800,()=>fadeUp(label(480,460,"miss either one and it breaks",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 1 · THE TWO PARTS",t:"1:00",vo:"The base case — the condition where it stops calling itself and just returns an answer directly.",
+ vis:"Code panel: if (n == 0) return 1;",act:"Line types on, green.",hold:"900ms",dur:5200,
+ build(){
+  const a=E("rect",{x:130,y:180,width:700,height:110,rx:12,fill:"#101720",stroke:C.green,"stroke-width":2,class:"p"});
+  E("rect",{x:130,y:310,width:700,height:110,rx:12,fill:"#101720",stroke:"var(--line)","stroke-width":2,"stroke-dasharray":"7 7",class:"p"});
+  label(480,372,"RECURSIVE CASE",{fill:"var(--faint)",size:20,ls:"0.16em"});
+  label(180,160,"BASE CASE",{fill:C.green,size:13,ls:"0.2em",anchor:"start"});
+  const t=label(480,248,"",{fill:C.green,size:28,f:"IBM Plex Mono"});
+  const full="if (n == 0) return 1;";
+  for(let i=0;i<=full.length;i++)at(500+i*95,()=>t.textContent=full.slice(0,i));
+  at(2800,()=>fadeUp(label(480,460,"it stops calling — and answers directly",{fill:C.green,size:17}),0));
+  at(3700,()=>fadeUp(label(480,505,"this is the only way the recursion ever ends",{size:14}),0));
+ }},
+{s:"CORE 1 · THE TWO PARTS",t:"1:15",vo:"And the recursive case — where it calls itself, but on a smaller version of the problem.",
+ vis:"Second line: return n * fact(n-1);",act:"Line types on, blue; n-1 pulses yellow.",hold:"1000ms",dur:6000,
+ build(){
+  E("rect",{x:130,y:180,width:700,height:110,rx:12,fill:"#101720",stroke:C.green,"stroke-width":2,class:"p"});
+  label(480,248,"if (n == 0) return 1;",{fill:C.green,size:28,f:"IBM Plex Mono"});
+  label(180,160,"BASE CASE",{fill:C.green,size:13,ls:"0.2em",anchor:"start"});
+  const b=E("rect",{x:130,y:310,width:700,height:110,rx:12,fill:"#101720",stroke:C.blue,"stroke-width":2,class:"p"});
+  label(180,300,"RECURSIVE CASE",{fill:C.blue,size:13,ls:"0.2em",anchor:"start"});
+  const T=terms(480,378,[{t:"return n * fact(",c:C.blue},{t:"n-1",c:C.blue},{t:");",c:C.blue}],28);
+  T.forEach(t=>t.style.opacity=0);
+  at(500,()=>T[0].style.opacity=1);
+  at(1300,()=>T[1].style.opacity=1);
+  at(1600,()=>T[2].style.opacity=1);
+  for(let k=0;k<3;k++){
+    at(2200+k*500,()=>T[1].setAttribute("fill",C.yellow));
+    at(2450+k*500,()=>T[1].setAttribute("fill",C.blue))}
+  at(3900,()=>{T[1].setAttribute("fill",C.yellow);
+    fadeUp(label(480,470,"it calls itself — on a SMALLER problem",{fill:C.yellow,size:17}),0)});
+ }},
+{s:"CORE 1 · THE TWO PARTS",t:"1:30",vo:"That word smaller is doing all the work. Each call must move closer to the base case, or you never reach it.",
+ vis:"Number line from 5 down to 0.",act:"Marker steps 5 → 4 → 3 → 2 → 1 → 0, landing green on 0.",hold:"1200ms",dur:6600,
+ build(){
+  label(480,120,"EACH CALL MUST GET CLOSER",{fill:C.yellow,ls:"0.2em",size:14});
+  const X=i=>200+(5-i)*112;
+  line(180,280,760,280,{stroke:"var(--line)",sw:2});
+  const dots=[];
+  for(let n=5;n>=0;n--){const c=E("circle",{cx:X(n),cy:280,r:9,fill:"#1B2431",stroke:"var(--cells)","stroke-width":2,class:"p"});
+    label(X(n),330,n,{fill:"var(--dim)",size:20,f:"IBM Plex Mono"});dots.push({n,c})}
+  const mk=E("path",{d:"M0 0 L-12 -18 L12 -18 z",fill:C.blue,class:"p"});
+  move(mk,X(5),256);
+  for(let k=0;k<=5;k++)at(700+k*550,()=>{
+    const n=5-k;move(mk,X(n),256);
+    const d=dots.find(d=>d.n===n);
+    d.c.setAttribute("stroke",n===0?C.green:C.blue);d.c.setAttribute("fill",n===0?C.green:"#12213A")});
+  at(1000,()=>fadeUp(label(480,220,"n → n-1",{fill:C.blue,size:18,f:"IBM Plex Mono"}),0));
+  at(4000,()=>{mk.setAttribute("fill",C.green);
+    fadeUp(label(X(0),400,"BASE CASE",{fill:C.green,size:13,ls:"0.14em"}),0)});
+  at(4900,()=>fadeUp(label(480,470,"never shrink, and you never arrive",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 1 · THE TWO PARTS",t:"1:48",vo:"Factorial in full. Five lines of C, and it computes something a loop would take the same five lines to do.",
+ vis:"Full function in code panel.",act:"Function assembles.",hold:"1100ms",dur:5800,
+ build(){
+  const P=panel(180,140,600,260,{stroke:C.blue});
+  const SRC=["int fact(int n) {","    if (n == 0)","        return 1;","    return n * fact(n-1);","}"];
+  const ls=code(P,SRC.map(()=>""),{y:56,lh:48,size:19});
+  SRC.forEach((s,i)=>at(400+i*600,()=>{ls[i].textContent=s;
+    if(i===1||i===2)ls[i].setAttribute("fill",C.green);
+    if(i===3)ls[i].setAttribute("fill",C.blue)}));
+  at(3600,()=>{const b=vbracket(190,260,790,"base case",C.green);b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(4100,()=>{const b=vbracket(275,305,790,"recursive case",C.blue);b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(4700,()=>fadeUp(label(480,460,"five lines — the same as the loop version",{size:16}),0));
+ }},
+{s:"CORE 1 · THE TWO PARTS",t:"2:05",vo:"The reason this works is a definition that refers to itself. Five factorial is five times four factorial. Four factorial is four times three factorial. The definition is already recursive — the code just copies it.",
+ vis:"Chain of expressions expanding rightward.",act:"5! = 5×4! → = 5×4×3! → expands to 5×4×3×2×1!.",hold:"1400ms",dur:7400,
+ build(){
+  label(480,100,"THE DEFINITION IS ALREADY RECURSIVE",{fill:C.yellow,ls:"0.14em",size:13});
+  const EXP=["5!  =  5 × 4!",
+             "5!  =  5 × 4 × 3!",
+             "5!  =  5 × 4 × 3 × 2!",
+             "5!  =  5 × 4 × 3 × 2 × 1!",
+             "5!  =  5 × 4 × 3 × 2 × 1"];
+  const ns=EXP.map((s,i)=>{const t=label(480,180+i*62,s,{fill:i===4?C.green:"var(--text)",size:26,f:"IBM Plex Mono"});
+    t.style.opacity=0;return t});
+  ns.forEach((n,i)=>at(500+i*900,()=>n.style.opacity=1));
+  at(5000,()=>fadeUp(label(480,500,"the code just copies the definition",{fill:C.green,size:17}),0));
+ }},
+{s:"CORE 1 · THE TWO PARTS",t:"2:25",vo:"That's the real reason to use recursion. Not because it's clever — because for some problems, the recursive definition is the natural one, and the loop version is the translation.",
+ vis:"Expression chain holds.",act:"Hold, no motion.",hold:"1200ms",dur:6000,
+ build(){
+  const A=panel(60,150,380,220,{stroke:C.green});
+  label(250,200,"RECURSIVE",{fill:C.green,size:15,ls:"0.2em"});
+  code(A,["if (n == 0)","    return 1;","return n * fact(n-1);"],{x:30,y:100,lh:40,size:16});
+  const B=panel(520,150,380,220,{stroke:"var(--line)"});
+  label(710,200,"ITERATIVE",{fill:"var(--dim)",size:15,ls:"0.2em"});
+  code(B,["r = 1;","for (i=1; i<=n; i++)","    r = r * i;"],{x:30,y:100,lh:40,size:16});
+  at(1000,()=>fadeUp(label(250,410,"matches the definition",{fill:C.green,size:15}),0));
+  at(1600,()=>fadeUp(label(710,410,"a translation of it",{fill:"var(--dim)",size:15}),0));
+  at(2600,()=>fadeUp(label(480,470,"not because it's clever —",{size:17}),0));
+  at(3200,()=>fadeUp(label(480,506,"because for some problems it is the natural shape",{fill:C.green,size:17}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"2:45",vo:"Now the mechanism. When any function is called — recursive or not — the system creates a block of memory called an activation record, or a stack frame.",
+ vis:"Single frame plate, expanded to show three compartments.",act:"Plate draws; compartments label.",hold:"1000ms",dur:5800,
+ build(){
+  label(480,90,"ACTIVATION RECORD",{fill:C.blue,ls:"0.26em",size:14});
+  label(480,128,"also called: a stack frame",{size:13});
+  const r=record(300,180,360,[["parameters",""],["local variables",""],["return address",""]],C.blue);
+  r.style.opacity=0;
+  at(600,()=>r.style.opacity=1);
+  at(1600,()=>r.parts.forEach((p,i)=>setTimeout(()=>p.lab.setAttribute("fill",C.blue),i*260)));
+  at(3000,()=>fadeUp(label(480,400,"created on every call — recursive or not",{size:16}),0));
+  at(3900,()=>fadeUp(label(480,450,"this is where each copy's n actually lives",{fill:C.yellow,size:15}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"3:00",vo:"It holds the parameters, the local variables, and — critically — the return address: the line to come back to when this call finishes.",
+ vis:"Compartments filling: n = 5, locals, return addr.",act:"Each fills in turn, 300ms apart; return address pulses yellow.",hold:"1300ms",dur:6400,
+ build(){
+  const r=record(280,150,400,[["parameters",""],["local variables",""],["return address",""]],C.blue);
+  r.parts.forEach(p=>p.lab.setAttribute("fill",C.blue));
+  const V=["n = 5","(none)","line 14"];
+  V.forEach((v,i)=>at(500+i*600,()=>{r.parts[i].val.textContent=v;
+    r.parts[i].val.setAttribute("fill",i===2?C.yellow:"var(--text)")}));
+  for(let k=0;k<3;k++){
+    at(2600+k*400,()=>r.parts[2].val.setAttribute("fill","var(--text)"));
+    at(2800+k*400,()=>r.parts[2].val.setAttribute("fill",C.yellow))}
+  at(4000,()=>fadeUp(label(480,400,"the return address is the critical one",{fill:C.yellow,size:18}),0));
+  at(4800,()=>fadeUp(label(480,450,"it's how the function knows where to come back to",{size:15}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"3:18",vo:"These frames stack up. Newest on top. And the rule is strict — you can only ever remove the top one.",
+ vis:"Three plates stacked.",act:"Top plate lifts and returns; lower plates locked with a small lock icon.",hold:"1200ms",dur:6200,
+ build(){
+  label(480,90,"NEWEST ON TOP",{fill:C.blue,ls:"0.28em",size:14});
+  const fs=[];
+  for(let i=0;i<3;i++)fs.push(fplate(300,340-i*80,360,64,"frame "+(i+1),C.blue));
+  at(600,()=>{const t=fs[2];t.tint(C.green);
+    fadeUp(label(700,212,"◀ TOP",{fill:C.green,size:14,anchor:"start"}),0)});
+  at(1400,()=>{move(fs[2],300,120);fs[2].style.opacity=.4});
+  at(2100,()=>{move(fs[2],300,180);fs[2].style.opacity=1});
+  at(2900,()=>[0,1].forEach((k,i)=>setTimeout(()=>{
+    fs[k].tint("var(--faint)");
+    fadeUp(label(262,378-k*80,"LOCKED",{fill:"var(--faint)",size:11,ls:"0.14em",anchor:"end"}),0)},i*250)));
+  at(3900,()=>fadeUp(label(480,450,"you can only ever remove the top one",{fill:C.yellow,size:17}),0));
+  at(4700,()=>fadeUp(label(480,496,"that strictness is what makes it a stack",{size:15}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"3:35",vo:"Let's trace factorial of four. Frame one: n equals four. It needs three factorial before it can multiply, so it pauses — mid-statement — and calls.",
+ vis:"Work area right shows the expression; call stack builds in left column.",act:"Plate n=4 drops in; its expression shows 4 × ___ with a blank.",hold:"1200ms",dur:6400,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.24em",size:12});
+  label(700,100,"WHAT IT'S WAITING FOR",{fill:"var(--dim)",ls:"0.14em",size:12});
+  line(480,120,480,480,{stroke:"var(--line)",sw:1});
+  E("line",{x1:60,y1:472,x2:440,y2:472,stroke:"var(--cells)","stroke-width":3});
+  const f=fplate(60,SY(0),380,54,"n = 4",C.blue,{expr:"fact(4)"});
+  f.style.opacity=0;move(f,60,SY(0)-70);
+  at(600,()=>{f.style.opacity=1;move(f,60,SY(0))});
+  at(1600,()=>fadeUp(label(700,220,"4 × ___",{fill:C.yellow,size:34,f:"IBM Plex Mono"}),0));
+  at(2400,()=>fadeUp(label(700,280,"needs fact(3) first",{fill:"var(--dim)",size:15}),0));
+  at(3400,()=>fadeUp(label(700,360,"so it pauses",{fill:C.yellow,size:19}),0));
+  at(4000,()=>fadeUp(label(700,396,"mid-statement",{fill:C.yellow,size:19}),0));
+  at(4800,()=>fadeUp(label(700,450,"…and calls",{size:16}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"3:52",vo:"Frame two: n equals three. Same thing. It pauses, and calls again.",
+ vis:"Second plate.",act:"Plate n=3 drops; expression 3 × ___.",hold:"900ms",dur:4800,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.24em",size:12});
+  line(480,120,480,480,{stroke:"var(--line)",sw:1});
+  E("line",{x1:60,y1:472,x2:440,y2:472,stroke:"var(--cells)","stroke-width":3});
+  fplate(60,SY(0),380,54,"n = 4",C.blue,{expr:"4 × ___"});
+  label(700,200,"4 × ___",{fill:"var(--faint)",size:26,f:"IBM Plex Mono"});
+  const f=fplate(60,SY(1),380,54,"n = 3",C.blue,{expr:"3 × ___"});
+  f.style.opacity=0;move(f,60,SY(1)-70);
+  at(500,()=>{f.style.opacity=1;move(f,60,SY(1))});
+  at(1400,()=>fadeUp(label(700,270,"3 × ___",{fill:C.yellow,size:34,f:"IBM Plex Mono"}),0));
+  at(2400,()=>fadeUp(label(700,360,"pauses. calls again.",{size:17}),0));
+  at(3200,()=>fadeUp(label(700,410,"nothing has been computed yet",{fill:C.red,size:14}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"4:05",vo:"Two. Then one. Then n equals zero — and this one doesn't call anybody. It's the base case. It returns one.",
+ vis:"Plates for 2, 1, 0.",act:"Three plates drop, 400ms apart; the n=0 plate turns green and shows return 1.",hold:"1400ms",dur:7000,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.24em",size:12});
+  line(480,120,480,480,{stroke:"var(--line)",sw:1});
+  E("line",{x1:60,y1:472,x2:440,y2:472,stroke:"var(--cells)","stroke-width":3});
+  fplate(60,SY(0),380,54,"n = 4",C.blue,{expr:"4 × ___"});
+  fplate(60,SY(1),380,54,"n = 3",C.blue,{expr:"3 × ___"});
+  const EX=["2 × ___","1 × ___","return 1"];
+  const fs=[];
+  [2,1,0].forEach((n,i)=>at(500+i*800,()=>{
+    const f=fplate(60,SY(i+2),380,54,"n = "+n,n===0?C.green:C.blue,{expr:EX[i]});
+    f.style.opacity=0;move(f,60,SY(i+2)-70);
+    setTimeout(()=>{f.style.opacity=1;move(f,60,SY(i+2))},20);
+    if(n===0){f.expr.setAttribute("fill",C.green)}
+    fs.push(f)}));
+  at(1000,()=>fadeUp(label(700,200,"2 × ___",{fill:"var(--faint)",size:24,f:"IBM Plex Mono"}),0));
+  at(1800,()=>fadeUp(label(700,250,"1 × ___",{fill:"var(--faint)",size:24,f:"IBM Plex Mono"}),0));
+  at(2800,()=>fadeUp(label(700,320,"n = 0",{fill:C.green,size:34,f:"IBM Plex Mono"}),0));
+  at(3400,()=>fadeUp(label(700,370,"it doesn't call anybody",{fill:C.green,size:17}),0));
+  at(4200,()=>fadeUp(label(700,430,"BASE CASE — returns 1",{fill:C.green,size:16,ls:"0.08em"}),0));
+  at(5200,()=>fadeUp(label(250,150,"five frames alive",{fill:C.yellow,size:15}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"4:25",vo:"Now watch the direction reverse. This is the phase students never picture.",
+ vis:"Full stack of five plates.",act:"Hold, then the base plate pulses green.",hold:"900ms",dur:4600,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.24em",size:12});
+  E("line",{x1:60,y1:472,x2:440,y2:472,stroke:"var(--cells)","stroke-width":3});
+  const EX=["4 × ___","3 × ___","2 × ___","1 × ___","return 1"];
+  const fs=[4,3,2,1,0].map((n,i)=>fplate(60,SY(i),380,54,"n = "+n,n===0?C.green:C.blue,{expr:EX[i]}));
+  fs[4].expr.setAttribute("fill",C.green);
+  at(500,()=>{const a=arrow(520,180,520,430,{stroke:C.blue});drawIn(a,700);
+    setTimeout(()=>fadeUp(label(560,300,"winding",{fill:C.blue,size:15,anchor:"start"}),0),700)});
+  at(1800,()=>{const a=arrow(700,430,700,180,{stroke:C.green});drawIn(a,700);
+    setTimeout(()=>fadeUp(label(740,300,"unwinding",{fill:C.green,size:15,anchor:"start"}),0),700)});
+  at(2900,()=>{fs[4].rect.setAttribute("fill","#1E4A38")});
+  at(3200,()=>fs[4].rect.setAttribute("fill","#122A21"));
+  at(3600,()=>fadeUp(label(700,470,"the phase students never picture",{fill:C.green,size:15}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"4:38",vo:"The base frame returns one and is destroyed. That one flows up into the frame waiting below — which finally fills its blank: one times one is one.",
+ vis:"Stack.",act:"n=0 plate fades red and vanishes; value 1 flies up; n=1 plate's blank fills, showing 1 × 1 = 1.",hold:"1400ms",dur:7000,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.24em",size:12});
+  E("line",{x1:60,y1:472,x2:440,y2:472,stroke:"var(--cells)","stroke-width":3});
+  const EX=["4 × ___","3 × ___","2 × ___","1 × ___","return 1"];
+  const fs=[4,3,2,1,0].map((n,i)=>fplate(60,SY(i),380,54,"n = "+n,n===0?C.green:C.blue,{expr:EX[i]}));
+  fs[4].expr.setAttribute("fill",C.green);
+  at(600,()=>fs[4].tint(C.red));
+  const v=label(250,SY(4)+30,"1",{fill:C.green,size:34,f:"IBM Plex Mono"});v.style.opacity=0;
+  at(1200,()=>{fs[4].style.opacity=0;v.style.opacity=1});
+  at(1800,()=>{v.style.transition="transform .7s ease";move(v,0,62)});
+  at(2600,()=>{v.style.opacity=0;fs[3].expr.textContent="1 × 1";fs[3].expr.setAttribute("fill",C.yellow)});
+  at(3400,()=>{fs[3].expr.textContent="1 × 1 = 1";fs[3].expr.setAttribute("fill",C.green);fs[3].tint(C.green)});
+  at(4200,()=>fadeUp(label(700,240,"the blank finally fills",{fill:C.green,size:18}),0));
+  at(5000,()=>fadeUp(label(700,300,"this is where the work happens",{fill:C.green,size:16}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"4:58",vo:"That frame returns and is destroyed too. Two times one is two. Then three times two is six. Then four times six is twenty-four.",
+ vis:"Stack unwinding.",act:"Three more plates resolve and vanish in sequence, 600ms apart, each filling its blank and passing the value upward.",hold:"1500ms",dur:7600,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.24em",size:12});
+  E("line",{x1:60,y1:472,x2:440,y2:472,stroke:"var(--cells)","stroke-width":3});
+  const EX=["4 × ___","3 × ___","2 × ___","1 × 1 = 1"];
+  const fs=[4,3,2,1].map((n,i)=>fplate(60,SY(i),380,54,"n = "+n,i===3?C.green:C.blue,{expr:EX[i]}));
+  fs[3].expr.setAttribute("fill",C.green);
+  const STEPS=[[3,2,"2 × 1 = 2",2],[2,3,"3 × 2 = 6",6],[1,4,"4 × 6 = 24",24]];
+  STEPS.forEach((s,k)=>{
+    at(600+k*1500,()=>{const gone=fs[3-k];gone.tint(C.red)});
+    at(1000+k*1500,()=>{const gone=fs[3-k];gone.style.opacity=0;
+      const t=fs[2-k];t.expr.textContent=s[2];t.expr.setAttribute("fill",C.green);t.tint(C.green)});
+    at(1400+k*1500,()=>{const t=fs[2-k];
+      const v=label(700,SY(2-k)+30,s[3],{fill:C.green,size:26,f:"IBM Plex Mono"});
+      v.style.opacity=0;setTimeout(()=>v.style.opacity=1,20)})});
+  at(5600,()=>fadeUp(label(700,150,"every multiply happens here",{fill:C.green,size:16}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"5:20",vo:"Stack empty. Answer twenty-four. And notice — every multiplication happened on the way back up. Nothing was computed on the way down.",
+ vis:"Empty stack, result 24 centered.",act:"Result enlarges green.",hold:"1400ms",dur:6600,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.24em",size:12});
+  E("line",{x1:60,y1:472,x2:440,y2:472,stroke:"var(--cells)","stroke-width":3});
+  const f=fplate(60,SY(0),380,54,"n = 4",C.green,{expr:"4 × 6 = 24"});
+  f.expr.setAttribute("fill",C.green);
+  at(600,()=>f.tint(C.red));
+  at(1100,()=>{f.style.opacity=0;fadeUp(label(250,SY(0)+30,"EMPTY",{fill:"var(--faint)",size:16,ls:"0.2em"}),0)});
+  const r=label(700,280,"24",{fill:C.green,size:44,f:"IBM Plex Mono"});r.style.opacity=0;
+  at(1800,()=>r.style.opacity=1);
+  at(2400,()=>{r.setAttribute("font-size",96)});
+  at(3400,()=>fadeUp(label(700,380,"every multiplication",{fill:C.green,size:17}),0));
+  at(3700,()=>fadeUp(label(700,412,"happened on the way back up",{fill:C.green,size:17}),0));
+  at(4600,()=>fadeUp(label(480,510,"nothing at all was computed on the way down",{fill:C.yellow,size:16}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"5:45",vo:"So there are two phases in every recursion. Winding, going down — frames pile up, work is deferred. Unwinding, coming back — frames collapse, work actually happens.",
+ vis:"Two labeled arrows beside the stack region: down blue, up green.",act:"Arrows draw.",hold:"1300ms",dur:6800,
+ build(){
+  label(480,80,"TWO PHASES",{fill:C.yellow,ls:"0.3em",size:14});
+  const A=panel(60,130,380,320,{stroke:C.blue});
+  const B=panel(520,130,380,320,{stroke:C.green});
+  label(250,180,"WINDING",{fill:C.blue,size:22,f:"Space Grotesk",w:700});
+  label(710,180,"UNWINDING",{fill:C.green,size:22,f:"Space Grotesk",w:700});
+  at(500,()=>{const a=arrow(250,220,250,330,{stroke:C.blue});drawIn(a,600)});
+  at(1200,()=>{fadeUp(label(250,370,"frames pile up",{fill:"var(--text)",size:17}),0);
+    fadeUp(label(250,406,"work is deferred",{fill:C.blue,size:16}),150)});
+  at(2400,()=>{const a=arrow(710,330,710,220,{stroke:C.green});drawIn(a,600)});
+  at(3100,()=>{fadeUp(label(710,370,"frames collapse",{fill:"var(--text)",size:17}),0);
+    fadeUp(label(710,406,"work actually happens",{fill:C.green,size:16}),150)});
+  at(4400,()=>fadeUp(label(480,500,"going down defers · coming back computes",{size:16}),0));
+ }},
+{s:"CORE 2 · THE CALL STACK",t:"6:00",vo:"Which phase your work happens in determines what kind of recursion you've written. That's the next video, entirely.",
+ vis:"Arrows hold.",act:"Up-arrow pulses.",hold:"1100ms",dur:5200,
+ build(){
+  const A=panel(60,140,380,300,{stroke:"var(--line)"});
+  const B=panel(520,140,380,300,{stroke:C.green});
+  label(250,190,"WINDING",{fill:"var(--faint)",size:22,f:"Space Grotesk",w:700});
+  label(710,190,"UNWINDING",{fill:C.green,size:22,f:"Space Grotesk",w:700});
+  const a=arrow(250,230,250,340,{stroke:"var(--faint)"});
+  const b=arrow(710,340,710,230,{stroke:C.green});
+  for(let k=0;k<3;k++){
+    at(600+k*600,()=>{b.setAttribute("stroke-width",5);B.rect.setAttribute("stroke-width",3)});
+    at(900+k*600,()=>{b.setAttribute("stroke-width",2);B.rect.setAttribute("stroke-width",1.5)})}
+  at(2600,()=>fadeUp(label(480,480,"which phase your work lands in",{size:18}),0));
+  at(3000,()=>fadeUp(label(480,516,"decides what kind of recursion you wrote — next video",{fill:C.yellow,size:15}),0));
+ }},
+{s:"CORE 3 · THE COST",t:"6:15",vo:"So what does this cost? Video three told you recursion charges you variable space. Now you can see exactly why.",
+ vis:"Stack of 5 plates with a memory bracket beside it.",act:"Bracket draws.",hold:"800ms",dur:4800,
+ build(){
+  label(250,100,"AT ITS DEEPEST POINT",{fill:C.yellow,ls:"0.16em",size:12});
+  const EX=["4 × ___","3 × ___","2 × ___","1 × ___","return 1"];
+  [4,3,2,1,0].forEach((n,i)=>fplate(60,SY(i),380,54,"n = "+n,n===0?C.green:C.blue,{expr:EX[i]}));
+  at(700,()=>{const b=vbracket(SY(4),SY(0)+54,470,"5 frames alive at once",C.yellow);
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(2000,()=>fadeUp(label(720,240,"video 03 said recursion",{size:16}),0));
+  at(2300,()=>fadeUp(label(720,272,"charges you variable space",{size:16}),0));
+  at(3100,()=>fadeUp(label(720,340,"this is why",{fill:C.yellow,size:22}),0));
+ }},
+{s:"CORE 3 · THE COST",t:"6:30",vo:"Factorial of n holds n frames simultaneously at its deepest point. Space complexity: O of n. The iterative version holds one variable — O of one.",
+ vis:"Split: recursive stack tall, iterative single cell.",act:"Chips write O(n) yellow and O(1) green.",hold:"1400ms",dur:6400,
+ build(){
+  line(480,90,480,480,{stroke:"var(--line)",sw:1});
+  label(240,120,"RECURSIVE",{fill:C.yellow,ls:"0.2em",size:13});
+  label(720,120,"ITERATIVE",{fill:C.green,ls:"0.2em",size:13});
+  const EX=["n","n-1","n-2","…","0"];
+  EX.forEach((s,i)=>at(300+i*180,()=>{
+    const f=fplate(80,400-i*54,320,46,"n = "+s,C.yellow,{size:14});
+    f.style.opacity=0;setTimeout(()=>f.style.opacity=1,20)}));
+  at(1600,()=>{const c=cell(660,340,{w:130,h:70,label:"r",stroke:C.green,tf:C.green});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20);
+    label(725,440,"one variable",{fill:C.green,size:14})});
+  at(2600,()=>{const c=chip(140,180,"O(n) space",{w:200,stroke:C.yellow,tf:C.yellow});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(3200,()=>{const c=chip(620,180,"O(1) space",{w:200,stroke:C.green,tf:C.green});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(4200,()=>fadeUp(label(720,250,"same answer, different memory",{size:15}),0));
+ }},
+{s:"CORE 3 · THE COST",t:"6:50",vo:"There's a time cost too. Every call means allocating a frame, copying parameters, saving a return address, and tearing it all down again. A loop does none of that.",
+ vis:"One frame plate with four labeled sub-steps.",act:"Sub-steps highlight in sequence.",hold:"1300ms",dur:6600,
+ build(){
+  label(480,90,"WHAT EVERY CALL ACTUALLY COSTS",{fill:C.red,ls:"0.16em",size:14});
+  const S=["allocate a frame","copy the parameters","save the return address","tear it all down again"];
+  const ps=S.map((s,i)=>{const p=panel(180,150+i*82,600,66,{stroke:"var(--line)"});p.style.opacity=0;
+    const t=label(480,192+i*82,s,{fill:"var(--dim)",size:19,f:"Space Grotesk",w:500});
+    at(300+i*200,()=>p.style.opacity=1);return {p,t}});
+  S.forEach((s,i)=>at(1400+i*550,()=>{ps[i].p.rect.setAttribute("stroke",C.red);
+    ps[i].t.setAttribute("fill","var(--text)")}));
+  at(4000,()=>fadeUp(label(480,510,"a loop does none of this",{fill:C.green,size:18}),0));
+ }},
+{s:"CORE 3 · THE COST",t:"7:10",vo:"Both versions are O of n in time. But the recursive one has a fatter constant — and video four told you constants don't change the class, while still mattering in real code. This is that situation, precisely.",
+ vis:"Two bars, same shape, different heights.",act:"Bars grow; both labeled O(n).",hold:"1400ms",dur:7000,
+ build(){
+  line(160,450,800,450,{stroke:"var(--line)",sw:1.5});
+  const b1=bar(250,450,150,C.green),b2=bar(600,450,150,C.yellow);
+  label(325,482,"iterative",{size:14});label(675,482,"recursive",{size:14});
+  at(500,()=>{b1.grow(120,900);setTimeout(()=>fadeUp(label(325,300,"O(n)",{fill:C.green,size:24,f:"IBM Plex Mono"}),0),900)});
+  at(1900,()=>{b2.grow(290,900);setTimeout(()=>fadeUp(label(675,130,"O(n)",{fill:C.yellow,size:24,f:"IBM Plex Mono"}),0),900)});
+  at(3400,()=>fadeUp(label(480,200,"same class",{fill:"var(--text)",size:20}),0));
+  at(4000,()=>fadeUp(label(480,240,"fatter constant",{fill:C.yellow,size:20}),0));
+  at(4900,()=>fadeUp(label(480,516,"video 04: constants don't change the class — and still matter",{size:15}),0));
+ }},
+{s:"CORE 4 · WHEN IT BREAKS",t:"7:45",vo:"And when it goes wrong. Remove the base case — or write one that's never reached.",
+ vis:"Code panel with the base case line struck through red.",act:"Strike-through.",hold:"800ms",dur:5000,
+ build(){
+  const P=panel(180,160,600,240,{stroke:C.red});
+  const ls=code(P,["int fact(int n) {","    if (n == 0)","        return 1;","    return n * fact(n-1);","}"],
+    {y:56,lh:46,size:18});
+  ls[1].setAttribute("fill",C.green);ls[2].setAttribute("fill",C.green);
+  ls[3].setAttribute("fill",C.blue);
+  at(700,()=>{const l1=line(200,214,760,214,{stroke:C.red,sw:3});drawIn(l1,400);
+    const l2=line(200,260,760,260,{stroke:C.red,sw:3});drawIn(l2,400,120);
+    ls[1].setAttribute("fill",C.red);ls[2].setAttribute("fill",C.red)});
+  at(1800,()=>fadeUp(label(480,450,"no base case — or one that's never reached",{fill:C.red,size:17}),0));
+  at(2900,()=>fadeUp(label(480,500,"nothing ever stops the calling",{size:15}),0));
+ }},
+{s:"CORE 4 · WHEN IT BREAKS",t:"7:58",vo:"Frames pile up and never come down. The stack has a fixed size — usually a megabyte or so — and eventually you run past the end of it.",
+ vis:"Stack region with a hard ceiling line.",act:"Plates stack rapidly, accelerating, until they hit and cross the ceiling; region flashes red.",hold:"1300ms",dur:7200,
+ build(){
+  const CEIL=120;
+  E("line",{x1:60,y1:472,x2:620,y2:472,stroke:"var(--cells)","stroke-width":3});
+  at(300,()=>{const l=line(60,CEIL,620,CEIL,{stroke:C.red,sw:3});drawIn(l,500);
+    setTimeout(()=>fadeUp(label(340,CEIL-16,"STACK LIMIT  ·  ~1 MB",{fill:C.red,size:13,ls:"0.14em"}),0),480)});
+  at(900,()=>{const b=vbracket(CEIL,472,640,"fixed size",C.red);b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  let t=1400;
+  for(let i=0;i<9;i++){const gap=Math.max(120,420-i*45);
+    at(t,()=>{const f=fplate(80,440-i*40,520,34,"fact("+(-i)+")",i>6?C.red:C.blue,{size:12});
+      f.style.opacity=0;setTimeout(()=>f.style.opacity=1,20)});
+    t+=gap}
+  at(5000,()=>{fplate(80,80,520,34,"fact(-9)",C.red,{size:12});
+    setTimeout(()=>fplate(80,44,520,34,"fact(-10)",C.red,{size:12}),160)});
+  at(5400,()=>{const r=E("rect",{x:56,y:40,width:568,height:436,rx:10,fill:"rgba(255,107,107,.18)",class:"p"});
+    r.style.opacity=0;setTimeout(()=>r.style.opacity=1,20)});
+  at(6000,()=>fadeUp(label(790,300,"past the end",{fill:C.red,size:20}),0));
+ }},
+{s:"CORE 4 · WHEN IT BREAKS",t:"8:15",vo:"Stack overflow. The program dies. And notice this is the same failure as writing past the end of an array in video five — fixed-size block, no bounds checking, same consequence.",
+ vis:"Red region, label STACK OVERFLOW.",act:"Label writes.",hold:"1300ms",dur:6600,
+ build(){
+  E("rect",{x:100,y:120,width:760,height:200,rx:12,fill:"rgba(255,107,107,.14)",stroke:C.red,"stroke-width":2});
+  const t=label(480,230,"",{fill:C.red,size:44,f:"Space Grotesk",w:700,ls:"0.06em"});
+  const full="STACK OVERFLOW";
+  for(let i=0;i<=full.length;i++)at(400+i*90,()=>t.textContent=full.slice(0,i));
+  at(2000,()=>fadeUp(label(480,285,"the program dies",{fill:C.red,size:18}),0));
+  at(2900,()=>fadeUp(label(480,370,"same failure as writing past an array — video 05",{fill:C.yellow,size:16}),0));
+  at(3800,()=>{fadeUp(label(250,440,"fixed-size block",{size:15}),0);
+    fadeUp(label(480,440,"no bounds checking",{size:15}),150);
+    fadeUp(label(730,440,"same consequence",{fill:C.red,size:15}),300)});
+ }},
+{s:"CORE 4 · WHEN IT BREAKS",t:"8:30",vo:"Common causes: a missing base case, a recursive call that doesn't shrink the problem, or a negative input hitting a base case that only checks for zero.",
+ vis:"Three-item list.",act:"Items stagger in red; the third shows n == 0 with n = −3 sliding past it.",hold:"1500ms",dur:7200,
+ build(){
+  label(480,90,"THE THREE COMMON CAUSES",{fill:C.red,ls:"0.16em",size:14});
+  const R=[["01","a missing base case","nothing ever stops it"],
+           ["02","a call that doesn't shrink","fact(n) instead of fact(n-1)"],
+           ["03","a negative input","n == 0 is never hit from below"]];
+  R.forEach((r,i)=>at(400+i*600,()=>{
+    const p=panel(120,140+i*88,720,72,{stroke:C.red});p.style.opacity=0;setTimeout(()=>p.style.opacity=1,20);
+    label(152,185+i*88,r[0],{fill:C.red,size:14,anchor:"start",f:"IBM Plex Mono"});
+    label(196,178+i*88,r[1],{fill:"var(--text)",size:19,anchor:"start",f:"Space Grotesk",w:500});
+    label(196,200+i*88,r[2],{size:12.5,anchor:"start"})}));
+  at(2800,()=>{
+    const gate=label(400,440,"n == 0",{fill:C.green,size:26,f:"IBM Plex Mono"});
+    const v=label(120,440,"n = −3",{fill:C.red,size:26,f:"IBM Plex Mono"});
+    setTimeout(()=>{v.style.transition="transform 1.6s linear";move(v,760,0)},300);
+    setTimeout(()=>fadeUp(label(480,500,"it sails straight past — and keeps going",{fill:C.red,size:16}),0),1900)});
+ }},
+{s:"CLOSE",t:"8:45",vo:"Recap. Every recursion needs a base case and a shrinking recursive case. Each call gets an activation record holding parameters, locals, and a return address. Frames stack up while winding down, and collapse while unwinding — and for many functions, the real work happens on the way back up. The cost is O of n stack space. And a missing or unreachable base case gives you stack overflow.",
+ vis:"Five-item summary card.",act:"Instant draw, no stagger.",hold:"2100ms",dur:7600,
+ build(){
+  label(480,58,"RECAP",{fill:C.blue,ls:"0.3em",size:13});
+  const D=[["01","Base case + shrinking recursive case","miss either one and it breaks"],
+           ["02","Every call gets an activation record","parameters · locals · return address"],
+           ["03","Winding down · unwinding back up","frames pile up, then collapse"],
+           ["04","The work happens on the way back","nothing at all is computed going down"],
+           ["05","O(n) stack space · overflow if unbounded","same failure mode as an array overrun"]];
+  D.forEach((d,i)=>{const y=90+i*88;
+    panel(70,y,820,74);
+    label(102,y+46,d[0],{fill:C.blue,size:14,anchor:"start",f:"IBM Plex Mono"});
+    label(146,y+34,d[1],{fill:"var(--text)",size:18,anchor:"start",f:"Space Grotesk",w:500});
+    label(146,y+58,d[2],{size:12.5,anchor:"start"})});
+ }},
+{s:"CLOSE",t:"9:20",vo:"Exam question: write a recursive function to compute the sum of the first n natural numbers, and state exactly how many activation records exist at the deepest point when n is five. Pause and answer both parts.",
+ vis:"Question card.",act:"Card slides up.",hold:"2400ms",dur:7000,
+ build(){
+  const g=G({class:"p"});move(g,140,560);
+  E("rect",{width:680,height:330,rx:16,fill:"#141B25",stroke:C.blue,"stroke-width":2},g);
+  const t1=E("text",{x:36,y:50,fill:C.blue,"font-family":"IBM Plex Mono","font-size":12,"letter-spacing":"0.24em"},g);
+  t1.textContent="EXAM QUESTION · 5 MARKS";
+  const t2=E("text",{x:36,y:96,fill:"var(--text)","font-family":"Space Grotesk","font-size":22,"font-weight":500},g);
+  t2.textContent="Sum of the first n natural numbers.";
+  E("rect",{x:36,y:120,width:608,height:110,rx:8,fill:"#0F151E",stroke:"var(--line)","stroke-width":1.5},g);
+  ["(a)  Write it recursively.","(b)  How many activation records exist","      at the deepest point when n = 5?"].forEach((s,i)=>{
+    const t=E("text",{x:58,y:154+i*30,fill:"#B9C4D2","font-family":"IBM Plex Mono","font-size":15},g);t.textContent=s});
+  const t4=E("text",{x:36,y:268,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t4.textContent="Careful — count the base-case frame too.";
+  const t3=E("text",{x:36,y:300,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t3.textContent="⏸  Pause and answer both parts.";
+  at(300,()=>move(g,140,110));
+  at(4000,()=>{const bar2=E("rect",{x:176,y:466,width:0,height:4,rx:2,fill:C.blue});
+    bar2.style.transition="width 2.4s linear";setTimeout(()=>bar2.setAttribute("width",608),30)});
+ }},
+{s:"CLOSE",t:"9:40",vo:"Next video: tail, head, and nested recursion — three shapes, and one of them costs nothing at all.",
+ vis:"End card.",act:"Fade.",hold:"End.",dur:6400,
+ build(){
+  const l=label(110,200,"NEXT",{fill:"var(--dim)",size:14,anchor:"start",ls:"0.3em"});
+  const a=label(110,262,"Types of Recursion",{fill:"var(--text)",size:40,f:"Space Grotesk",w:700,anchor:"start"});
+  const b=label(110,306,"tail, head, nested — three shapes,",{fill:"var(--dim)",size:17,anchor:"start"});
+  const b2=label(110,332,"and one of them costs nothing at all",{fill:"var(--dim)",size:17,anchor:"start"});
+  const c=label(110,392,"VIDEO 11 · UNIT 3",{fill:C.blue,size:13,anchor:"start",ls:"0.16em"});
+  [l,a,b,b2,c].forEach((n,i)=>{n.style.opacity=0;at(200+i*160,()=>n.style.opacity=1)});
+  const g=G({class:"p"});move(g,570,150);g.style.opacity=0;
+  E("rect",{width:330,height:230,rx:12,fill:"#101722",stroke:"var(--line)","stroke-width":1.5},g);
+  ["TAIL","HEAD","NESTED"].forEach((s,i)=>{
+    E("rect",{x:30,y:40+i*62,width:270,height:46,rx:8,fill:"#1B2431",
+      stroke:i===0?C.green:C.blue,"stroke-width":1.6},g);
+    const t=E("text",{x:60,y:69+i*62,fill:i===0?C.green:C.blue,"font-family":"IBM Plex Mono","font-size":15},g);
+    t.textContent=s;
+    if(i===0){const t2=E("text",{x:272,y:69,fill:C.green,"font-family":"IBM Plex Mono","font-size":13,"text-anchor":"end"},g);
+      t2.textContent="O(1) space"}});
+  at(1100,()=>g.style.opacity=1);
+  at(4400,()=>fadeUp(label(480,500,"SUBSCRIBE · UNIT 3 CONTINUES",{size:12,ls:"0.2em"}),0));
+ }}
+];
+
+/* small helper used by beat 1 for the check path */
+function drawIn2(p,ms){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{p.style.transition=`stroke-dashoffset ${ms}ms ease`;p.style.strokeDashoffset=0})}
+
+/* ── runner ── */
+let idx=0,elapsed=0,playing=false,rate=1,queue=[],last=0;
+const tickrow=document.getElementById("tickrow"),secrow=document.getElementById("secrow");
+const total=BEATS.reduce((a,b)=>a+b.dur,0);
+BEATS.forEach((b,i)=>{const t=document.createElement("button");t.className="tick";
+  t.style.flex=b.dur;t.innerHTML='<i></i><span>'+(i+1)+'</span>';
+  t.title="Beat "+(i+1)+" — "+b.s;t.onclick=()=>go(i,playing);tickrow.appendChild(t)});
+let cur=null;BEATS.forEach(b=>{if(!cur||cur.s!==b.s){cur={s:b.s,d:0};const el=document.createElement("div");el.className="sec";el.textContent=b.s;el.dataset.s=b.s;secrow.appendChild(el)}
+  cur.d+=b.dur;secrow.lastChild.style.flex=cur.d});
+
+function go(i,autoplay){
+  idx=Math.max(0,Math.min(BEATS.length-1,i));elapsed=0;queue=[];
+  clearStage();const b=BEATS[idx];
+  at=(ms,fn)=>queue.push({ms,fn,done:false});
+  b.build();
+  document.getElementById("bn").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("bt").textContent=b.t;
+  document.getElementById("f-vo").textContent=b.vo;
+  document.getElementById("f-vis").textContent=b.vis;
+  document.getElementById("f-act").textContent=b.act;
+  document.getElementById("f-hold").textContent=b.hold;
+  [...tickrow.children].forEach((t,k)=>{t.classList.toggle("now",k===idx);t.classList.toggle("done",k<idx)});
+  playing=!!autoplay;paint();
+}
+function paint(){document.getElementById("play").textContent=playing?"❚❚ PAUSE":"▶ PLAY";
+  const t=tickrow.children[idx];t.querySelector("i").style.transform=`scaleX(${elapsed/BEATS[idx].dur})`}
+function frame(ts){const dt=Math.min(64,ts-(last||ts));last=ts;
+  if(playing){elapsed+=dt*rate;
+    queue.forEach(q=>{if(!q.done&&elapsed>=q.ms){q.done=true;q.fn()}});
+    if(elapsed>=BEATS[idx].dur){if(idx<BEATS.length-1)go(idx+1,true);else{playing=false;elapsed=BEATS[idx].dur}}
+    paint()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+document.getElementById("play").onclick=()=>{if(!playing&&elapsed>=BEATS[idx].dur)go(idx,true);else{playing=!playing;paint()}};
+document.getElementById("next").onclick=()=>go(idx+1,playing);
+document.getElementById("prev").onclick=()=>go(idx-1,playing);
+document.getElementById("replay").onclick=()=>go(idx,true);
+document.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>{rate=parseFloat(b.dataset.r);
+  document.querySelectorAll(".rate button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;
+  if(e.key===" "){e.preventDefault();document.getElementById("play").click()}
+  if(e.key==="ArrowRight")go(idx+1,playing);if(e.key==="ArrowLeft")go(idx-1,playing);
+  if(e.key.toLowerCase()==="r")go(idx,true)});
+
+go(0,false);
+</script>
+</body>
+</html>

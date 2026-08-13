@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video 08 — Sparse Matrices: Storing Only What Exists · Animatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080A0D; --panel:#0D1116; --stage:#12161C; --line:#1E252E;
+  --cellf:#28313D; --cells:#3B4756;
+  --blue:#4C8DFF; --green:#3DD68C; --red:#FF6B6B; --yellow:#FFC94D;
+  --text:#E7ECF3; --dim:#7C8899; --faint:#4A5464;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--disp)}
+body{padding:18px 16px 60px;max-width:1180px;margin:0 auto}
+
+/* ── masthead ── */
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.slate{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink);background:var(--yellow);padding:3px 8px;border-radius:3px;font-weight:600}
+h1{font-size:clamp(19px,4vw,27px);font-weight:700;letter-spacing:-.02em;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;margin-left:auto}
+
+/* ── stage ── */
+.stagewrap{margin-top:14px;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--stage)}
+svg#stage{display:block;width:100%;height:auto;background:
+  linear-gradient(rgba(76,141,255,.035) 1px,transparent 1px) 0 0/100% 36px,
+  linear-gradient(90deg,rgba(76,141,255,.035) 1px,transparent 1px) 0 0/36px 100%,
+  var(--stage)}
+.badge{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint)}
+.badge b{color:var(--blue);font-weight:600}
+
+/* ── ruler (signature) ── */
+.ruler{margin-top:12px}
+.secrow,.tickrow{display:flex;gap:2px}
+.secrow{margin-bottom:5px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--faint);border-top:1px solid var(--line);padding-top:4px;overflow:hidden;white-space:nowrap}
+.tick{height:26px;background:#131922;border:0;padding:0;border-radius:2px;position:relative;cursor:pointer;overflow:hidden}
+.tick:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tick i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:var(--faint)}
+.tick.done i{transform:scaleX(1)}
+.tick.now i{background:var(--blue)}
+.tick span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--dim)}
+.tick.now span{color:#fff}
+
+/* ── transport ── */
+.transport{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.ctl{font-family:var(--mono);font-size:12px;color:var(--text);background:#131922;border:1px solid var(--line);border-radius:6px;padding:9px 13px;cursor:pointer}
+button.ctl:hover{border-color:var(--faint)}
+button.ctl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.ctl.primary{background:var(--blue);color:#06101F;border-color:var(--blue);font-weight:600;min-width:96px}
+.rate{margin-left:auto;display:flex;gap:2px}
+.rate button{padding:9px 10px}
+.rate button[aria-pressed="true"]{background:#1B2431;border-color:var(--faint);color:var(--yellow)}
+
+/* ── spec sheet ── */
+.spec{margin-top:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.vo{border-left:2px solid var(--yellow);padding:2px 0 2px 14px}
+.vo .lab,.fld .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.vo p{margin:6px 0 0;font-size:clamp(16px,2.4vw,20px);line-height:1.45;letter-spacing:-.01em}
+.fields{display:grid;gap:10px}
+.fld{border-left:1px solid var(--line);padding-left:14px}
+.fld p{margin:4px 0 0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#B9C4D2}
+.fld.hold p{color:var(--green)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:760px){.spec{grid-template-columns:1fr}.meta{margin-left:0;width:100%}.tick span{display:none}}
+
+/* ── stage element transitions ── */
+.p{transition:transform .55s cubic-bezier(.2,.8,.25,1),opacity .4s ease,fill .3s ease,stroke .3s ease}
+.fast{transition:transform .25s ease,opacity .2s ease,fill .12s ease}
+.q{transition:none}
+@keyframes shake{0%,100%{transform:translate(var(--tx),var(--ty))}25%{transform:translate(calc(var(--tx) - 7px),var(--ty))}75%{transform:translate(calc(var(--tx) + 7px),var(--ty))}}
+.shake{animation:shake .28s 2}
+@media(prefers-reduced-motion:reduce){.p,.fast{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slate">VID 08</span>
+  <h1>Sparse Matrices: Storing Only What Exists</h1>
+  <span class="meta">UNIT 2 · TARGET 10:00 · 34 BEATS · ANIMATIC v1</span>
+</header>
+
+<div class="stagewrap">
+  <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Animation stage"></svg>
+  <div class="badge">BEAT <b id="bn">01</b> · <span id="bt">0:00</span></div>
+</div>
+
+<div class="ruler">
+  <div class="secrow" id="secrow"></div>
+  <div class="tickrow" id="tickrow"></div>
+</div>
+
+<div class="transport">
+  <button class="ctl" id="prev" aria-label="Previous beat">◀ PREV</button>
+  <button class="ctl primary" id="play">▶ PLAY</button>
+  <button class="ctl" id="next" aria-label="Next beat">NEXT ▶</button>
+  <button class="ctl" id="replay">↻ BEAT</button>
+  <div class="rate" role="group" aria-label="Playback rate">
+    <button class="ctl" data-r="0.5">.5×</button>
+    <button class="ctl" data-r="1" aria-pressed="true">1×</button>
+    <button class="ctl" data-r="2">2×</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div class="vo"><span class="lab">VO</span><p id="f-vo"></p></div>
+  <div class="fields">
+    <div class="fld"><span class="lab">VIS</span><p id="f-vis"></p></div>
+    <div class="fld"><span class="lab">ACT</span><p id="f-act"></p></div>
+    <div class="fld hold"><span class="lab">HOLD</span><p id="f-hold"></p></div>
+  </div>
+</div>
+
+<footer>
+  ANIMATIC RUNS AT STORYBOARD PACE — REAL CUT IS TIMED TO VO (10:00).<br>
+  KEYS: SPACE PLAY/PAUSE · ← → STEP BEAT · R REPLAY BEAT.<br>
+  THIS FILE IS THE FORMAT SPEC. CLONE FOR VIDEOS 02–48; REPLACE THE BEATS ARRAY ONLY.
+</footer>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const stage=document.getElementById("stage");
+let layer=document.createElementNS(NS,"g");stage.appendChild(layer);
+
+/* ── primitive kit ── */
+function E(t,a={},p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);(p||layer).appendChild(n);return n}
+function G(a={},p){return E("g",a,p)}
+function move(n,x,y){n.style.setProperty("--tx",x+"px");n.style.setProperty("--ty",y+"px");n.style.transform=`translate(${x}px,${y}px)`}
+function cell(x,y,o={}){const w=o.w||46,h=o.h||46;
+  const g=G({class:o.cls||"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:o.rx??9,fill:o.fill||"var(--cellf)",stroke:o.stroke||"var(--cells)","stroke-width":1.5,class:o.cls||"p"},g);
+  if(o.label!=null)E("text",{x:w/2,y:h/2+5,fill:o.tf||"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g).textContent=o.label;
+  g.rect=r;g.opacity=v=>g.style.opacity=v;return g}
+function label(x,y,s,o={}){const t=E("text",{x,y,fill:o.fill||"var(--dim)","font-family":o.f||"IBM Plex Mono","font-size":o.size||13,"text-anchor":o.anchor||"middle","letter-spacing":o.ls||0,class:o.cls||"p","font-weight":o.w||400},o.p);t.textContent=s;if(o.o!=null)t.style.opacity=o.o;return t}
+function line(x1,y1,x2,y2,o={}){return E("line",{x1,y1,x2,y2,stroke:o.stroke||"var(--cells)","stroke-width":o.sw||2,"stroke-linecap":"round",class:"p",...(o.attrs||{})})}
+function drawIn(l,ms,delay){const len=Math.hypot(l.x2.baseVal.value-l.x1.baseVal.value,l.y2.baseVal.value-l.y1.baseVal.value);
+  l.style.strokeDasharray=len;l.style.strokeDashoffset=len;l.style.transition="none";
+  requestAnimationFrame(()=>{l.style.transition=`stroke-dashoffset ${ms||420}ms cubic-bezier(.3,.7,.3,1) ${delay||0}ms, stroke .3s`;l.style.strokeDashoffset=0});return l}
+function arrow(x1,y1,x2,y2,o={}){const l=line(x1,y1,x2,y2,o);l.setAttribute("marker-end","url(#ah)");return l}
+function chip(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||(s.length*8.4+22);
+  const r=E("rect",{width:w,height:28,rx:14,fill:o.fill||"#1A2230",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const t=E("text",{x:w/2,y:19,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;g.w=w;return g}
+function nodeBox(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||64,h=o.h||44;
+  const r=E("rect",{width:w,height:h,rx:8,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:w/2,y:h/2+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;return g}
+function circleNode(cx,cy,s,o={}){const g=G({class:"p"});
+  const c=E("circle",{cx,cy,r:o.r||24,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.c=c;g.txt=t;return g}
+function fadeUp(n,d){n.style.opacity=0;setTimeout(()=>n.style.opacity=1,d||0);return n}
+function defs(){const d=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"},d);
+  E("path",{d:"M0 0 L10 5 L0 10 z",fill:"var(--cells)"},m)}
+function clearStage(){layer.remove();layer=document.createElementNS(NS,"g");stage.appendChild(layer);defs()}
+const C={blue:"var(--blue)",green:"var(--green)",red:"var(--red)",yellow:"var(--yellow)",grey:"var(--cellf)"};
+
+/* ── beats ── */
+let at; // scheduler injected per beat
+
+/* ── extra primitives for Video 08 ── */
+function panel(x,y,w,h,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:10,fill:o.fill||"#131A24",stroke:o.stroke||"var(--line)","stroke-width":o.sw||1.5,class:"p"},g);
+  g.rect=r;g.w=w;g.h=h;return g}
+/* rectangular grid with .at(r,c) and .val(r,c) */
+function mgrid(x,y,rows,cols,cw,o={}){const g=G({class:"p"});const cells=[],vals=[];
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const rect=E("rect",{x:x+c*cw,y:y+r*cw,width:cw-4,height:cw-4,rx:Math.min(6,cw/5),
+      fill:o.fill||"#161E29",stroke:o.stroke||"#232C38","stroke-width":cw>18?1.4:0.6,class:"fast"},g);
+    cells.push(rect);
+    const t=E("text",{x:x+c*cw+(cw-4)/2,y:y+r*cw+(cw-4)/2+6,fill:"var(--faint)","font-family":"IBM Plex Mono",
+      "font-size":Math.max(9,cw*0.36),"text-anchor":"middle",class:"fast"},g);
+    t.textContent=o.blank?"":"0";vals.push(t)}
+  g.rows=rows;g.cols=cols;g.cw=cw;g.x0=x;g.y0=y;
+  g.at=(r,c)=>cells[r*cols+c];g.val=(r,c)=>vals[r*cols+c];
+  g.cx=c=>x+c*cw+(cw-4)/2;g.cy=r=>y+r*cw+(cw-4)/2;
+  g.set=(r,c,v,col)=>{g.at(r,c).setAttribute("stroke",col||C.blue);
+    g.at(r,c).setAttribute("fill",col===C.green?"#122A21":"#12213A");
+    const t=g.val(r,c);t.textContent=v;t.setAttribute("fill",col||C.blue)};
+  return g}
+/* 3-column triplet table; .add(i,vals,col) writes a row */
+function ttable(x,y,rowCount,o={}){const g=G({class:"p"});move(g,x,y);
+  const w=o.w||300,rh=o.rh||42;
+  E("rect",{width:w,height:46+rh*rowCount,rx:10,fill:"#131A24",stroke:o.stroke||"var(--line)","stroke-width":1.5},g);
+  const cx=[w*0.2,w*0.5,w*0.8];
+  ["ROW","COL","VALUE"].forEach((h,i)=>{const t=E("text",{x:cx[i],y:30,fill:"var(--dim)","font-family":"IBM Plex Mono",
+    "font-size":10,"letter-spacing":"0.18em","text-anchor":"middle"},g);t.textContent=h});
+  E("line",{x1:12,y1:44,x2:w-12,y2:44,stroke:"var(--line)","stroke-width":1},g);
+  g.rowY=i=>44+rh*(i+1)-13;
+  g.cellX=i=>cx[i];
+  g.add=(i,v,col)=>v.map((s,k)=>{const t=E("text",{x:cx[k],y:g.rowY(i),fill:col||"var(--text)","font-family":"IBM Plex Mono",
+    "font-size":o.size||17,"text-anchor":"middle",class:"p"},g);t.textContent=s;return t});
+  g.w=w;g.rh=rh;return g}
+function meter(x,y,w,h,o={}){const g=G({class:"p"});
+  E("rect",{x,y,width:w,height:h,rx:h/2,fill:"#101720",stroke:"var(--line)","stroke-width":1.5,class:"p"},g);
+  const f=E("rect",{x:x+3,y:y+3,width:0,height:h-6,rx:(h-6)/2,fill:o.fill||C.green,class:"p"},g);
+  g.fill=f;g.to=(pct,ms)=>{f.style.transition=`width ${ms||900}ms ease, fill .4s`;f.setAttribute("width",(w-6)*pct)};
+  g.x0=x;g.w=w;return g}
+function bar(x,y,w,col){const r=E("rect",{x,y,width:w,height:0,rx:6,fill:col,class:"p"});
+  r.grow=(h,ms)=>{r.style.transition=`height ${ms||900}ms ease, y ${ms||900}ms ease, fill .4s`;
+    r.setAttribute("height",h);r.setAttribute("y",y-h)};return r}
+function nodeChain(x,y,items,col){const g=G({class:"p"});const boxes=[];
+  items.forEach((it,i)=>{const bx=x+i*150;
+    const b=G({class:"p"},g);
+    E("rect",{width:106,height:52,rx:8,fill:"#1B2431",stroke:col,"stroke-width":1.8,class:"p"},b);
+    E("line",{x1:66,y1:0,x2:66,y2:52,stroke:col,"stroke-width":1.4,class:"p"},b);
+    const t1=E("text",{x:33,y:33,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":15,"text-anchor":"middle"},b);
+    t1.textContent=it[0];
+    const t2=E("text",{x:86,y:33,fill:col,"font-family":"IBM Plex Mono","font-size":15,"text-anchor":"middle"},b);
+    t2.textContent=it[1];
+    move(b,bx,y);boxes.push(b)});
+  g.boxes=boxes;return g}
+
+const M0=[[0,2,7],[1,5,3],[3,0,4],[4,3,9],[5,6,2]];   /* 6×7, 5 non-zeros */
+
+const BEATS=[
+{s:"HOOK",t:"0:00",vo:"Here's a matrix. Count the useful numbers in it.",
+ vis:"6×7 grid, 42 cells, mostly 0, with 5 non-zero values scattered.",act:"Grid draws with values.",hold:"1100ms",dur:5400,
+ build(){
+  label(480,90,"a 6 × 7 matrix",{fill:"var(--dim)",size:15,f:"IBM Plex Mono"});
+  const m=mgrid(320,130,6,7,54);
+  m.style.opacity=0;at(200,()=>m.style.opacity=1);
+  M0.forEach((h,k)=>at(900+k*300,()=>{const t=m.val(h[0],h[1]);t.textContent=h[2];t.setAttribute("fill","var(--text)")}));
+  at(2800,()=>fadeUp(label(480,500,"count the useful numbers",{size:18}),0));
+ }},
+{s:"HOOK",t:"0:06",vo:"Five. Out of forty-two cells, five carry information. The other thirty-seven are storing the fact that nothing is there — and each one costs you the same four bytes as a real value.",
+ vis:"Same grid.",act:"Five non-zero cells light blue; the 37 zeros shade red then dim.",hold:"1300ms",dur:7000,
+ build(){
+  const m=mgrid(320,130,6,7,54);
+  M0.forEach(h=>{const t=m.val(h[0],h[1]);t.textContent=h[2];t.setAttribute("fill","var(--text)")});
+  const isHit=(r,c)=>M0.some(h=>h[0]===r&&h[1]===c);
+  at(500,()=>M0.forEach((h,k)=>setTimeout(()=>m.set(h[0],h[1],h[2],C.blue),k*180)));
+  at(1600,()=>fadeUp(label(150,200,"5 carry information",{fill:C.blue,size:17}),0));
+  at(2400,()=>{for(let r=0;r<6;r++)for(let c=0;c<7;c++)if(!isHit(r,c)){
+    m.at(r,c).setAttribute("stroke",C.red);m.at(r,c).setAttribute("fill","rgba(255,107,107,.14)");
+    m.val(r,c).setAttribute("fill",C.red)}});
+  at(3600,()=>{for(let r=0;r<6;r++)for(let c=0;c<7;c++)if(!isHit(r,c)){
+    m.at(r,c).setAttribute("fill","#0E1319");m.at(r,c).setAttribute("stroke","#1B222C");
+    m.val(r,c).setAttribute("fill","#2A323D")}});
+  at(4200,()=>fadeUp(label(150,260,"37 store nothing",{fill:C.red,size:17}),0));
+  at(5000,()=>fadeUp(label(480,500,"and every one costs the same 4 bytes",{fill:C.red,size:16}),0));
+ }},
+{s:"HOOK",t:"0:16",vo:"Now scale that to ten thousand by ten thousand. You're burning four hundred megabytes to store almost nothing.",
+ vis:"Grid zooms out into a dense dark field.",act:"Expand; 400 MB label writes in red.",hold:"1200ms",dur:6000,
+ build(){
+  const m=mgrid(320,130,6,7,54);
+  M0.forEach(h=>m.set(h[0],h[1],h[2],C.blue));
+  const big=mgrid(180,110,26,42,15,{blank:true,stroke:"#1B222C"});big.style.opacity=0;
+  const cap=label(480,90,"6 × 7",{fill:"var(--dim)",size:16,f:"IBM Plex Mono"});
+  at(600,()=>{m.style.transformOrigin="510px 290px";m.style.transform="scale(.24)";m.style.opacity=0});
+  at(1000,()=>{big.style.opacity=1;cap.textContent="10,000 × 10,000";cap.setAttribute("fill",C.yellow)});
+  let seed=13;const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff};
+  at(1600,()=>{for(let k=0;k<26;k++){const i=Math.floor(rnd()*26*42);
+    setTimeout(()=>{big.at(Math.floor(i/42),i%42).setAttribute("fill",C.blue)},k*45)}});
+  at(3000,()=>fadeUp(label(480,500,"400 MB",{fill:C.red,size:46,f:"IBM Plex Mono"}),0));
+  at(3900,()=>fadeUp(label(480,60,"…to store almost nothing",{fill:C.red,size:16}),0));
+ }},
+{s:"HOOK",t:"0:24",vo:"The fix is simple and it's worth understanding properly, because the same idea reappears three more times in this course.",
+ vis:"Title card.",act:'"SPARSE MATRICES" types on.',hold:"600ms",dur:5400,
+ build(){
+  const m=mgrid(345,120,5,6,50,{blank:true});
+  at(200,()=>[[0,3],[2,1],[3,4],[4,0]].forEach((h,k)=>setTimeout(()=>m.set(h[0],h[1],"·",C.yellow),k*140)));
+  const t=label(480,410,"",{fill:C.yellow,size:46,f:"Space Grotesk",w:700,ls:"0.02em"});
+  const full="SPARSE MATRICES";
+  for(let i=0;i<=full.length;i++)at(1100+i*80,()=>t.textContent=full.slice(0,i)+(i<full.length?"▌":""));
+  at(1100+full.length*80+140,()=>{t.textContent=full;
+    fadeUp(label(480,458,"store only what exists",{size:15,ls:"0.14em"}),0)});
+  at(4200,()=>fadeUp(label(480,506,"this same idea returns three more times in the course",{size:13}),0));
+ }},
+{s:"PROMISE",t:"0:30",vo:"What counts as sparse, the two array-based representations you'll be examined on, the linked representation, and when compressing is actually a bad idea.",
+ vis:"Four chips: Definition · Triplet · Linked · Limits.",act:"Stagger 150ms.",hold:"500ms",dur:4600,
+ build(){
+  label(480,130,"IN THIS VIDEO",{ls:"0.28em",size:12});
+  ["What counts as sparse","The triplet form","The linked form","When not to compress"].forEach((s,i)=>{
+    const c=chip(-340,200+i*66,s,{w:300});c.rect.setAttribute("height",46);c.txt.setAttribute("y",28);c.style.opacity=0;
+    const n=label(286,200+i*66+29,"0"+(i+1),{fill:C.yellow,size:13});n.style.opacity=0;
+    at(200+i*150,()=>{move(c,330,200+i*66);c.style.opacity=1;n.style.opacity=1})});
+ }},
+{s:"CORE 1 · DEFINITION",t:"0:50",vo:"A sparse matrix is one where most elements are zero. There's no exact threshold — but as a working rule, if fewer than a third of the cells are non-zero, compression starts paying off.",
+ vis:"Grid with a fill-percentage meter beside it.",act:"Meter fills to 12%, sits in the green zone.",hold:"1000ms",dur:6400,
+ build(){
+  const m=mgrid(120,140,6,7,54);
+  M0.forEach(h=>m.set(h[0],h[1],h[2],C.blue));
+  label(650,150,"DENSITY",{fill:"var(--dim)",ls:"0.24em",size:12});
+  const mt=meter(520,190,340,34);
+  const pct=label(690,262,"0%",{fill:C.green,size:34,f:"IBM Plex Mono"});
+  at(700,()=>{mt.to(0.12,1100);
+    let v=0;for(let k=0;k<=12;k++)setTimeout(()=>{pct.textContent=k+"%"},k*90)});
+  at(2200,()=>fadeUp(label(690,310,"5 of 42 cells  =  12%",{size:14,f:"IBM Plex Mono"}),0));
+  at(2900,()=>{const th=line(520+340*0.33,182,520+340*0.33,232,{stroke:C.yellow,sw:2.5});drawIn(th,300);
+    setTimeout(()=>fadeUp(label(520+340*0.33,352,"⅓ break-even",{fill:C.yellow,size:13}),0),320)});
+  at(4000,()=>fadeUp(label(480,440,"no exact threshold — but under a third, compression pays",{size:16}),0));
+ }},
+{s:"CORE 1 · DEFINITION",t:"1:15",vo:"Two special shapes get their own names in exams. A triangular matrix — everything above or below the diagonal is zero.",
+ vis:"5×5 grid.",act:"Upper half shades red and dims; diagonal and lower half stay blue.",hold:"1000ms",dur:5800,
+ build(){
+  label(480,100,"TRIANGULAR",{fill:C.yellow,ls:"0.28em",size:14});
+  const m=mgrid(330,140,5,5,60,{blank:true});
+  at(500,()=>{for(let r=0;r<5;r++)for(let c=0;c<5;c++)if(c<=r)setTimeout(()=>{
+    m.at(r,c).setAttribute("stroke",C.blue);m.at(r,c).setAttribute("fill","#12213A");
+    const t=m.val(r,c);t.textContent="•";t.setAttribute("fill",C.blue)},(r*5+c)*50)});
+  at(1900,()=>{for(let r=0;r<5;r++)for(let c=0;c<5;c++)if(c>r){
+    m.at(r,c).setAttribute("stroke",C.red);m.at(r,c).setAttribute("fill","rgba(255,107,107,.14)")}});
+  at(2800,()=>{for(let r=0;r<5;r++)for(let c=0;c<5;c++)if(c>r){
+    m.at(r,c).setAttribute("fill","#0E1319");m.at(r,c).setAttribute("stroke","#1B222C")}});
+  at(3400,()=>fadeUp(label(480,470,"everything on one side of the diagonal is zero",{size:16}),0));
+ }},
+{s:"CORE 1 · DEFINITION",t:"1:32",vo:"And a tridiagonal matrix — non-zeros only on the main diagonal and the two beside it. Everything else empty.",
+ vis:"5×5 grid resets.",act:"Three diagonal bands light blue; the rest dims.",hold:"1000ms",dur:5800,
+ build(){
+  label(480,100,"TRIDIAGONAL",{fill:C.yellow,ls:"0.28em",size:14});
+  const m=mgrid(330,140,5,5,60,{blank:true});
+  const band=(r,c)=>Math.abs(r-c)<=1;
+  at(500,()=>{for(let r=0;r<5;r++)for(let c=0;c<5;c++)if(band(r,c))setTimeout(()=>{
+    m.at(r,c).setAttribute("stroke",C.blue);m.at(r,c).setAttribute("fill","#12213A");
+    const t=m.val(r,c);t.textContent="•";t.setAttribute("fill",C.blue)},Math.abs(r-c)*300+r*90)});
+  at(2200,()=>{for(let r=0;r<5;r++)for(let c=0;c<5;c++)if(!band(r,c)){
+    m.at(r,c).setAttribute("fill","#0E1319");m.at(r,c).setAttribute("stroke","#1B222C")}});
+  at(3000,()=>fadeUp(label(480,470,"the main diagonal and the two beside it — nothing else",{size:16}),0));
+  at(3900,()=>fadeUp(label(480,510,"13 non-zeros out of 25",{fill:C.blue,size:14,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 1 · DEFINITION",t:"1:50",vo:"These matter because their shape is predictable. You can store a tridiagonal matrix in a single one-dimensional array and compute exactly where any element sits — no bookkeeping at all.",
+ vis:"Tridiagonal grid, ribbon beneath.",act:"The three bands flatten into the ribbon in order.",hold:"1300ms",dur:7400,
+ build(){
+  const m=mgrid(330,110,5,5,52,{blank:true});
+  const band=(r,c)=>Math.abs(r-c)<=1;
+  const src=[];
+  for(let r=0;r<5;r++)for(let c=0;c<5;c++){if(band(r,c)){m.set(r,c,"•",C.blue);src.push([r,c])}
+    else{m.at(r,c).setAttribute("fill","#0E1319");m.at(r,c).setAttribute("stroke","#1B222C")}}
+  at(400,()=>fadeUp(label(480,400,"ONE-DIMENSIONAL ARRAY",{fill:"var(--dim)",size:11,ls:"0.24em"}),0));
+  const X=i=>50+i*66;
+  for(let i=0;i<13;i++)E("rect",{x:X(i),y:420,width:58,height:52,rx:7,fill:"#101720",
+    stroke:"var(--line)","stroke-width":1.4,"stroke-dasharray":"4 4",class:"p"});
+  src.forEach((s,i)=>at(900+i*330,()=>{
+    m.at(s[0],s[1]).setAttribute("stroke",C.green);m.at(s[0],s[1]).setAttribute("fill","#122A21");
+    const c=cell(X(i),420,{w:58,h:52,label:"•",stroke:C.green,tf:C.green});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)}));
+  at(5500,()=>fadeUp(label(480,510,"predictable shape → compute the position, store no indices",{fill:C.green,size:15}),0));
+ }},
+{s:"CORE 1 · DEFINITION",t:"2:15",vo:"But most sparse matrices have no pattern. The non-zeros are scattered. For those, you have to store the positions explicitly.",
+ vis:"Random scatter grid returns.",act:"Non-zeros pulse in random positions.",hold:"1000ms",dur:5600,
+ build(){
+  label(480,100,"NO PATTERN",{fill:C.red,ls:"0.28em",size:14});
+  const m=mgrid(320,140,6,7,54);
+  M0.forEach((h,k)=>at(500+k*260,()=>m.set(h[0],h[1],h[2],C.blue)));
+  at(2200,()=>M0.forEach((h,k)=>setTimeout(()=>{
+    m.at(h[0],h[1]).setAttribute("fill","#1D3A66");
+    setTimeout(()=>m.at(h[0],h[1]).setAttribute("fill","#12213A"),300)},k*120)));
+  at(3200,()=>fadeUp(label(480,500,"scattered — so the positions must be stored explicitly",{size:16}),0));
+ }},
+{s:"CORE 2 · TRIPLET",t:"2:30",vo:"The standard answer is the triplet, sometimes called the three-tuple or the row-column-value form.",
+ vis:"Grid left, empty 3-column table right: ROW · COL · VALUE.",act:"Table headers draw.",hold:"700ms",dur:4600,
+ build(){
+  const m=mgrid(60,150,6,7,50);
+  M0.forEach(h=>m.set(h[0],h[1],h[2],C.blue));
+  const T=ttable(560,150,6,{w:330,stroke:C.green});T.style.opacity=0;
+  at(500,()=>T.style.opacity=1);
+  at(1400,()=>fadeUp(label(725,120,"THE TRIPLET",{fill:C.green,ls:"0.24em",size:13}),0));
+  at(2200,()=>fadeUp(label(725,480,"three-tuple · row–column–value form",{size:13}),0));
+ }},
+{s:"CORE 2 · TRIPLET",t:"2:42",vo:"For every non-zero element, you store three numbers: which row it's in, which column, and what it is. That's it.",
+ vis:"Grid with first non-zero at row 0, column 2, value 7.",act:"Cell lights blue, flies right, lands as a table row 0 · 2 · 7.",hold:"1100ms",dur:6200,
+ build(){
+  const m=mgrid(60,150,6,7,50);
+  M0.forEach(h=>m.set(h[0],h[1],h[2],C.blue));
+  const T=ttable(560,150,6,{w:330,stroke:C.green});
+  const h=M0[0];
+  at(600,()=>{m.at(h[0],h[1]).setAttribute("stroke",C.yellow);m.at(h[0],h[1]).setAttribute("fill","#2A2415");
+    m.val(h[0],h[1]).setAttribute("fill",C.yellow)});
+  at(1200,()=>{const p=E("path",{d:`M${m.cx(h[1])+18} ${m.cy(h[0])} C 400 180, 480 200, 600 ${150+T.rowY(0)-6}`,
+    stroke:C.yellow,"stroke-width":2.5,fill:"none","marker-end":"url(#ah)",class:"p"});drawIn2(p,700)});
+  at(2100,()=>{T.add(0,[h[0],h[1],h[2]],C.green);
+    m.at(h[0],h[1]).setAttribute("stroke",C.green);m.at(h[0],h[1]).setAttribute("fill","#122A21")});
+  at(3000,()=>{fadeUp(label(626,510,"which row",{fill:"var(--dim)",size:11}),0);
+    fadeUp(label(725,510,"which column",{fill:"var(--dim)",size:11}),120);
+    fadeUp(label(824,510,"what it is",{fill:"var(--dim)",size:11}),240)});
+  at(4200,()=>fadeUp(label(240,500,"three numbers per non-zero. that's it.",{size:16}),0));
+ }},
+{s:"CORE 2 · TRIPLET",t:"3:00",vo:"Sweep the matrix row by row — row-major order, same as video five — and record each non-zero as you meet it.",
+ vis:"Sweep pointer moves through the grid.",act:"Four more non-zeros fly into the table in row-major order, 500ms apart.",hold:"1400ms",dur:7400,
+ build(){
+  const m=mgrid(60,150,6,7,50);
+  M0.forEach(h=>m.set(h[0],h[1],h[2],C.blue));
+  const T=ttable(560,150,6,{w:330,stroke:C.green});
+  T.add(0,[M0[0][0],M0[0][1],M0[0][2]],C.green);
+  m.at(M0[0][0],M0[0][1]).setAttribute("stroke",C.green);m.at(M0[0][0],M0[0][1]).setAttribute("fill","#122A21");
+  at(300,()=>fadeUp(label(240,120,"row-major sweep",{fill:C.yellow,size:15}),0));
+  const sweep=E("rect",{x:56,y:146,width:354,height:46,rx:8,fill:"rgba(255,201,77,.12)",
+    stroke:C.yellow,"stroke-width":1.5,class:"p"});
+  for(let r=0;r<6;r++)at(700+r*950,()=>{sweep.style.transition="y .4s ease";sweep.setAttribute("y",146+r*50)});
+  M0.slice(1).forEach((h,k)=>at(700+h[0]*950+400,()=>{
+    m.at(h[0],h[1]).setAttribute("stroke",C.green);m.at(h[0],h[1]).setAttribute("fill","#122A21");
+    T.add(k+1,[h[0],h[1],h[2]],C.green)}));
+  at(6200,()=>fadeUp(label(240,500,"five non-zeros → five table rows",{fill:C.green,size:16}),0));
+ }},
+{s:"CORE 2 · TRIPLET",t:"3:25",vo:"Now the part students drop. The first row of the table isn't data — it's the header. It stores the original number of rows, the original number of columns, and the count of non-zero elements.",
+ vis:"Table shifts down; a header row inserts at the top: 6 · 7 · 5.",act:"Header row slides in accent blue.",hold:"1500ms",dur:7600,
+ build(){
+  const m=mgrid(60,150,6,7,50);
+  M0.forEach(h=>m.set(h[0],h[1],h[2],C.green));
+  const T=ttable(560,150,7,{w:330,stroke:C.green});
+  const rows=M0.map((h,i)=>T.add(i,[h[0],h[1],h[2]],C.green));
+  at(600,()=>rows.forEach((r,i)=>setTimeout(()=>r.forEach(t=>move(t,0,42)),i*90)));
+  at(1700,()=>{const hl=E("rect",{x:572,y:150+46,width:306,height:38,rx:6,fill:"rgba(76,141,255,.14)",class:"p"});
+    hl.style.opacity=0;setTimeout(()=>hl.style.opacity=1,20)});
+  at(2100,()=>{const hdr=T.add(0,[6,7,5],C.blue);
+    hdr.forEach((t,i)=>{move(t,0,-40);t.style.opacity=0;
+      setTimeout(()=>{t.style.opacity=1;move(t,0,0)},i*160)})});
+  at(3600,()=>{fadeUp(label(626,520,"original rows",{fill:C.blue,size:11}),0);
+    fadeUp(label(725,520,"original cols",{fill:C.blue,size:11}),120);
+    fadeUp(label(824,520,"non-zero count",{fill:C.blue,size:11}),240)});
+  at(5000,()=>fadeUp(label(240,480,"row 0 is not data — it is the header",{fill:C.blue,size:17}),0));
+  at(5800,()=>fadeUp(label(240,520,"this is the part students drop",{fill:C.red,size:14}),0));
+ }},
+{s:"CORE 2 · TRIPLET",t:"3:50",vo:"Without it you couldn't rebuild the matrix. The table alone doesn't tell you whether it came from a six by seven grid or a hundred by hundred one.",
+ vis:"Table with header, two candidate grids beside it.",act:"Header pulses; wrong-size grid fades red.",hold:"1300ms",dur:6800,
+ build(){
+  const T=ttable(60,120,6,{w:300,stroke:C.green});
+  const hdr=T.add(0,[6,7,5],C.blue);
+  M0.forEach((h,i)=>T.add(i+1,[h[0],h[1],h[2]],C.green));
+  const a=mgrid(430,140,6,7,42,{blank:true});a.style.opacity=.35;
+  const lab1=label(556,120,"6 × 7",{fill:"var(--dim)",size:14,f:"IBM Plex Mono"});
+  const b=mgrid(760,140,10,10,25,{blank:true});b.style.opacity=.35;
+  const lab2=label(880,120,"100 × 100",{fill:"var(--dim)",size:14,f:"IBM Plex Mono"});
+  at(700,()=>fadeUp(label(670,440,"which one did the table come from?",{size:16}),0));
+  at(1900,()=>hdr.forEach(t=>{t.setAttribute("fill",C.yellow);t.setAttribute("font-size",21)}));
+  at(2400,()=>hdr.forEach(t=>{t.setAttribute("fill",C.blue);t.setAttribute("font-size",17)}));
+  at(3000,()=>{a.style.opacity=1;lab1.setAttribute("fill",C.green);
+    M0.forEach(h=>a.set(h[0],h[1],h[2],C.green))});
+  at(3600,()=>{b.style.opacity=.2;lab2.setAttribute("fill",C.red)});
+  at(4400,()=>fadeUp(label(670,490,"the header is what makes rebuilding possible",{fill:C.blue,size:15}),0));
+ }},
+{s:"CORE 2 · TRIPLET",t:"4:15",vo:"So the storage is: number of non-zeros, plus one for the header, times three columns.",
+ vis:"Formula writes: (n + 1) × 3.",act:"Formula appears.",hold:"900ms",dur:4800,
+ build(){
+  label(480,140,"STORAGE COST",{fill:C.yellow,ls:"0.28em",size:13});
+  panel(180,200,600,140,{stroke:C.yellow});
+  const P=[{t:"(",c:"var(--dim)"},{t:"n",c:C.green},{t:" + ",c:"var(--dim)"},{t:"1",c:C.blue},
+           {t:") × ",c:"var(--dim)"},{t:"3",c:C.yellow}];
+  const cw=44*0.6;let x=480-P.reduce((a,p)=>a+p.t.length,0)*cw/2;
+  const ns=P.map(p=>{const t=E("text",{x,y:288,fill:p.c,"font-family":"IBM Plex Mono","font-size":44,class:"p"});
+    t.textContent=p.t;t.style.opacity=0;x+=p.t.length*cw;return t});
+  ns.forEach((n,i)=>at(400+i*350,()=>n.style.opacity=1));
+  at(2600,()=>{fadeUp(label(300,390,"n = non-zeros",{fill:C.green,size:14}),0);
+    fadeUp(label(480,390,"+1 for the header",{fill:C.blue,size:14}),150);
+    fadeUp(label(680,390,"3 columns",{fill:C.yellow,size:14}),300)});
+ }},
+{s:"CORE 2 · TRIPLET",t:"4:28",vo:"Our example: five non-zeros, plus one, times three — eighteen integers instead of forty-two. Fifty-seven percent saved on a tiny matrix.",
+ vis:"Two bars: 42 and 18.",act:"Bars grow; savings label in green.",hold:"1200ms",dur:6400,
+ build(){
+  label(480,100,"(5 + 1) × 3  =  18",{fill:C.yellow,size:24,f:"IBM Plex Mono"});
+  line(160,440,800,440,{stroke:"var(--line)",sw:1.5});
+  const b1=bar(240,440,140,C.red),b2=bar(580,440,140,C.green);
+  label(310,470,"full grid",{size:14});label(650,470,"triplet",{size:14});
+  at(600,()=>{b1.grow(260,900);setTimeout(()=>fadeUp(label(310,160,"42 integers",{fill:C.red,size:20,f:"IBM Plex Mono"}),0),900)});
+  at(2000,()=>{b2.grow(112,900);setTimeout(()=>fadeUp(label(650,308,"18 integers",{fill:C.green,size:20,f:"IBM Plex Mono"}),0),900)});
+  at(3600,()=>{const br=E("path",{d:"M400 200 h-20 V330 h20",stroke:C.green,"stroke-width":2,fill:"none",class:"p"});
+    br.style.opacity=0;setTimeout(()=>br.style.opacity=1,20)});
+  at(4000,()=>fadeUp(label(480,510,"57% saved — on a matrix this small",{fill:C.green,size:19}),0));
+ }},
+{s:"CORE 2 · TRIPLET",t:"4:45",vo:"On the ten-thousand-square example, it's four hundred megabytes down to about twenty-four. That's the whole point.",
+ vis:"Two much larger bars.",act:"Second bar barely visible beside the first.",hold:"1200ms",dur:6000,
+ build(){
+  label(480,90,"10,000 × 10,000",{fill:C.yellow,size:20,f:"IBM Plex Mono"});
+  line(160,450,800,450,{stroke:"var(--line)",sw:1.5});
+  const b1=bar(250,450,150,C.red),b2=bar(600,450,150,C.green);
+  label(325,482,"full grid",{size:14});label(675,482,"triplet",{size:14});
+  at(600,()=>{b1.grow(320,1100);setTimeout(()=>fadeUp(label(325,110,"400 MB",{fill:C.red,size:30,f:"IBM Plex Mono"}),0),1100)});
+  at(2400,()=>{b2.grow(19,900);setTimeout(()=>fadeUp(label(675,410,"24 MB",{fill:C.green,size:26,f:"IBM Plex Mono"}),0),900)});
+  at(4000,()=>fadeUp(label(480,516,"that is the whole point",{fill:C.green,size:18}),0));
+ }},
+{s:"CORE 2 · TRIPLET",t:"5:00",vo:"But you paid for it. Access is no longer constant time.",
+ vis:"Triplet table.",act:"Search pointer walks down the table rows, yellow.",hold:"1000ms",dur:5200,
+ build(){
+  label(480,90,"BUT YOU PAID FOR IT",{fill:C.red,ls:"0.24em",size:14});
+  const T=ttable(330,130,6,{w:300,stroke:"var(--line)"});
+  T.add(0,[6,7,5],C.blue);
+  M0.forEach((h,i)=>T.add(i+1,[h[0],h[1],h[2]],"var(--text)"));
+  const hl=E("rect",{x:342,y:130+46,width:276,height:38,rx:6,fill:"rgba(255,201,77,.16)",class:"p"});
+  hl.style.opacity=0;
+  at(600,()=>hl.style.opacity=1);
+  for(let i=1;i<6;i++)at(900+i*500,()=>{hl.style.transition="y .28s ease";hl.setAttribute("y",130+46+i*42)});
+  at(3900,()=>fadeUp(label(480,450,"access is no longer constant time",{fill:C.red,size:18}),0));
+ }},
+{s:"CORE 2 · TRIPLET",t:"5:12",vo:"In the original matrix, element at row four, column two is one address calculation. In the triplet, you have to search the table for a matching pair — and if it isn't there, the answer is zero.",
+ vis:"Split: grid with instant jump on the left; table with linear walk on the right.",act:"Left jumps in one step green; right walks all rows and ends red.",hold:"1400ms",dur:7600,
+ build(){
+  line(480,80,480,500,{stroke:"var(--line)",sw:1});
+  label(230,110,"FULL GRID",{fill:C.green,ls:"0.2em",size:13});
+  label(730,110,"TRIPLET",{fill:C.yellow,ls:"0.2em",size:13});
+  label(480,60,"find  A[4][2]",{fill:"var(--text)",size:19,f:"IBM Plex Mono"});
+  const m=mgrid(70,150,6,7,46,{blank:true});
+  M0.forEach(h=>m.set(h[0],h[1],h[2],"var(--cells)"));
+  at(700,()=>{const p=E("path",{d:`M100 420 C 160 400, 200 380, ${m.cx(2)} ${m.cy(4)+16}`,stroke:C.green,
+    "stroke-width":3,fill:"none","marker-end":"url(#ah)",class:"p"});drawIn2(p,500)});
+  at(1300,()=>{m.at(4,2).setAttribute("stroke",C.green);m.at(4,2).setAttribute("fill","#122A21");
+    fadeUp(label(230,450,"one calculation",{fill:C.green,size:16}),0)});
+  const T=ttable(590,150,6,{w:290,stroke:"var(--line)",rh:38,size:15});
+  T.add(0,[6,7,5],C.blue);
+  M0.forEach((h,i)=>T.add(i+1,[h[0],h[1],h[2]],"var(--text)"));
+  const hl=E("rect",{x:602,y:150+46,width:266,height:34,rx:6,fill:"rgba(255,201,77,.16)",class:"p"});
+  hl.style.opacity=0;
+  at(2200,()=>hl.style.opacity=1);
+  for(let i=1;i<6;i++)at(2500+i*480,()=>{hl.style.transition="y .26s ease";hl.setAttribute("y",150+46+i*38)});
+  at(5100,()=>{hl.setAttribute("fill","rgba(255,107,107,.2)");
+    fadeUp(label(730,450,"not found  →  it's a zero",{fill:C.red,size:16}),0)});
+ }},
+{s:"CORE 2 · TRIPLET",t:"5:32",vo:"Constant time became O of n, where n is the number of non-zeros. Time–space trade-off again — running in the direction we usually don't.",
+ vis:"Two chips: O(1) → O(n) yellow, memory ↓ 57% green.",act:"Chips appear.",hold:"1200ms",dur:5600,
+ build(){
+  label(480,120,"THE TRADE",{fill:C.yellow,ls:"0.3em",size:13});
+  const a=panel(90,180,340,180,{stroke:C.yellow});a.style.opacity=0;
+  const b=panel(530,180,340,180,{stroke:C.green});b.style.opacity=0;
+  const t1=label(260,240,"ACCESS",{fill:"var(--dim)",size:14,ls:"0.2em"});
+  const v1=label(260,300,"O(1) → O(n)",{fill:C.yellow,size:28,f:"IBM Plex Mono"});
+  const t2=label(700,240,"MEMORY",{fill:"var(--dim)",size:14,ls:"0.2em"});
+  const v2=label(700,300,"↓ 57%",{fill:C.green,size:28,f:"IBM Plex Mono"});
+  [t1,v1,t2,v2].forEach(n=>n.style.opacity=0);
+  at(400,()=>{a.style.opacity=1;t1.style.opacity=1;v1.style.opacity=1});
+  at(1100,()=>{b.style.opacity=1;t2.style.opacity=1;v2.style.opacity=1});
+  at(2200,()=>fadeUp(label(480,420,"video 03's trade-off — running the other way",{size:17}),0));
+  at(3200,()=>fadeUp(label(480,470,"we usually buy speed with memory. here we buy memory with speed.",{size:14}),0));
+ }},
+{s:"CORE 3 · TRANSPOSE",t:"5:45",vo:"One operation worth seeing, because it's the classic exam question: transpose a matrix in triplet form.",
+ vis:"Triplet table.",act:"Table holds.",hold:"600ms",dur:4200,
+ build(){
+  label(480,90,"TRANSPOSE IN TRIPLET FORM",{fill:C.yellow,ls:"0.18em",size:14});
+  label(480,130,"the classic exam question",{size:13});
+  const T=ttable(330,170,6,{w:300,stroke:C.green});
+  const hdr=T.add(0,[6,7,5],C.blue);
+  const rows=M0.map((h,i)=>T.add(i+1,[h[0],h[1],h[2]],"var(--text)"));
+  [hdr,...rows].forEach((r,i)=>{r.forEach(t=>t.style.opacity=0);
+    at(400+i*220,()=>r.forEach(t=>t.style.opacity=1))});
+  at(2600,()=>fadeUp(label(480,490,"three steps — and students usually do only the first",{fill:C.red,size:15}),0));
+ }},
+{s:"CORE 3 · TRANSPOSE",t:"5:55",vo:"In a normal matrix, transposing means swapping rows and columns across the diagonal. In a triplet — you swap the first two columns of every row.",
+ vis:"Table.",act:"Row and Col columns swap values, row by row, staggered 200ms.",hold:"1300ms",dur:6600,
+ build(){
+  label(480,80,"STEP 1 · SWAP ROW AND COL",{fill:C.blue,ls:"0.18em",size:14});
+  const T=ttable(330,130,6,{w:300,stroke:C.green});
+  T.add(0,[6,7,5],C.blue);
+  const rows=M0.map((h,i)=>T.add(i+1,[h[0],h[1],h[2]],"var(--text)"));
+  at(700,()=>{const a=arrow(T.cellX(0)+330,150,T.cellX(1)+330,150,{stroke:C.yellow});
+    a.setAttribute("marker-start","url(#ah)");drawIn(a,400)});
+  rows.forEach((r,i)=>at(1400+i*450,()=>{
+    const rv=r[0].textContent, cv=r[1].textContent;
+    r[0].textContent=cv;r[1].textContent=rv;
+    r[0].setAttribute("fill",C.yellow);r[1].setAttribute("fill",C.yellow)}));
+  at(4200,()=>fadeUp(label(480,450,"every row: first two columns exchanged",{fill:C.yellow,size:16}),0));
+  at(5000,()=>fadeUp(label(480,496,"and if you stop here, the answer is wrong",{fill:C.red,size:15}),0));
+ }},
+{s:"CORE 3 · TRANSPOSE",t:"6:15",vo:"But that alone gives you a broken table. The entries are no longer in row-major order — so you have to sort them again.",
+ vis:"Swapped table.",act:"Out-of-order rows flash yellow; then rows reorder by row-index.",hold:"1400ms",dur:7400,
+ build(){
+  label(480,80,"STEP 2 · RE-SORT",{fill:C.yellow,ls:"0.18em",size:14});
+  const T=ttable(330,130,6,{w:300,stroke:C.red});
+  T.add(0,[7,6,5],C.blue);
+  /* swapped, still in the old order */
+  const SW=M0.map(h=>[h[1],h[0],h[2]]);
+  const rows=SW.map((h,i)=>T.add(i+1,h,"var(--text)"));
+  at(600,()=>fadeUp(label(190,220,"2, 5, 0, 3, 6",{fill:C.red,size:18,f:"IBM Plex Mono"}),0));
+  at(1000,()=>fadeUp(label(190,258,"not ascending",{fill:C.red,size:14}),0));
+  at(1600,()=>rows.forEach((r,i)=>setTimeout(()=>r.forEach(t=>t.setAttribute("fill",C.yellow)),i*130)));
+  /* sorted order by new row index: 0(4,3,9)->? compute mapping */
+  const sorted=SW.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  at(3200,()=>rows.forEach((r,i)=>{
+    const target=sorted.findIndex(s=>s[0]===SW[i][0]&&s[1]===SW[i][1]);
+    setTimeout(()=>{r.forEach(t=>move(t,0,(target-i)*42));
+      r.forEach(t=>t.setAttribute("fill",C.green))},i*160)}));
+  at(5200,()=>fadeUp(label(190,320,"0, 2, 3, 5, 6",{fill:C.green,size:18,f:"IBM Plex Mono"}),0));
+  at(5900,()=>fadeUp(label(480,500,"row-major order restored",{fill:C.green,size:16}),0));
+ }},
+{s:"CORE 3 · TRANSPOSE",t:"6:35",vo:"And don't forget the header: the six by seven becomes seven by six. The non-zero count stays the same.",
+ vis:"Header row.",act:"6 · 7 · 5 → 7 · 6 · 5; the swap flashes blue, the 5 stays green.",hold:"1300ms",dur:6000,
+ build(){
+  label(480,80,"STEP 3 · SWAP THE HEADER",{fill:C.blue,ls:"0.18em",size:14});
+  const T=ttable(330,130,6,{w:300,stroke:C.green});
+  const hdr=T.add(0,[6,7,5],"var(--text)");
+  const sorted=M0.map(h=>[h[1],h[0],h[2]]).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  sorted.forEach((h,i)=>T.add(i+1,h,C.green));
+  at(700,()=>{const hl=E("rect",{x:342,y:130+46,width:276,height:38,rx:6,fill:"rgba(76,141,255,.16)",class:"p"});
+    hl.style.opacity=0;setTimeout(()=>hl.style.opacity=1,20)});
+  at(1400,()=>{hdr[0].textContent="7";hdr[1].textContent="6";
+    hdr[0].setAttribute("fill",C.blue);hdr[1].setAttribute("fill",C.blue)});
+  at(2100,()=>hdr[2].setAttribute("fill",C.green));
+  at(2600,()=>fadeUp(label(190,200,"6 × 7  →  7 × 6",{fill:C.blue,size:18,f:"IBM Plex Mono"}),0));
+  at(3200,()=>fadeUp(label(190,250,"count unchanged",{fill:C.green,size:15}),0));
+  at(4000,()=>fadeUp(label(480,480,"swap · re-sort · swap the header — all three, every time",{size:16}),0));
+ }},
+{s:"CORE 4 · LINKED & LIMITS",t:"7:00",vo:"The triplet has one flaw. Insert a new non-zero into the middle and every entry after it shifts — because it's still an array.",
+ vis:"Triplet table, insertion at position 2.",act:"Rows below slide down one by one, staggered.",hold:"1200ms",dur:6800,
+ build(){
+  label(480,80,"THE TRIPLET'S FLAW",{fill:C.red,ls:"0.22em",size:14});
+  const T=ttable(330,120,7,{w:300,stroke:C.red});
+  T.add(0,[6,7,5],C.blue);
+  const rows=M0.map((h,i)=>T.add(i+1,[h[0],h[1],h[2]],"var(--text)"));
+  at(700,()=>fadeUp(label(190,230,"insert (2, 1, 8)",{fill:C.yellow,size:17,f:"IBM Plex Mono"}),0));
+  at(1500,()=>rows.slice(2).forEach((r,i)=>setTimeout(()=>{
+    r.forEach(t=>{move(t,0,42);t.setAttribute("fill",C.yellow)})},i*220)));
+  at(2800,()=>{const nr=T.add(3,[2,1,8],C.green);
+    nr.forEach((t,i)=>{t.style.opacity=0;setTimeout(()=>t.style.opacity=1,i*120)})});
+  at(4000,()=>fadeUp(label(190,300,"3 entries had to shift",{fill:C.red,size:16}),0));
+  at(4800,()=>fadeUp(label(480,500,"it is still an array — so insertion is still O(n)",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 4 · LINKED & LIMITS",t:"7:15",vo:"So the alternative is a linked representation. One header node per row, and each row holds a chain of nodes — column index, value, and a pointer to the next non-zero in that row.",
+ vis:"Column of row-headers left; chains of node boxes extending right from three of them.",act:"Headers draw, then chains draw with pointer arrows.",hold:"1500ms",dur:8000,
+ build(){
+  label(480,70,"LINKED REPRESENTATION",{fill:C.green,ls:"0.2em",size:14});
+  const HY=i=>120+i*66;
+  const hs=[];
+  for(let i=0;i<5;i++)at(300+i*180,()=>{
+    const h=cell(60,HY(i),{w:96,h:52,label:"row "+i,stroke:C.blue,tf:C.blue});
+    h.querySelector("text").setAttribute("font-size",13);
+    h.style.opacity=0;setTimeout(()=>h.style.opacity=1,20);hs.push(h)});
+  const CH=[[0,[["c 2","7"]]],[1,[["c 5","3"]]],[3,[["c 0","4"],["c 4","9"]]]];
+  CH.forEach((row,k)=>at(1600+k*1200,()=>{
+    row[1].forEach((it,j)=>setTimeout(()=>{
+      const x=230+j*180;
+      drawIn(arrow(j?x-64:166,HY(row[0])+26,x-8,HY(row[0])+26,{stroke:C.green}),300);
+      const b=G({class:"p"});move(b,x,HY(row[0]));
+      E("rect",{width:120,height:52,rx:8,fill:"#1B2431",stroke:C.green,"stroke-width":1.8},b);
+      E("line",{x1:74,y1:0,x2:74,y2:52,stroke:C.green,"stroke-width":1.4},b);
+      const t1=E("text",{x:37,y:33,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle"},b);
+      t1.textContent=it[0];
+      const t2=E("text",{x:97,y:33,fill:C.green,"font-family":"IBM Plex Mono","font-size":15,"text-anchor":"middle"},b);
+      t2.textContent=it[1];
+      b.style.opacity=0;setTimeout(()=>b.style.opacity=1,240)},j*600))}));
+  at(6000,()=>fadeUp(label(480,500,"column index · value · pointer to the next in that row",{size:15}),0));
+ }},
+{s:"CORE 4 · LINKED & LIMITS",t:"7:35",vo:"Rows with no non-zeros just point to null. They cost you one pointer instead of a whole row of zeros.",
+ vis:"Two headers with null markers.",act:"Null symbols appear.",hold:"1000ms",dur:5400,
+ build(){
+  const HY=i=>120+i*66;
+  for(let i=0;i<5;i++){const h=cell(60,HY(i),{w:96,h:52,label:"row "+i,stroke:C.blue,tf:C.blue});
+    h.querySelector("text").setAttribute("font-size",13)}
+  const CH={0:[["c 2","7"]],1:[["c 5","3"]],3:[["c 0","4"],["c 4","9"]]};
+  Object.keys(CH).forEach(r=>CH[r].forEach((it,j)=>{
+    const x=230+j*180;
+    arrow(j?x-64:166,HY(+r)+26,x-8,HY(+r)+26,{stroke:C.green});
+    const b=G({class:"p"});move(b,x,HY(+r));
+    E("rect",{width:120,height:52,rx:8,fill:"#1B2431",stroke:C.green,"stroke-width":1.8},b);
+    E("line",{x1:74,y1:0,x2:74,y2:52,stroke:C.green,"stroke-width":1.4},b);
+    const t1=E("text",{x:37,y:33,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle"},b);
+    t1.textContent=it[0];
+    const t2=E("text",{x:97,y:33,fill:C.green,"font-family":"IBM Plex Mono","font-size":15,"text-anchor":"middle"},b);
+    t2.textContent=it[1]}));
+  [2,4].forEach((r,k)=>at(600+k*700,()=>{
+    drawIn(arrow(166,HY(r)+26,222,HY(r)+26,{stroke:"var(--dim)"}),300);
+    setTimeout(()=>fadeUp(label(256,HY(r)+33,"NULL",{fill:"var(--dim)",size:16,f:"IBM Plex Mono"}),0),300)}));
+  at(2600,()=>fadeUp(label(660,460,"an empty row costs one pointer",{fill:C.green,size:17}),0));
+  at(3400,()=>fadeUp(label(660,500,"instead of a whole row of zeros",{fill:C.green,size:17}),0));
+ }},
+{s:"CORE 4 · LINKED & LIMITS",t:"7:50",vo:"Insertion becomes cheap — relink two pointers, nothing shifts. The cost is pointer overhead per element, and you'll understand the mechanics properly after Unit Five.",
+ vis:"Chain with a node inserted mid-way.",act:"Two arrows redraw; no other node moves.",hold:"1300ms",dur:6800,
+ build(){
+  label(480,90,"INSERTION IN THE LINKED FORM",{fill:C.green,ls:"0.16em",size:14});
+  const Y=230;
+  const h=cell(60,Y,{w:96,h:56,label:"row 3",stroke:C.blue,tf:C.blue});
+  h.querySelector("text").setAttribute("font-size",13);
+  const mk=(x,c,v,col)=>{const b=G({class:"p"});move(b,x,Y);
+    E("rect",{width:120,height:56,rx:8,fill:"#1B2431",stroke:col||C.green,"stroke-width":1.8},b);
+    E("line",{x1:74,y1:0,x2:74,y2:56,stroke:col||C.green,"stroke-width":1.4},b);
+    const t1=E("text",{x:37,y:35,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle"},b);t1.textContent=c;
+    const t2=E("text",{x:97,y:35,fill:col||C.green,"font-family":"IBM Plex Mono","font-size":15,"text-anchor":"middle"},b);t2.textContent=v;
+    return b};
+  const a=mk(230,"c 0","4"),b=mk(590,"c 4","9");
+  const link1=arrow(166,Y+28,222,Y+28,{stroke:C.green});
+  const link2=arrow(358,Y+28,582,Y+28,{stroke:C.green});
+  at(800,()=>fadeUp(label(480,160,"insert  c 2 = 6",{fill:C.yellow,size:18,f:"IBM Plex Mono"}),0));
+  at(1600,()=>{link2.setAttribute("stroke",C.red);link2.style.opacity=.25});
+  at(2100,()=>{const n=mk(410,"c 2","6",C.yellow);n.style.opacity=0;move(n,410,Y-70);
+    setTimeout(()=>{n.style.opacity=1;move(n,410,Y)},40)});
+  at(2900,()=>{drawIn(arrow(358,Y+28,402,Y+28,{stroke:C.yellow}),300);
+    drawIn(arrow(538,Y+28,582,Y+28,{stroke:C.yellow}),300,150)});
+  at(4000,()=>fadeUp(label(480,370,"two pointers relinked · nothing moved",{fill:C.green,size:17}),0));
+  at(4800,()=>fadeUp(label(480,460,"the cost: a pointer stored with every element",{fill:C.yellow,size:15}),0));
+  at(5400,()=>fadeUp(label(480,500,"mechanics properly covered in Unit 5",{size:13}),0));
+ }},
+{s:"CORE 4 · LINKED & LIMITS",t:"8:10",vo:"Last thing — when not to do this. If the matrix is only half zeros, the triplet uses three numbers per element to replace one. You've made it bigger.",
+ vis:"Fill meter at 50%, two bars showing compressed version larger.",act:"Compressed bar grows past the original, turns red.",hold:"1400ms",dur:7000,
+ build(){
+  label(480,80,"WHEN NOT TO COMPRESS",{fill:C.red,ls:"0.22em",size:14});
+  const mt=meter(310,120,340,30,{fill:C.red});
+  const pct=label(480,190,"0%",{fill:C.red,size:26,f:"IBM Plex Mono"});
+  at(400,()=>{mt.to(0.5,1000);for(let k=0;k<=50;k+=2)setTimeout(()=>pct.textContent=k+"%",k*20)});
+  line(160,470,800,470,{stroke:"var(--line)",sw:1.5});
+  const b1=bar(260,470,140,"var(--cells)"),b2=bar(600,470,140,C.green);
+  label(330,498,"full grid",{size:13});label(670,498,"triplet",{size:13});
+  at(1700,()=>{b1.grow(180,800);setTimeout(()=>fadeUp(label(330,262,"42",{fill:"var(--text)",size:20,f:"IBM Plex Mono"}),0),800)});
+  at(2900,()=>b2.grow(270,1100));
+  at(4100,()=>{b2.setAttribute("fill",C.red);
+    fadeUp(label(670,172,"63",{fill:C.red,size:22,f:"IBM Plex Mono"}),0)});
+  at(4800,()=>fadeUp(label(480,516,"three numbers to replace one — you made it bigger",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 4 · LINKED & LIMITS",t:"8:28",vo:"Rough break-even is around one-third density. Below that, compress. Above it, keep the grid and keep your constant-time access.",
+ vis:"Meter with a marked threshold at 33%.",act:"Threshold line draws; green zone left, red zone right.",hold:"1300ms",dur:6400,
+ build(){
+  label(480,110,"THE BREAK-EVEN",{fill:C.yellow,ls:"0.28em",size:14});
+  const X0=180,W=600,Y0=230;
+  E("rect",{x:X0,y:Y0,width:W,height:56,rx:28,fill:"#101720",stroke:"var(--line)","stroke-width":1.5});
+  const tx=X0+W*0.33;
+  at(500,()=>{const g1=E("rect",{x:X0+3,y:Y0+3,width:0,height:50,rx:25,fill:"rgba(61,214,140,.28)",class:"p"});
+    g1.style.transition="width .8s ease";setTimeout(()=>g1.setAttribute("width",tx-X0-3),30)});
+  at(1400,()=>{const g2=E("rect",{x:tx,y:Y0+3,width:0,height:50,rx:25,fill:"rgba(255,107,107,.24)",class:"p"});
+    g2.style.transition="width .8s ease";setTimeout(()=>g2.setAttribute("width",X0+W-tx-3),30)});
+  at(2300,()=>{const l=line(tx,Y0-26,tx,Y0+82,{stroke:C.yellow,sw:3});drawIn(l,350);
+    setTimeout(()=>fadeUp(label(tx,Y0-40,"⅓",{fill:C.yellow,size:22,f:"IBM Plex Mono"}),0),340)});
+  at(3200,()=>{fadeUp(label(X0+90,Y0+120,"COMPRESS",{fill:C.green,size:20,ls:"0.16em"}),0);
+    fadeUp(label(X0+W-160,Y0+120,"KEEP THE GRID",{fill:C.red,size:20,ls:"0.16em"}),200)});
+  at(4200,()=>{fadeUp(label(X0+90,Y0+158,"memory wins",{size:13}),0);
+    fadeUp(label(X0+W-160,Y0+158,"keep O(1) access",{size:13}),150)});
+ }},
+{s:"CLOSE",t:"8:45",vo:"Recap. Sparse means mostly zeros. Triplet form stores row, column, value — plus a header holding dimensions and the non-zero count. It trades constant-time access for large memory savings. Transpose means swap the first two columns, then re-sort, then swap the header. Linked form fixes insertion. And below about a third density, compression stops paying.",
+ vis:"Five-item summary card.",act:"Instant draw, no stagger.",hold:"2000ms",dur:7400,
+ build(){
+  label(480,58,"RECAP",{fill:C.yellow,ls:"0.3em",size:13});
+  const D=[["01","Sparse = mostly zeros","triangular and tridiagonal have predictable shape"],
+           ["02","Triplet: row · col · value","plus a header row: rows, cols, non-zero count"],
+           ["03","It trades O(1) access for memory","(n + 1) × 3 integers instead of the whole grid"],
+           ["04","Transpose = swap, re-sort, swap header","all three steps — stopping at one is the usual error"],
+           ["05","Below ⅓ density, compress","above it, the triplet is bigger than the grid"]];
+  D.forEach((d,i)=>{const y=90+i*88;
+    panel(70,y,820,74);
+    label(102,y+46,d[0],{fill:C.yellow,size:14,anchor:"start",f:"IBM Plex Mono"});
+    label(146,y+34,d[1],{fill:"var(--text)",size:18,anchor:"start",f:"Space Grotesk",w:500});
+    label(146,y+58,d[2],{size:12.5,anchor:"start"})});
+ }},
+{s:"CLOSE",t:"9:20",vo:"Exam question: a five by six matrix has non-zeros at row one column two, row two column four, and row four column zero. Write its triplet representation including the header, then write the transpose. Pause and do both.",
+ vis:"Question card.",act:"Card slides up.",hold:"2500ms",dur:7000,
+ build(){
+  const g=G({class:"p"});move(g,140,560);
+  E("rect",{width:680,height:350,rx:16,fill:"#141B25",stroke:C.yellow,"stroke-width":2},g);
+  const t1=E("text",{x:36,y:50,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":12,"letter-spacing":"0.24em"},g);
+  t1.textContent="EXAM QUESTION · 6 MARKS";
+  ["A 5 × 6 matrix has non-zeros at:"].forEach(s=>{
+    const t=E("text",{x:36,y:96,fill:"var(--text)","font-family":"Space Grotesk","font-size":22,"font-weight":500},g);t.textContent=s});
+  E("rect",{x:36,y:118,width:608,height:96,rx:8,fill:"#0F151E",stroke:"var(--line)","stroke-width":1.5},g);
+  ["(1, 2)      (2, 4)      (4, 0)"].forEach(s=>{
+    const t=E("text",{x:58,y:152,fill:"#B9C4D2","font-family":"IBM Plex Mono","font-size":17},g);t.textContent=s});
+  const t5=E("text",{x:58,y:186,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t5.textContent="values: 3, 8, 5";
+  ["(a)  Write the triplet, including the header.","(b)  Write the transpose."].forEach((s,i)=>{
+    const t=E("text",{x:36,y:252+i*32,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":15},g);t.textContent=s});
+  const t3=E("text",{x:36,y:326,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t3.textContent="⏸  Pause and do both.";
+  at(300,()=>move(g,140,95));
+  at(4000,()=>{const bar2=E("rect",{x:176,y:460,width:0,height:4,rx:2,fill:C.yellow});
+    bar2.style.transition="width 2.5s linear";setTimeout(()=>bar2.setAttribute("width",608),30)});
+ }},
+{s:"CLOSE",t:"9:40",vo:"Next video closes Unit Two: matrix arithmetic — addition, multiplication, and why one of them is O of n cubed.",
+ vis:"End card.",act:"Fade.",hold:"End.",dur:6400,
+ build(){
+  const l=label(110,200,"NEXT",{fill:"var(--dim)",size:14,anchor:"start",ls:"0.3em"});
+  const a=label(110,262,"Matrix Arithmetic",{fill:"var(--text)",size:40,f:"Space Grotesk",w:700,anchor:"start"});
+  const b=label(110,306,"addition, multiplication — and why",{fill:"var(--dim)",size:17,anchor:"start"});
+  const b2=label(110,332,"one of them is O(n³)",{fill:"var(--dim)",size:17,anchor:"start"});
+  const c=label(110,392,"VIDEO 09 · CLOSES UNIT 2",{fill:C.yellow,size:13,anchor:"start",ls:"0.16em"});
+  [l,a,b,b2,c].forEach((n,i)=>{n.style.opacity=0;at(200+i*160,()=>n.style.opacity=1)});
+  const g=G({class:"p"});move(g,570,160);g.style.opacity=0;
+  E("rect",{width:330,height:220,rx:12,fill:"#101722",stroke:"var(--line)","stroke-width":1.5},g);
+  for(let r=0;r<3;r++)for(let c2=0;c2<3;c2++){
+    E("rect",{x:26+c2*32,y:40+r*32,width:26,height:26,rx:4,fill:"#161E29",stroke:C.blue,"stroke-width":1.2},g);
+    E("rect",{x:150+c2*32,y:40+r*32,width:26,height:26,rx:4,fill:"#161E29",stroke:C.yellow,"stroke-width":1.2},g)}
+  const x=E("text",{x:134,y:92,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":20,"text-anchor":"middle"},g);
+  x.textContent="×";
+  const t=E("text",{x:165,y:186,fill:C.red,"font-family":"IBM Plex Mono","font-size":22,"text-anchor":"middle"},g);
+  t.textContent="O(n³)";
+  at(1100,()=>g.style.opacity=1);
+  at(4400,()=>fadeUp(label(480,500,"SUBSCRIBE · UNIT 2 FINALE NEXT",{size:12,ls:"0.2em"}),0));
+ }}
+];
+
+/* small helper used by beat 1 for the check path */
+function drawIn2(p,ms){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{p.style.transition=`stroke-dashoffset ${ms}ms ease`;p.style.strokeDashoffset=0})}
+
+/* ── runner ── */
+let idx=0,elapsed=0,playing=false,rate=1,queue=[],last=0;
+const tickrow=document.getElementById("tickrow"),secrow=document.getElementById("secrow");
+const total=BEATS.reduce((a,b)=>a+b.dur,0);
+BEATS.forEach((b,i)=>{const t=document.createElement("button");t.className="tick";
+  t.style.flex=b.dur;t.innerHTML='<i></i><span>'+(i+1)+'</span>';
+  t.title="Beat "+(i+1)+" — "+b.s;t.onclick=()=>go(i,playing);tickrow.appendChild(t)});
+let cur=null;BEATS.forEach(b=>{if(!cur||cur.s!==b.s){cur={s:b.s,d:0};const el=document.createElement("div");el.className="sec";el.textContent=b.s;el.dataset.s=b.s;secrow.appendChild(el)}
+  cur.d+=b.dur;secrow.lastChild.style.flex=cur.d});
+
+function go(i,autoplay){
+  idx=Math.max(0,Math.min(BEATS.length-1,i));elapsed=0;queue=[];
+  clearStage();const b=BEATS[idx];
+  at=(ms,fn)=>queue.push({ms,fn,done:false});
+  b.build();
+  document.getElementById("bn").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("bt").textContent=b.t;
+  document.getElementById("f-vo").textContent=b.vo;
+  document.getElementById("f-vis").textContent=b.vis;
+  document.getElementById("f-act").textContent=b.act;
+  document.getElementById("f-hold").textContent=b.hold;
+  [...tickrow.children].forEach((t,k)=>{t.classList.toggle("now",k===idx);t.classList.toggle("done",k<idx)});
+  playing=!!autoplay;paint();
+}
+function paint(){document.getElementById("play").textContent=playing?"❚❚ PAUSE":"▶ PLAY";
+  const t=tickrow.children[idx];t.querySelector("i").style.transform=`scaleX(${elapsed/BEATS[idx].dur})`}
+function frame(ts){const dt=Math.min(64,ts-(last||ts));last=ts;
+  if(playing){elapsed+=dt*rate;
+    queue.forEach(q=>{if(!q.done&&elapsed>=q.ms){q.done=true;q.fn()}});
+    if(elapsed>=BEATS[idx].dur){if(idx<BEATS.length-1)go(idx+1,true);else{playing=false;elapsed=BEATS[idx].dur}}
+    paint()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+document.getElementById("play").onclick=()=>{if(!playing&&elapsed>=BEATS[idx].dur)go(idx,true);else{playing=!playing;paint()}};
+document.getElementById("next").onclick=()=>go(idx+1,playing);
+document.getElementById("prev").onclick=()=>go(idx-1,playing);
+document.getElementById("replay").onclick=()=>go(idx,true);
+document.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>{rate=parseFloat(b.dataset.r);
+  document.querySelectorAll(".rate button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;
+  if(e.key===" "){e.preventDefault();document.getElementById("play").click()}
+  if(e.key==="ArrowRight")go(idx+1,playing);if(e.key==="ArrowLeft")go(idx-1,playing);
+  if(e.key.toLowerCase()==="r")go(idx,true)});
+
+go(0,false);
+</script>
+</body>
+</html>

@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video 09 — Matrix Arithmetic: Why Multiplication Costs So Much · Animatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080A0D; --panel:#0D1116; --stage:#12161C; --line:#1E252E;
+  --cellf:#28313D; --cells:#3B4756;
+  --blue:#4C8DFF; --green:#3DD68C; --red:#FF6B6B; --yellow:#FFC94D;
+  --text:#E7ECF3; --dim:#7C8899; --faint:#4A5464;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--disp)}
+body{padding:18px 16px 60px;max-width:1180px;margin:0 auto}
+
+/* ── masthead ── */
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.slate{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink);background:var(--yellow);padding:3px 8px;border-radius:3px;font-weight:600}
+h1{font-size:clamp(19px,4vw,27px);font-weight:700;letter-spacing:-.02em;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;margin-left:auto}
+
+/* ── stage ── */
+.stagewrap{margin-top:14px;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--stage)}
+svg#stage{display:block;width:100%;height:auto;background:
+  linear-gradient(rgba(76,141,255,.035) 1px,transparent 1px) 0 0/100% 36px,
+  linear-gradient(90deg,rgba(76,141,255,.035) 1px,transparent 1px) 0 0/36px 100%,
+  var(--stage)}
+.badge{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint)}
+.badge b{color:var(--blue);font-weight:600}
+
+/* ── ruler (signature) ── */
+.ruler{margin-top:12px}
+.secrow,.tickrow{display:flex;gap:2px}
+.secrow{margin-bottom:5px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--faint);border-top:1px solid var(--line);padding-top:4px;overflow:hidden;white-space:nowrap}
+.tick{height:26px;background:#131922;border:0;padding:0;border-radius:2px;position:relative;cursor:pointer;overflow:hidden}
+.tick:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tick i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:var(--faint)}
+.tick.done i{transform:scaleX(1)}
+.tick.now i{background:var(--blue)}
+.tick span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--dim)}
+.tick.now span{color:#fff}
+
+/* ── transport ── */
+.transport{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.ctl{font-family:var(--mono);font-size:12px;color:var(--text);background:#131922;border:1px solid var(--line);border-radius:6px;padding:9px 13px;cursor:pointer}
+button.ctl:hover{border-color:var(--faint)}
+button.ctl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.ctl.primary{background:var(--blue);color:#06101F;border-color:var(--blue);font-weight:600;min-width:96px}
+.rate{margin-left:auto;display:flex;gap:2px}
+.rate button{padding:9px 10px}
+.rate button[aria-pressed="true"]{background:#1B2431;border-color:var(--faint);color:var(--yellow)}
+
+/* ── spec sheet ── */
+.spec{margin-top:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.vo{border-left:2px solid var(--yellow);padding:2px 0 2px 14px}
+.vo .lab,.fld .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.vo p{margin:6px 0 0;font-size:clamp(16px,2.4vw,20px);line-height:1.45;letter-spacing:-.01em}
+.fields{display:grid;gap:10px}
+.fld{border-left:1px solid var(--line);padding-left:14px}
+.fld p{margin:4px 0 0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#B9C4D2}
+.fld.hold p{color:var(--green)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:760px){.spec{grid-template-columns:1fr}.meta{margin-left:0;width:100%}.tick span{display:none}}
+
+/* ── stage element transitions ── */
+.p{transition:transform .55s cubic-bezier(.2,.8,.25,1),opacity .4s ease,fill .3s ease,stroke .3s ease}
+.fast{transition:transform .25s ease,opacity .2s ease,fill .12s ease}
+.q{transition:none}
+@keyframes shake{0%,100%{transform:translate(var(--tx),var(--ty))}25%{transform:translate(calc(var(--tx) - 7px),var(--ty))}75%{transform:translate(calc(var(--tx) + 7px),var(--ty))}}
+.shake{animation:shake .28s 2}
+@media(prefers-reduced-motion:reduce){.p,.fast{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slate">VID 09</span>
+  <h1>Matrix Arithmetic: Why Multiplication Costs So Much</h1>
+  <span class="meta">UNIT 2 · TARGET 9:30 · 35 BEATS · UNIT 2 FINALE</span>
+</header>
+
+<div class="stagewrap">
+  <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Animation stage"></svg>
+  <div class="badge">BEAT <b id="bn">01</b> · <span id="bt">0:00</span></div>
+</div>
+
+<div class="ruler">
+  <div class="secrow" id="secrow"></div>
+  <div class="tickrow" id="tickrow"></div>
+</div>
+
+<div class="transport">
+  <button class="ctl" id="prev" aria-label="Previous beat">◀ PREV</button>
+  <button class="ctl primary" id="play">▶ PLAY</button>
+  <button class="ctl" id="next" aria-label="Next beat">NEXT ▶</button>
+  <button class="ctl" id="replay">↻ BEAT</button>
+  <div class="rate" role="group" aria-label="Playback rate">
+    <button class="ctl" data-r="0.5">.5×</button>
+    <button class="ctl" data-r="1" aria-pressed="true">1×</button>
+    <button class="ctl" data-r="2">2×</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div class="vo"><span class="lab">VO</span><p id="f-vo"></p></div>
+  <div class="fields">
+    <div class="fld"><span class="lab">VIS</span><p id="f-vis"></p></div>
+    <div class="fld"><span class="lab">ACT</span><p id="f-act"></p></div>
+    <div class="fld hold"><span class="lab">HOLD</span><p id="f-hold"></p></div>
+  </div>
+</div>
+
+<footer>
+  ANIMATIC RUNS AT STORYBOARD PACE — REAL CUT IS TIMED TO VO (9:30).<br>
+  KEYS: SPACE PLAY/PAUSE · ← → STEP BEAT · R REPLAY BEAT.<br>
+  THIS FILE IS THE FORMAT SPEC. CLONE FOR VIDEOS 02–48; REPLACE THE BEATS ARRAY ONLY.
+</footer>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const stage=document.getElementById("stage");
+let layer=document.createElementNS(NS,"g");stage.appendChild(layer);
+
+/* ── primitive kit ── */
+function E(t,a={},p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);(p||layer).appendChild(n);return n}
+function G(a={},p){return E("g",a,p)}
+function move(n,x,y){n.style.setProperty("--tx",x+"px");n.style.setProperty("--ty",y+"px");n.style.transform=`translate(${x}px,${y}px)`}
+function cell(x,y,o={}){const w=o.w||46,h=o.h||46;
+  const g=G({class:o.cls||"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:o.rx??9,fill:o.fill||"var(--cellf)",stroke:o.stroke||"var(--cells)","stroke-width":1.5,class:o.cls||"p"},g);
+  if(o.label!=null)E("text",{x:w/2,y:h/2+5,fill:o.tf||"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g).textContent=o.label;
+  g.rect=r;g.opacity=v=>g.style.opacity=v;return g}
+function label(x,y,s,o={}){const t=E("text",{x,y,fill:o.fill||"var(--dim)","font-family":o.f||"IBM Plex Mono","font-size":o.size||13,"text-anchor":o.anchor||"middle","letter-spacing":o.ls||0,class:o.cls||"p","font-weight":o.w||400},o.p);t.textContent=s;if(o.o!=null)t.style.opacity=o.o;return t}
+function line(x1,y1,x2,y2,o={}){return E("line",{x1,y1,x2,y2,stroke:o.stroke||"var(--cells)","stroke-width":o.sw||2,"stroke-linecap":"round",class:"p",...(o.attrs||{})})}
+function drawIn(l,ms,delay){const len=Math.hypot(l.x2.baseVal.value-l.x1.baseVal.value,l.y2.baseVal.value-l.y1.baseVal.value);
+  l.style.strokeDasharray=len;l.style.strokeDashoffset=len;l.style.transition="none";
+  requestAnimationFrame(()=>{l.style.transition=`stroke-dashoffset ${ms||420}ms cubic-bezier(.3,.7,.3,1) ${delay||0}ms, stroke .3s`;l.style.strokeDashoffset=0});return l}
+function arrow(x1,y1,x2,y2,o={}){const l=line(x1,y1,x2,y2,o);l.setAttribute("marker-end","url(#ah)");return l}
+function chip(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||(s.length*8.4+22);
+  const r=E("rect",{width:w,height:28,rx:14,fill:o.fill||"#1A2230",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const t=E("text",{x:w/2,y:19,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;g.w=w;return g}
+function nodeBox(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||64,h=o.h||44;
+  const r=E("rect",{width:w,height:h,rx:8,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:w/2,y:h/2+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;return g}
+function circleNode(cx,cy,s,o={}){const g=G({class:"p"});
+  const c=E("circle",{cx,cy,r:o.r||24,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.c=c;g.txt=t;return g}
+function fadeUp(n,d){n.style.opacity=0;setTimeout(()=>n.style.opacity=1,d||0);return n}
+function defs(){const d=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"},d);
+  E("path",{d:"M0 0 L10 5 L0 10 z",fill:"var(--cells)"},m)}
+function clearStage(){layer.remove();layer=document.createElementNS(NS,"g");stage.appendChild(layer);defs()}
+const C={blue:"var(--blue)",green:"var(--green)",red:"var(--red)",yellow:"var(--yellow)",grey:"var(--cellf)"};
+
+/* ── beats ── */
+let at; // scheduler injected per beat
+
+/* ── extra primitives for Video 09 ── */
+function panel(x,y,w,h,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:10,fill:o.fill||"#131A24",stroke:o.stroke||"var(--line)","stroke-width":o.sw||1.5,class:"p"},g);
+  g.rect=r;g.w=w;g.h=h;return g}
+function code(g,linesArr,o={}){const out=[];linesArr.forEach((s,i)=>{
+  const n=E("text",{x:o.x||22,y:(o.y||40)+i*(o.lh||30),fill:o.fill||"#B9C4D2","font-family":"IBM Plex Mono",
+    "font-size":o.size||15,class:"p"},g);n.textContent=s;out.push(n)});return out}
+/* rectangular grid with .at/.val/.set/.cx/.cy — carried from V08 */
+function mgrid(x,y,rows,cols,cw,o={}){const g=G({class:"p"});const cells=[],vals=[];
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const rect=E("rect",{x:x+c*cw,y:y+r*cw,width:cw-4,height:cw-4,rx:Math.min(6,cw/5),
+      fill:o.fill||"#161E29",stroke:o.stroke||"#232C38","stroke-width":cw>18?1.4:0.6,class:"fast"},g);
+    cells.push(rect);
+    const t=E("text",{x:x+c*cw+(cw-4)/2,y:y+r*cw+(cw-4)/2+6,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono",
+      "font-size":o.size||Math.max(9,cw*0.36),"text-anchor":"middle",class:"fast"},g);
+    t.textContent="";vals.push(t)}
+  g.rows=rows;g.cols=cols;g.cw=cw;g.x0=x;g.y0=y;
+  g.at=(r,c)=>cells[r*cols+c];g.val=(r,c)=>vals[r*cols+c];
+  g.cx=c=>x+c*cw+(cw-4)/2;g.cy=r=>y+r*cw+(cw-4)/2;
+  g.fillAll=M=>{for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)g.val(r,c).textContent=M[r][c]};
+  g.tint=(r,c,col,bg)=>{g.at(r,c).setAttribute("stroke",col);g.at(r,c).setAttribute("fill",bg||"#12213A");
+    g.val(r,c).setAttribute("fill",col)};
+  g.plain=(r,c)=>{g.at(r,c).setAttribute("stroke",o.stroke||"#232C38");g.at(r,c).setAttribute("fill",o.fill||"#161E29");
+    g.val(r,c).setAttribute("fill",o.tf||"var(--text)")};
+  return g}
+function ttable(x,y,rowCount,o={}){const g=G({class:"p"});move(g,x,y);
+  const w=o.w||300,rh=o.rh||40;
+  E("rect",{width:w,height:46+rh*rowCount,rx:10,fill:"#131A24",stroke:o.stroke||"var(--line)","stroke-width":1.5},g);
+  const cx=[w*0.2,w*0.5,w*0.8];
+  ["ROW","COL","VAL"].forEach((h,i)=>{const t=E("text",{x:cx[i],y:30,fill:"var(--dim)","font-family":"IBM Plex Mono",
+    "font-size":10,"letter-spacing":"0.18em","text-anchor":"middle"},g);t.textContent=h});
+  E("line",{x1:12,y1:44,x2:w-12,y2:44,stroke:"var(--line)","stroke-width":1},g);
+  g.rowY=i=>44+rh*(i+1)-13;
+  g.add=(i,v,col)=>v.map((s,k)=>{const t=E("text",{x:cx[k],y:g.rowY(i),fill:col||"var(--text)","font-family":"IBM Plex Mono",
+    "font-size":o.size||16,"text-anchor":"middle",class:"p"},g);t.textContent=s;return t});
+  g.w=w;g.rh=rh;return g}
+function bar(x,y,w,col){const r=E("rect",{x,y,width:w,height:0,rx:6,fill:col,class:"p"});
+  r.grow=(h,ms)=>{r.style.transition=`height ${ms||900}ms ease, y ${ms||900}ms ease, fill .4s`;
+    r.setAttribute("height",h);r.setAttribute("y",y-h)};return r}
+function bracket(x1,x2,y,txt,col,o={}){const g=G({class:"p"});const d=o.down?-1:1;
+  E("path",{d:`M${x1} ${y} v${-10*d} H${x2} v${10*d}`,stroke:col,"stroke-width":2,fill:"none",class:"p"},g);
+  const t=E("text",{x:(x1+x2)/2,y:y-16*d+(o.down?14:0),fill:col,"font-family":"IBM Plex Mono",
+    "font-size":o.size||13,"text-anchor":"middle",class:"p"},g);t.textContent=txt;g.txt=t;return g}
+function counter(t,from,to,steps,start,dur,fmt){for(let k=0;k<=steps;k++)
+  at(start+k*(dur/steps),()=>{const v=Math.round(from+(to-from)*k/steps);
+    t.textContent=fmt?fmt(v):v.toLocaleString()})}
+
+/* worked example: A(2×3) × B(3×4) */
+const MA=[[1,2,3],[4,5,6]];
+const MB=[[7,8,9,1],[2,3,4,5],[6,7,8,9]];
+const MC=[[0,0,0,0],[0,0,0,0]];
+for(let i=0;i<2;i++)for(let j=0;j<4;j++){let s=0;for(let k=0;k<3;k++)s+=MA[i][k]*MB[k][j];MC[i][j]=s}
+const ADD_A=[[2,5,1],[7,3,8],[4,6,9]];
+const ADD_B=[[3,1,6],[2,9,4],[5,7,2]];
+
+const BEATS=[
+{s:"HOOK",t:"0:00",vo:"Adding two matrices of a thousand by a thousand takes a million operations. Multiplying the same two takes a billion.",
+ vis:"Two grids side by side, a + between them; then the + becomes ×.",act:"1,000,000 writes beneath the + in green. Symbol flips to ×; counter spins up to 1,000,000,000 in red.",hold:"1200ms",dur:7400,
+ build(){
+  label(480,80,"1,000 × 1,000",{fill:"var(--dim)",size:16,f:"IBM Plex Mono"});
+  const a=mgrid(210,140,6,6,32,{blank:true}),b=mgrid(590,140,6,6,32,{blank:true});
+  const op=label(480,236,"+",{fill:C.green,size:52,f:"IBM Plex Mono"});
+  const cnt=label(480,380,"0",{fill:C.green,size:44,f:"IBM Plex Mono"});
+  counter(cnt,0,1000000,20,600,1600);
+  at(2400,()=>fadeUp(label(480,424,"operations to add",{fill:C.green,size:15}),0));
+  at(3400,()=>{op.textContent="×";op.setAttribute("fill",C.red);
+    cnt.setAttribute("fill",C.red);cnt.textContent="0"});
+  counter(cnt,0,1000000000,30,3700,2200);
+  at(6000,()=>fadeUp(label(480,470,"operations to multiply",{fill:C.red,size:15}),0));
+ }},
+{s:"HOOK",t:"0:12",vo:"Same matrices. Same sizes. A thousand times more work. That gap is worth understanding — it's the reason GPUs exist.",
+ vis:"Two bars comparing the counts.",act:"Second bar shoots off-frame top.",hold:"1000ms",dur:6000,
+ build(){
+  line(140,460,820,460,{stroke:"var(--line)",sw:1.5});
+  const b1=bar(250,460,140,C.green),b2=bar(600,460,140,C.red);
+  label(320,492,"addition",{size:14});label(670,492,"multiplication",{size:14});
+  at(500,()=>{b1.grow(14,800);setTimeout(()=>fadeUp(label(320,420,"10⁶",{fill:C.green,size:24,f:"IBM Plex Mono"}),0),800)});
+  at(1800,()=>{b2.style.transition="height 1.6s cubic-bezier(.4,0,.7,1), y 1.6s cubic-bezier(.4,0,.7,1)";
+    b2.setAttribute("height",620);b2.setAttribute("y",-160)});
+  at(3000,()=>fadeUp(label(670,120,"10⁹ ↑",{fill:C.red,size:26,f:"IBM Plex Mono"}),0));
+  at(3900,()=>fadeUp(label(280,220,"1,000× more work",{fill:C.red,size:22,f:"Space Grotesk",w:700}),0));
+  at(4600,()=>fadeUp(label(280,262,"this gap is the reason GPUs exist",{size:15}),0));
+ }},
+{s:"HOOK",t:"0:22",vo:"So let's do the arithmetic properly, and see exactly where the cost comes from.",
+ vis:"Title card.",act:'"MATRIX ARITHMETIC" types on.',hold:"600ms",dur:5000,
+ build(){
+  const a=mgrid(300,130,4,4,40,{blank:true}),b=mgrid(520,130,4,4,40,{blank:true});
+  at(300,()=>{for(let r=0;r<4;r++)for(let c=0;c<4;c++)setTimeout(()=>{
+    a.at(r,c).setAttribute("stroke",C.blue);b.at(r,c).setAttribute("stroke",C.yellow)},(r*4+c)*45)});
+  label(480,236,"×",{fill:"var(--dim)",size:32,f:"IBM Plex Mono"});
+  const t=label(480,380,"",{fill:C.yellow,size:44,f:"Space Grotesk",w:700,ls:"0.02em"});
+  const full="MATRIX ARITHMETIC";
+  for(let i=0;i<=full.length;i++)at(1200+i*80,()=>t.textContent=full.slice(0,i)+(i<full.length?"▌":""));
+  at(1200+full.length*80+140,()=>{t.textContent=full;
+    fadeUp(label(480,428,"and exactly where the cost comes from",{size:15,ls:"0.08em"}),0)});
+ }},
+{s:"PROMISE",t:"0:30",vo:"Addition and subtraction, transpose, multiplication with a full dry run, the complexity of each, and how these change when the matrix is sparse.",
+ vis:"Four chips: Add · Transpose · Multiply · Sparse.",act:"Stagger 150ms.",hold:"500ms",dur:4600,
+ build(){
+  label(480,130,"IN THIS VIDEO",{ls:"0.28em",size:12});
+  ["Addition and subtraction","Transpose","Multiplication — full dry run","Sparse arithmetic"].forEach((s,i)=>{
+    const c=chip(-360,200+i*66,s,{w:320});c.rect.setAttribute("height",46);c.txt.setAttribute("y",28);c.style.opacity=0;
+    const n=label(276,200+i*66+29,"0"+(i+1),{fill:C.yellow,size:13});n.style.opacity=0;
+    at(200+i*150,()=>{move(c,320,200+i*66);c.style.opacity=1;n.style.opacity=1})});
+ }},
+{s:"CORE 1 · ADDITION",t:"0:50",vo:"Addition is the easy one. One condition: both matrices must have exactly the same dimensions.",
+ vis:"Two 3×3 grids side by side.",act:"Dimension labels 3×3 write beneath each; both flash green.",hold:"900ms",dur:5000,
+ build(){
+  const a=mgrid(180,150,3,3,64),b=mgrid(560,150,3,3,64);
+  a.fillAll(ADD_A);b.fillAll(ADD_B);
+  label(480,246,"+",{fill:"var(--text)",size:40,f:"IBM Plex Mono"});
+  label(276,120,"A",{fill:C.blue,size:18,f:"IBM Plex Mono"});
+  label(656,120,"B",{fill:C.yellow,size:18,f:"IBM Plex Mono"});
+  at(700,()=>{fadeUp(label(276,392,"3 × 3",{fill:"var(--dim)",size:20,f:"IBM Plex Mono"}),0);
+    fadeUp(label(656,392,"3 × 3",{fill:"var(--dim)",size:20,f:"IBM Plex Mono"}),200)});
+  at(1800,()=>{const l=layer.querySelectorAll("text");
+    for(let r=0;r<3;r++)for(let c=0;c<3;c++){a.at(r,c).setAttribute("stroke",C.green);b.at(r,c).setAttribute("stroke",C.green)}});
+  at(2600,()=>fadeUp(label(480,470,"one condition: identical dimensions",{fill:C.green,size:17}),0));
+ }},
+{s:"CORE 1 · ADDITION",t:"1:05",vo:"Not just the same total number of cells — the same shape. A two by six and a three by four both hold twelve elements, and they still can't be added.",
+ vis:"A 2×6 grid and a 3×4 grid.",act:"Both show 12 elements; then a red X strikes the + between them.",hold:"1200ms",dur:6400,
+ build(){
+  const a=mgrid(80,190,2,6,54,{blank:true}),b=mgrid(600,170,3,4,54,{blank:true});
+  label(242,160,"2 × 6",{fill:C.blue,size:18,f:"IBM Plex Mono"});
+  label(708,140,"3 × 4",{fill:C.yellow,size:18,f:"IBM Plex Mono"});
+  const op=label(480,290,"+",{fill:"var(--text)",size:44,f:"IBM Plex Mono"});
+  at(700,()=>{fadeUp(label(242,340,"12 elements",{fill:"var(--dim)",size:16,f:"IBM Plex Mono"}),0);
+    fadeUp(label(708,360,"12 elements",{fill:"var(--dim)",size:16,f:"IBM Plex Mono"}),200)});
+  at(1900,()=>fadeUp(label(480,110,"same count — different shape",{fill:C.yellow,size:17}),0));
+  at(2700,()=>{op.setAttribute("fill",C.red);
+    const x=line(440,250,520,330,{stroke:C.red,sw:6});drawIn(x,300);
+    const y=line(520,250,440,330,{stroke:C.red,sw:6});drawIn(y,300,150)});
+  at(3800,()=>fadeUp(label(480,450,"the shape must match — not the count",{fill:C.red,size:18}),0));
+ }},
+{s:"CORE 1 · ADDITION",t:"1:25",vo:"The rule itself is element-wise. The cell at row i, column j in the result is just A at i, j plus B at i, j.",
+ vis:"Two 3×3 grids and an empty result grid.",act:"Cell [0][0] in each source lights blue, values fly into the result cell which fills green.",hold:"1100ms",dur:6600,
+ build(){
+  const a=mgrid(50,190,3,3,54),b=mgrid(300,190,3,3,54),c=mgrid(660,190,3,3,54);
+  a.fillAll(ADD_A);b.fillAll(ADD_B);
+  label(131,170,"A",{fill:C.blue,size:15,f:"IBM Plex Mono"});
+  label(381,170,"B",{fill:C.yellow,size:15,f:"IBM Plex Mono"});
+  label(741,170,"C",{fill:C.green,size:15,f:"IBM Plex Mono"});
+  label(262,275,"+",{fill:"var(--dim)",size:28,f:"IBM Plex Mono"});
+  label(600,275,"=",{fill:"var(--dim)",size:28,f:"IBM Plex Mono"});
+  at(700,()=>{a.tint(0,0,C.blue);b.tint(0,0,C.yellow,"#2A2415")});
+  at(1500,()=>fadeUp(label(480,410,"2  +  3",{fill:"var(--text)",size:30,f:"IBM Plex Mono"}),0));
+  at(2400,()=>{c.tint(0,0,C.green,"#122A21");c.val(0,0).textContent=ADD_A[0][0]+ADD_B[0][0]});
+  at(3200,()=>fadeUp(label(480,460,"C[i][j]  =  A[i][j]  +  B[i][j]",{fill:C.green,size:24,f:"IBM Plex Mono"}),0));
+  at(4400,()=>fadeUp(label(480,506,"element-wise — position by position",{size:15}),0));
+ }},
+{s:"CORE 1 · ADDITION",t:"1:45",vo:"Every cell is independent. Nothing depends on anything else.",
+ vis:"Same three grids.",act:"Remaining 8 cells resolve in a fast sweep, 150ms apart.",hold:"1200ms",dur:5600,
+ build(){
+  const a=mgrid(50,190,3,3,54),b=mgrid(300,190,3,3,54),c=mgrid(660,190,3,3,54);
+  a.fillAll(ADD_A);b.fillAll(ADD_B);
+  label(262,275,"+",{fill:"var(--dim)",size:28,f:"IBM Plex Mono"});
+  label(600,275,"=",{fill:"var(--dim)",size:28,f:"IBM Plex Mono"});
+  a.tint(0,0,C.blue);b.tint(0,0,C.yellow,"#2A2415");
+  c.tint(0,0,C.green,"#122A21");c.val(0,0).textContent=ADD_A[0][0]+ADD_B[0][0];
+  const order=[[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]];
+  order.forEach((p,i)=>at(500+i*260,()=>{
+    a.tint(p[0],p[1],C.blue);b.tint(p[0],p[1],C.yellow,"#2A2415");
+    c.tint(p[0],p[1],C.green,"#122A21");
+    c.val(p[0],p[1]).textContent=ADD_A[p[0]][p[1]]+ADD_B[p[0]][p[1]]}));
+  at(3000,()=>fadeUp(label(480,430,"every cell is independent",{fill:C.green,size:19}),0));
+  at(3900,()=>fadeUp(label(480,476,"nothing depends on anything else",{size:15}),0));
+ }},
+{s:"CORE 1 · ADDITION",t:"2:00",vo:"So the code is two nested loops — one for rows, one for columns — and inside, a single addition.",
+ vis:"Code panel: outer for i, inner for j, body C[i][j] = A[i][j] + B[i][j].",act:"Lines type on.",hold:"1000ms",dur:5800,
+ build(){
+  const P=panel(140,160,680,220,{stroke:C.blue});
+  const SRC=["for i = 0 to m-1","    for j = 0 to n-1","        C[i][j] = A[i][j] + B[i][j]"];
+  const ls=code(P,["","",""],{y:60,lh:56,size:19});
+  SRC.forEach((s,i)=>at(500+i*900,()=>{ls[i].textContent=s;
+    ls[i].setAttribute("fill",i<2?C.blue:"#B9C4D2")}));
+  at(3400,()=>{const b=bracket(170,470,150,"2 nested loops",C.blue);b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(4200,()=>fadeUp(label(480,440,"one addition inside — that's the whole operation",{size:16}),0));
+ }},
+{s:"CORE 1 · ADDITION",t:"2:15",vo:"Two loops, so the body runs m times n. For a square matrix that's n squared. Every element touched exactly once — you cannot do better than that, because you have to at least look at each one.",
+ vis:"Frequency chip: O(m × n) → O(n²).",act:"Chip writes green.",hold:"1300ms",dur:6600,
+ build(){
+  const P=panel(140,130,680,190,{stroke:"var(--line)"});
+  code(P,["for i = 0 to m-1","    for j = 0 to n-1","        C[i][j] = A[i][j] + B[i][j]"],{y:56,lh:48,size:17});
+  at(600,()=>{const c=chip(230,360,"O(m × n)",{w:220,stroke:C.blue,tf:C.blue});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(1400,()=>{const a=label(480,382,"→",{fill:"var(--dim)",size:26});a.style.opacity=0;setTimeout(()=>a.style.opacity=1,20)});
+  at(1900,()=>{const c=chip(520,360,"O(n²)",{w:220,stroke:C.green,tf:C.green});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(3000,()=>fadeUp(label(480,450,"every element touched exactly once",{fill:C.green,size:18}),0));
+  at(4000,()=>fadeUp(label(480,496,"you cannot beat this — you must at least look at each one",{size:14}),0));
+ }},
+{s:"CORE 1 · ADDITION",t:"2:32",vo:"Subtraction is identical — change the plus to a minus. Same condition, same loops, same complexity. Nothing new.",
+ vis:"Code panel.",act:"+ in the body swaps to −; everything else stays static.",hold:"1000ms",dur:5200,
+ build(){
+  const P=panel(140,160,680,190,{stroke:"var(--line)"});
+  const ls=code(P,["for i = 0 to m-1","    for j = 0 to n-1","        C[i][j] = A[i][j] + B[i][j]"],{y:56,lh:48,size:17});
+  at(900,()=>{ls[2].setAttribute("fill",C.yellow)});
+  at(1400,()=>{ls[2].textContent="        C[i][j] = A[i][j] − B[i][j]"});
+  at(2100,()=>ls[2].setAttribute("fill","#B9C4D2"));
+  at(2700,()=>{fadeUp(label(300,410,"same condition",{fill:C.green,size:15}),0);
+    fadeUp(label(480,410,"same loops",{fill:C.green,size:15}),150);
+    fadeUp(label(670,410,"same O(n²)",{fill:C.green,size:15}),300)});
+  at(3700,()=>fadeUp(label(480,470,"one character changes. nothing else does.",{size:16}),0));
+ }},
+{s:"CORE 2 · TRANSPOSE",t:"2:45",vo:"Transpose. Flip the matrix across its main diagonal — row i becomes column i.",
+ vis:"3×4 grid.",act:"Diagonal line draws; grid rotates/reflects across it into a 4×3 grid.",hold:"1200ms",dur:6400,
+ build(){
+  label(480,90,"TRANSPOSE",{fill:C.yellow,ls:"0.3em",size:14});
+  const a=mgrid(90,160,3,4,64);
+  const M=[[1,2,3,4],[5,6,7,8],[9,10,11,12]];a.fillAll(M);
+  label(218,140,"A   (3 × 4)",{fill:C.blue,size:14,f:"IBM Plex Mono"});
+  at(700,()=>{const d=line(90,160,90+3*64-4,160+3*64-4,{stroke:C.yellow,sw:3});drawIn(d,600)});
+  at(1500,()=>fadeUp(label(200,400,"main diagonal",{fill:C.yellow,size:13}),0));
+  const b=mgrid(600,140,4,3,64);b.style.opacity=0;
+  at(2300,()=>{b.style.opacity=1;
+    for(let r=0;r<3;r++)for(let c=0;c<4;c++)b.val(c,r).textContent=M[r][c]});
+  at(3100,()=>fadeUp(label(696,120,"Aᵀ   (4 × 3)",{fill:C.green,size:14,f:"IBM Plex Mono"}),0));
+  at(3900,()=>fadeUp(label(480,470,"row i becomes column i",{size:18}),0));
+ }},
+{s:"CORE 2 · TRANSPOSE",t:"3:00",vo:"So an m by n matrix becomes n by m. The element at i, j moves to j, i. That's the entire operation.",
+ vis:"Both grids, one cell tracked.",act:"Cell [1][3] lights blue, flies to position [3][1] in the result.",hold:"1200ms",dur:6400,
+ build(){
+  const a=mgrid(90,160,3,4,64),b=mgrid(600,140,4,3,64);
+  const M=[[1,2,3,4],[5,6,7,8],[9,10,11,12]];a.fillAll(M);
+  for(let r=0;r<3;r++)for(let c=0;c<4;c++)b.val(c,r).textContent=M[r][c];
+  label(218,140,"m × n",{fill:C.blue,size:14,f:"IBM Plex Mono"});
+  label(696,120,"n × m",{fill:C.green,size:14,f:"IBM Plex Mono"});
+  at(600,()=>{a.tint(1,3,C.blue);fadeUp(label(150,420,"A[1][3]",{fill:C.blue,size:20,f:"IBM Plex Mono"}),0)});
+  at(1500,()=>{const p=E("path",{d:`M${a.cx(3)} ${a.cy(1)-24} C 400 100, 500 100, ${b.cx(1)} ${b.cy(3)-24}`,
+    stroke:C.blue,"stroke-width":3,fill:"none","marker-end":"url(#ah)",class:"p"});drawIn2(p,800)});
+  at(2500,()=>{b.tint(3,1,C.green,"#122A21");
+    fadeUp(label(760,420,"Aᵀ[3][1]",{fill:C.green,size:20,f:"IBM Plex Mono"}),0)});
+  at(3600,()=>fadeUp(label(480,490,"[i][j]  →  [j][i]   ·   that's the entire operation",{size:17,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 2 · TRANSPOSE",t:"3:15",vo:"Two loops again, n squared. And notice — the diagonal elements never move. Row two column two stays exactly where it is.",
+ vis:"Square grid.",act:"Diagonal cells pulse green and hold; off-diagonal cells swap in pairs.",hold:"1300ms",dur:6600,
+ build(){
+  label(480,90,"SQUARE MATRIX",{fill:"var(--dim)",ls:"0.24em",size:12});
+  const a=mgrid(320,130,4,4,72);
+  const M=[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]];a.fillAll(M);
+  at(500,()=>{const c=chip(700,140,"O(n²)",{w:170,stroke:C.blue,tf:C.blue});c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(1200,()=>[0,1,2,3].forEach(k=>setTimeout(()=>a.tint(k,k,C.green,"#122A21"),k*180)));
+  at(2200,()=>fadeUp(label(160,300,"the diagonal",{fill:C.green,size:16}),0));
+  at(2500,()=>fadeUp(label(160,332,"never moves",{fill:C.green,size:16}),0));
+  const pairs=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+  at(3200,()=>pairs.forEach((p,i)=>setTimeout(()=>{
+    const v1=a.val(p[0],p[1]).textContent,v2=a.val(p[1],p[0]).textContent;
+    a.val(p[0],p[1]).textContent=v2;a.val(p[1],p[0]).textContent=v1;
+    a.tint(p[0],p[1],C.yellow,"#2A2415");a.tint(p[1],p[0],C.yellow,"#2A2415")},i*260)));
+  at(5000,()=>fadeUp(label(480,470,"everything else swaps in pairs",{fill:C.yellow,size:17}),0));
+ }},
+{s:"CORE 2 · TRANSPOSE",t:"3:30",vo:"Which means for a square matrix you can transpose in place, swapping only the pairs above the diagonal. Half the work, no second matrix, no extra memory.",
+ vis:"Square grid with the upper triangle highlighted.",act:"Only upper-triangle cells swap with their mirrors; lower triangle dims.",hold:"1400ms",dur:6800,
+ build(){
+  label(480,90,"IN-PLACE TRANSPOSE",{fill:C.green,ls:"0.24em",size:14});
+  const a=mgrid(320,130,4,4,72);
+  const M=[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]];a.fillAll(M);
+  for(let k=0;k<4;k++)a.tint(k,k,C.green,"#122A21");
+  at(600,()=>{for(let r=0;r<4;r++)for(let c=0;c<4;c++)if(c<r){
+    a.at(r,c).setAttribute("fill","#0E1319");a.at(r,c).setAttribute("stroke","#1B222C");
+    a.val(r,c).setAttribute("fill","#2A323D")}});
+  at(1300,()=>{for(let r=0;r<4;r++)for(let c=0;c<4;c++)if(c>r)a.at(r,c).setAttribute("stroke",C.yellow)});
+  at(1800,()=>fadeUp(label(160,240,"only these 6",{fill:C.yellow,size:17}),0));
+  at(2100,()=>fadeUp(label(160,274,"need swapping",{fill:C.yellow,size:17}),0));
+  at(2900,()=>{const P=panel(140,420,680,90,{stroke:C.green});P.style.opacity=0;setTimeout(()=>P.style.opacity=1,20);
+    code(P,["for i = 0 to n-1:  for j = i+1 to n-1:  swap(A[i][j], A[j][i])"],{y:56,size:15})});
+  at(4400,()=>fadeUp(label(760,300,"half the work",{fill:C.green,size:16}),0));
+  at(4700,()=>fadeUp(label(760,334,"no extra memory",{fill:C.green,size:16}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"3:45",vo:"Now multiplication, where everything gets more expensive. And the condition is different — this is the one people get wrong.",
+ vis:"Two grids: A is 2×3, B is 3×4.",act:"Grids draw with dimension labels.",hold:"800ms",dur:5000,
+ build(){
+  label(480,80,"MULTIPLICATION",{fill:C.red,ls:"0.3em",size:14});
+  const a=mgrid(120,190,2,3,64);a.fillAll(MA);
+  const b=mgrid(520,160,3,4,64);b.fillAll(MB);
+  a.style.opacity=0;b.style.opacity=0;
+  at(400,()=>a.style.opacity=1);
+  at(900,()=>b.style.opacity=1);
+  at(1600,()=>{fadeUp(label(214,170,"A   2 × 3",{fill:C.blue,size:16,f:"IBM Plex Mono"}),0);
+    fadeUp(label(646,140,"B   3 × 4",{fill:C.yellow,size:16,f:"IBM Plex Mono"}),200)});
+  at(2600,()=>fadeUp(label(480,450,"the condition is different — this is the one people get wrong",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"3:58",vo:"The columns of A must equal the rows of B. Not the same shape — the inner dimensions must match.",
+ vis:"Dimensions written as 2×3 and 3×4.",act:"The two inner 3s pulse yellow and get linked by an arc.",hold:"1300ms",dur:6400,
+ build(){
+  const P=[["(",300,"var(--dim)"],["2",348,"var(--text)"],["×",396,"var(--dim)"],["3",444,"var(--text)"],[")",492,"var(--dim)"],
+           ["(",528,"var(--dim)"],["3",576,"var(--text)"],["×",624,"var(--dim)"],["4",672,"var(--text)"],[")",720,"var(--dim)"]];
+  const ns=P.map(p=>label(p[1],280,p[0],{fill:p[2],size:56,f:"IBM Plex Mono"}));
+  at(700,()=>{ns[3].setAttribute("fill",C.yellow);ns[6].setAttribute("fill",C.yellow)});
+  at(1400,()=>{const arc=E("path",{d:"M444 316 C 460 380, 560 380, 576 316",stroke:C.yellow,"stroke-width":3,fill:"none",class:"p"});
+    drawIn2(arc,600)});
+  at(2200,()=>fadeUp(label(510,412,"must match",{fill:C.yellow,size:20}),0));
+  at(3000,()=>{ns[3].setAttribute("fill","var(--text)");ns[6].setAttribute("fill","var(--text)")});
+  at(3300,()=>{ns[3].setAttribute("fill",C.yellow);ns[6].setAttribute("fill",C.yellow)});
+  at(4000,()=>fadeUp(label(480,180,"columns of A  =  rows of B",{fill:C.yellow,size:22}),0));
+  at(4800,()=>fadeUp(label(480,478,"not the same shape — the INNER dimensions",{size:16}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"4:15",vo:"And the result takes the outer dimensions: rows of A by columns of B. Two by four.",
+ vis:"Same expression.",act:"Outer 2 and 4 pulse blue; empty result grid 2×4 draws.",hold:"1200ms",dur:6000,
+ build(){
+  const P=[["(",300,"var(--dim)"],["2",348,"var(--text)"],["×",396,"var(--dim)"],["3",444,C.yellow],[")",492,"var(--dim)"],
+           ["(",528,"var(--dim)"],["3",576,C.yellow],["×",624,"var(--dim)"],["4",672,"var(--text)"],[")",720,"var(--dim)"]];
+  const ns=P.map(p=>label(p[1],200,p[0],{fill:p[2],size:48,f:"IBM Plex Mono"}));
+  at(600,()=>{ns[1].setAttribute("fill",C.blue);ns[8].setAttribute("fill",C.blue)});
+  at(1200,()=>{const arc=E("path",{d:"M348 150 C 400 90, 620 90, 672 150",stroke:C.blue,"stroke-width":3,fill:"none",class:"p"});
+    drawIn2(arc,700)});
+  at(2100,()=>fadeUp(label(510,110,"the outer pair is your answer",{fill:C.blue,size:16}),0));
+  const c=mgrid(360,280,2,4,64,{blank:true});c.style.opacity=0;
+  at(2900,()=>{c.style.opacity=1;for(let r=0;r<2;r++)for(let k=0;k<4;k++)c.at(r,k).setAttribute("stroke",C.blue)});
+  at(3700,()=>fadeUp(label(480,460,"C  is  2 × 4",{fill:C.blue,size:26,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"4:30",vo:"Write the dimensions side by side and it reads itself. Inner pair must match, outer pair is your answer. That one trick answers most exam questions on this.",
+ vis:"(2×3)(3×4) → 2×4.",act:"Inner pair flashes yellow, outer pair flashes green.",hold:"1400ms",dur:6600,
+ build(){
+  const P=[["(",250,"var(--dim)"],["2",298,"var(--text)"],["×",346,"var(--dim)"],["3",394,"var(--text)"],[")",442,"var(--dim)"],
+           ["(",478,"var(--dim)"],["3",526,"var(--text)"],["×",574,"var(--dim)"],["4",622,"var(--text)"],[")",670,"var(--dim)"]];
+  const ns=P.map(p=>label(p[1],260,p[0],{fill:p[2],size:52,f:"IBM Plex Mono"}));
+  const eq=label(730,260,"→",{fill:"var(--dim)",size:38});eq.style.opacity=0;
+  const res=label(830,260,"2 × 4",{fill:C.green,size:44,f:"IBM Plex Mono"});res.style.opacity=0;
+  const flash=(idx,col,ms)=>{at(ms,()=>idx.forEach(i=>ns[i].setAttribute("fill",col)));
+    at(ms+500,()=>idx.forEach(i=>ns[i].setAttribute("fill","var(--text)")));
+    at(ms+900,()=>idx.forEach(i=>ns[i].setAttribute("fill",col)))};
+  flash([3,6],C.yellow,600);
+  at(700,()=>fadeUp(label(460,350,"inner — must match",{fill:C.yellow,size:16}),0));
+  flash([1,8],C.green,2400);
+  at(2500,()=>fadeUp(label(460,400,"outer — your answer",{fill:C.green,size:16}),0));
+  at(3600,()=>{eq.style.opacity=1;res.style.opacity=1});
+  at(4600,()=>fadeUp(label(480,480,"this one trick answers most exam questions on this",{size:16}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"4:50",vo:"Now the actual rule. To get the cell at row one, column one of the result — take row one of A and column one of B.",
+ vis:"A and B grids.",act:"Row 0 of A lights blue; column 0 of B lights blue.",hold:"1000ms",dur:5600,
+ build(){
+  const a=mgrid(60,230,2,3,58);a.fillAll(MA);
+  const b=mgrid(330,180,3,4,58);b.fillAll(MB);
+  const c=mgrid(680,230,2,4,58,{blank:true});
+  label(147,210,"A",{fill:C.blue,size:14,f:"IBM Plex Mono"});
+  label(446,160,"B",{fill:C.yellow,size:14,f:"IBM Plex Mono"});
+  label(796,210,"C",{fill:C.green,size:14,f:"IBM Plex Mono"});
+  at(700,()=>[0,1,2].forEach(k=>setTimeout(()=>a.tint(0,k,C.blue),k*160)));
+  at(1600,()=>fadeUp(label(147,380,"row 0 of A",{fill:C.blue,size:15}),0));
+  at(2300,()=>[0,1,2].forEach(k=>setTimeout(()=>b.tint(k,0,C.blue),k*160)));
+  at(3200,()=>fadeUp(label(446,390,"column 0 of B",{fill:C.blue,size:15}),0));
+  at(3900,()=>{c.at(0,0).setAttribute("stroke",C.yellow);c.at(0,0).setAttribute("fill","#2A2415");
+    fadeUp(label(796,380,"→ C[0][0]",{fill:C.yellow,size:15}),0)});
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"5:05",vo:"Multiply them position by position, and add all the products together. First with first, second with second, third with third.",
+ vis:"The highlighted row and column pulled out and aligned vertically.",act:"Three multiplication pairs light in turn, 400ms apart, each product written beneath.",hold:"1400ms",dur:7000,
+ build(){
+  label(480,90,"ROW 0 OF A   ·   COLUMN 0 OF B",{fill:"var(--dim)",ls:"0.16em",size:12});
+  const X=i=>260+i*180;
+  const ra=[],rb=[];
+  for(let k=0;k<3;k++){ra.push(cell(X(k),140,{w:120,h:70,label:MA[0][k],stroke:C.blue,tf:"var(--text)"}));
+    rb.push(cell(X(k),240,{w:120,h:70,label:MB[k][0],stroke:C.yellow,tf:"var(--text)"}))}
+  ra.forEach(c=>c.querySelector("text").setAttribute("font-size",26));
+  rb.forEach(c=>c.querySelector("text").setAttribute("font-size",26));
+  const prods=[];
+  for(let k=0;k<3;k++)at(800+k*1100,()=>{
+    ra[k].rect.setAttribute("fill","#12213A");rb[k].rect.setAttribute("fill","#2A2415");
+    drawIn(arrow(X(k)+60,214,X(k)+60,236,{stroke:C.green}),200);
+    setTimeout(()=>{const t=label(X(k)+60,370,MA[0][k]+" × "+MB[k][0],{fill:"var(--dim)",size:15,f:"IBM Plex Mono"});
+      const v=label(X(k)+60,410,MA[0][k]*MB[k][0],{fill:C.green,size:30,f:"IBM Plex Mono"});
+      prods.push(v)},250)});
+  at(4400,()=>{fadeUp(label(430,410,"+",{fill:"var(--dim)",size:24}),0);
+    fadeUp(label(610,410,"+",{fill:"var(--dim)",size:24}),0)});
+  at(5200,()=>fadeUp(label(480,480,"position by position — then add them all",{size:17}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"5:25",vo:"That sum is one single cell of the answer. One cell — and it already took three multiplications and two additions.",
+ vis:"Products sum into one value.",act:"Products collapse into the result cell [0][0], which fills green.",hold:"1300ms",dur:6600,
+ build(){
+  const X=i=>260+i*180;
+  const ps=[];
+  for(let k=0;k<3;k++){label(X(k)+60,180,MA[0][k]+" × "+MB[k][0],{fill:"var(--dim)",size:15,f:"IBM Plex Mono"});
+    ps.push(label(X(k)+60,230,MA[0][k]*MB[k][0],{fill:C.green,size:34,f:"IBM Plex Mono"}))}
+  label(430,230,"+",{fill:"var(--dim)",size:26});label(610,230,"+",{fill:"var(--dim)",size:26});
+  const sum=MA[0][0]*MB[0][0]+MA[0][1]*MB[1][0]+MA[0][2]*MB[2][0];
+  at(800,()=>ps.forEach(p=>{p.style.transition="transform .8s ease, opacity .6s";move(p,480-parseFloat(p.getAttribute("x")),110);
+    p.style.opacity=0}));
+  const c=mgrid(680,300,2,4,58,{blank:true});
+  at(1700,()=>{c.tint(0,0,C.green,"#122A21");c.val(0,0).textContent=sum;
+    c.val(0,0).setAttribute("font-size",22)});
+  at(1700,()=>fadeUp(label(300,340,"= "+sum,{fill:C.green,size:44,f:"IBM Plex Mono"}),0));
+  at(3000,()=>fadeUp(label(300,420,"ONE cell of the answer",{fill:C.yellow,size:19}),0));
+  at(3900,()=>fadeUp(label(300,470,"3 multiplications · 2 additions",{fill:C.red,size:17,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"5:45",vo:"Now do it again for the next column of B. Same row of A, different column.",
+ vis:"Row 0 of A stays lit; column 1 of B lights.",act:"Second dot product runs, faster; result cell [0][1] fills.",hold:"1100ms",dur:5600,
+ build(){
+  const a=mgrid(60,230,2,3,58);a.fillAll(MA);
+  const b=mgrid(330,180,3,4,58);b.fillAll(MB);
+  const c=mgrid(680,230,2,4,58,{blank:true});
+  for(let k=0;k<3;k++){a.tint(0,k,C.blue);b.tint(k,0,"var(--cells)","#1B2431")}
+  c.tint(0,0,C.green,"#122A21");c.val(0,0).textContent=MC[0][0];c.val(0,0).setAttribute("font-size",20);
+  at(600,()=>[0,1,2].forEach(k=>setTimeout(()=>b.tint(k,1,C.blue),k*140)));
+  at(1500,()=>fadeUp(label(480,120,MA[0][0]+"×"+MB[0][1]+" + "+MA[0][1]+"×"+MB[1][1]+" + "+MA[0][2]+"×"+MB[2][1],
+    {fill:"var(--text)",size:20,f:"IBM Plex Mono"}),0));
+  at(2600,()=>{c.tint(0,1,C.green,"#122A21");c.val(0,1).textContent=MC[0][1];c.val(0,1).setAttribute("font-size",20)});
+  at(3300,()=>fadeUp(label(480,430,"same row of A · different column of B",{size:17}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"6:00",vo:"Finish the row, then move down and do the whole thing again for row two.",
+ vis:"Both grids.",act:"Remaining 6 result cells fill in sequence, accelerating, 250ms apart.",hold:"1300ms",dur:7000,
+ build(){
+  const a=mgrid(60,230,2,3,58);a.fillAll(MA);
+  const b=mgrid(330,180,3,4,58);b.fillAll(MB);
+  const c=mgrid(680,230,2,4,58,{blank:true});
+  for(let k=0;k<3;k++)a.tint(0,k,C.blue);
+  [[0,0],[0,1]].forEach(p=>{c.tint(p[0],p[1],C.green,"#122A21");
+    c.val(p[0],p[1]).textContent=MC[p[0]][p[1]];c.val(p[0],p[1]).setAttribute("font-size",20)});
+  const rest=[[0,2],[0,3],[1,0],[1,1],[1,2],[1,3]];
+  rest.forEach((p,i)=>at(600+i*620,()=>{
+    if(p[0]===1&&p[1]===0){for(let k=0;k<3;k++){a.plain(0,k);a.tint(1,k,C.blue)}}
+    for(let k=0;k<3;k++){for(let jj=0;jj<4;jj++)b.plain(k,jj);}
+    for(let k=0;k<3;k++)b.tint(k,p[1],C.blue);
+    c.tint(p[0],p[1],C.green,"#122A21");
+    c.val(p[0],p[1]).textContent=MC[p[0]][p[1]];c.val(p[0],p[1]).setAttribute("font-size",20)}));
+  at(4600,()=>fadeUp(label(480,420,"8 cells  ×  3 multiplications each",{fill:C.yellow,size:18}),0));
+  at(5400,()=>fadeUp(label(480,466,"24 multiplications for a tiny 2×3 by 3×4",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"6:20",vo:"So: three nested loops. Rows of A, columns of B, and a third loop running along the shared dimension to build each sum.",
+ vis:"Code panel with for i, for j, sum = 0, for k, sum += A[i][k] * B[k][j], C[i][j] = sum.",act:"Lines type on; the three for keywords each pulse as mentioned.",hold:"1500ms",dur:7400,
+ build(){
+  const P=panel(120,120,720,330,{stroke:C.red});
+  const SRC=["for i = 0 to m-1","    for j = 0 to p-1","        sum = 0","        for k = 0 to n-1",
+             "            sum += A[i][k] * B[k][j]","        C[i][j] = sum"];
+  const ls=code(P,["","","","","",""],{y:56,lh:48,size:17});
+  SRC.forEach((s,i)=>at(400+i*700,()=>{ls[i].textContent=s;
+    if(i===0||i===1)ls[i].setAttribute("fill",C.blue);
+    if(i===3)ls[i].setAttribute("fill",C.yellow)}));
+  at(5000,()=>{fadeUp(label(300,490,"pick the cell",{fill:C.blue,size:15}),0);
+    fadeUp(label(660,490,"compute the cell",{fill:C.yellow,size:15}),200)});
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"6:40",vo:"The k loop is the one that isn't obvious, and it's why this is cubic. Two loops to pick a cell, one more loop to compute it.",
+ vis:"Code panel with the k loop bracketed.",act:"Bracket draws yellow.",hold:"1200ms",dur:6000,
+ build(){
+  const P=panel(120,110,720,300,{stroke:"var(--line)"});
+  const ls=code(P,["for i = 0 to m-1","    for j = 0 to p-1","        sum = 0","        for k = 0 to n-1",
+    "            sum += A[i][k] * B[k][j]","        C[i][j] = sum"],{y:50,lh:44,size:16});
+  ls[0].setAttribute("fill",C.blue);ls[1].setAttribute("fill",C.blue);
+  at(600,()=>{const hl=E("rect",{x:250,y:110+232,width:520,height:82,rx:8,fill:"rgba(255,201,77,.12)",
+    stroke:C.yellow,"stroke-width":1.5,class:"p"});hl.style.opacity=0;setTimeout(()=>hl.style.opacity=1,20);
+    ls[3].setAttribute("fill",C.yellow);ls[4].setAttribute("fill",C.yellow)});
+  at(1800,()=>fadeUp(label(480,450,"two loops to PICK a cell",{fill:C.blue,size:19}),0));
+  at(2600,()=>fadeUp(label(480,490,"one more loop to COMPUTE it",{fill:C.yellow,size:19}),0));
+  at(3600,()=>fadeUp(label(480,80,"the k loop is why this is cubic",{fill:C.red,size:17}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"6:55",vo:"For n by n matrices: n squared cells, each costing n multiplications. O of n cubed.",
+ vis:"Chip writes O(n³); general form O(m × n × p) beneath.",act:"Chips fade in staggered.",hold:"1300ms",dur:6000,
+ build(){
+  label(480,110,"THE COST",{fill:C.red,ls:"0.3em",size:14});
+  const a=label(480,200,"n²  cells",{fill:C.blue,size:32,f:"IBM Plex Mono"});
+  const b=label(480,262,"×   n  multiplications each",{fill:C.yellow,size:28,f:"IBM Plex Mono"});
+  [a,b].forEach(n=>n.style.opacity=0);
+  at(500,()=>a.style.opacity=1);at(1300,()=>b.style.opacity=1);
+  at(2200,()=>{const l=line(280,300,680,300,{stroke:"var(--line)",sw:2});drawIn(l,400)});
+  at(2700,()=>{const c=chip(370,330,"O(n³)",{w:220,stroke:C.red,tf:C.red});
+    c.txt.setAttribute("font-size",26);c.rect.setAttribute("height",56);c.txt.setAttribute("y",36);
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(3700,()=>fadeUp(label(480,440,"general form:  O(m × n × p)",{fill:"var(--dim)",size:20,f:"IBM Plex Mono"}),0));
+  at(4500,()=>fadeUp(label(480,490,"double n → eight times the work",{fill:C.red,size:15}),0));
+ }},
+{s:"CORE 3 · MULTIPLICATION",t:"7:05",vo:"One more property to state, because it's an exam favourite. Matrix multiplication is not commutative. A times B is generally not B times A — and depending on the shapes, B times A might not even be a legal operation.",
+ vis:"(2×3)(3×4) ✓ above, (3×4)(2×3) ✗ below.",act:"Second expression's inner pair 4 and 2 flash red; X strikes through.",hold:"1500ms",dur:7400,
+ build(){
+  label(480,80,"NOT COMMUTATIVE",{fill:C.red,ls:"0.28em",size:14});
+  const row=(y,d,col)=>{const xs=[300,348,396,444,492,528,576,624,672,720];
+    const ch=["(",d[0],"×",d[1],")","(",d[2],"×",d[3],")"];
+    return ch.map((s,i)=>label(xs[i],y,s,{fill:"var(--text)",size:40,f:"IBM Plex Mono"}))};
+  const r1=row(200,["2","3","3","4"]);
+  const r2=row(360,["3","4","2","3"]);
+  r2.forEach(n=>n.style.opacity=0);
+  at(600,()=>{r1[3].setAttribute("fill",C.green);r1[6].setAttribute("fill",C.green);
+    fadeUp(label(790,200,"✓  A B",{fill:C.green,size:26,f:"IBM Plex Mono",anchor:"start"}),0)});
+  at(1600,()=>r2.forEach((n,i)=>setTimeout(()=>n.style.opacity=1,i*60)));
+  at(2600,()=>{r2[3].setAttribute("fill",C.red);r2[6].setAttribute("fill",C.red)});
+  at(3200,()=>{const x=line(420,320,600,400,{stroke:C.red,sw:5});drawIn(x,300);
+    const y=line(600,320,420,400,{stroke:C.red,sw:5});drawIn(y,300,150)});
+  at(3700,()=>fadeUp(label(790,360,"✗  B A",{fill:C.red,size:26,f:"IBM Plex Mono",anchor:"start"}),0));
+  at(4600,()=>fadeUp(label(480,470,"4 ≠ 2 — B A isn't even a legal operation here",{fill:C.red,size:17}),0));
+  at(5600,()=>fadeUp(label(480,510,"and even when both are legal, the answers differ",{size:14}),0));
+ }},
+{s:"CORE 4 · SPARSE",t:"7:15",vo:"Finally — what happens when the matrices are sparse, in triplet form from last video?",
+ vis:"Two triplet tables side by side.",act:"Tables draw.",hold:"700ms",dur:4400,
+ build(){
+  label(480,80,"SPARSE ARITHMETIC",{fill:C.green,ls:"0.26em",size:14});
+  const A=[[0,1,5],[1,3,2],[2,0,7]],B=[[0,1,3],[1,2,4],[2,0,1]];
+  const T1=ttable(120,130,4,{w:280,stroke:C.blue});T1.style.opacity=0;
+  const T2=ttable(560,130,4,{w:280,stroke:C.yellow});T2.style.opacity=0;
+  T1.add(0,[3,4,3],C.blue);A.forEach((h,i)=>T1.add(i+1,h,"var(--text)"));
+  T2.add(0,[3,4,3],C.yellow);B.forEach((h,i)=>T2.add(i+1,h,"var(--text)"));
+  at(400,()=>T1.style.opacity=1);
+  at(800,()=>T2.style.opacity=1);
+  at(1500,()=>{fadeUp(label(260,110,"A",{fill:C.blue,size:16,f:"IBM Plex Mono"}),0);
+    fadeUp(label(700,110,"B",{fill:C.yellow,size:16,f:"IBM Plex Mono"}),0)});
+  at(2200,()=>fadeUp(label(480,420,"both in triplet form — from video 08",{size:16}),0));
+ }},
+{s:"CORE 4 · SPARSE",t:"7:25",vo:"For addition, you don't loop over the grid at all. You walk both tables together, comparing positions — like merging two sorted lists.",
+ vis:"Two tables with a pointer on each.",act:"Pointers advance; matching positions merge into one result row, non-matching copy straight across.",hold:"1500ms",dur:7600,
+ build(){
+  const A=[[0,1,5],[1,3,2],[2,0,7]],B=[[0,1,3],[1,2,4],[2,0,1]];
+  const T1=ttable(60,120,4,{w:250,rh:38,size:15,stroke:C.blue});
+  const T2=ttable(360,120,4,{w:250,rh:38,size:15,stroke:C.yellow});
+  const T3=ttable(680,120,5,{w:250,rh:38,size:15,stroke:C.green});
+  T1.add(0,[3,4,3],C.blue);A.forEach((h,i)=>T1.add(i+1,h,"var(--text)"));
+  T2.add(0,[3,4,3],C.yellow);B.forEach((h,i)=>T2.add(i+1,h,"var(--text)"));
+  T3.add(0,["?","?","?"],"var(--faint)");
+  const h1=E("rect",{x:72,y:120+46,width:226,height:34,rx:6,fill:"rgba(76,141,255,.16)",class:"p"});
+  const h2=E("rect",{x:372,y:120+46,width:226,height:34,rx:6,fill:"rgba(255,201,77,.16)",class:"p"});
+  const steps=[[0,"5 + 3","8",C.green],[1,"2 only","2",C.blue],[2,"4 only","4",C.yellow]];
+  at(600,()=>{T3.add(1,[0,1,8],C.green)});
+  at(1900,()=>{h1.setAttribute("y",120+46+38);h2.setAttribute("y",120+46+38);
+    h1.style.transition="y .3s";h2.style.transition="y .3s"});
+  at(2400,()=>T3.add(2,[1,2,4],C.yellow));
+  at(3000,()=>T3.add(3,[1,3,2],C.blue));
+  at(3800,()=>{h1.setAttribute("y",120+46+76);h2.setAttribute("y",120+46+76)});
+  at(4300,()=>T3.add(4,[2,0,8],C.green));
+  at(5400,()=>fadeUp(label(480,430,"walk both tables together — like merging two sorted lists",{size:16}),0));
+  at(6200,()=>fadeUp(label(480,478,"the grid is never touched",{fill:C.green,size:17}),0));
+ }},
+{s:"CORE 4 · SPARSE",t:"7:45",vo:"Same position in both? Add the values. Only in one? Copy it. And if two values happen to cancel to zero, you drop the entry entirely.",
+ vis:"A merge step producing 0.",act:"Result row fills, shows 0, then fades red and is removed.",hold:"1400ms",dur:7000,
+ build(){
+  const R=[["same position in both","add the values",C.green],
+           ["only in one table","copy it across",C.blue],
+           ["values cancel to zero","drop the entry",C.red]];
+  R.forEach((r,i)=>at(400+i*500,()=>{
+    const p=panel(90,130+i*86,780,72,{stroke:r[2]});p.style.opacity=0;setTimeout(()=>p.style.opacity=1,20);
+    label(130,130+i*86+44,r[0],{fill:"var(--text)",size:19,anchor:"start",f:"Space Grotesk",w:500});
+    label(830,130+i*86+44,r[1],{fill:r[2],size:17,anchor:"end",f:"IBM Plex Mono"})}));
+  at(2600,()=>{const T=ttable(330,400,1,{w:300,rh:40,stroke:C.red});T.style.opacity=0;
+    setTimeout(()=>T.style.opacity=1,20);
+    const row=T.add(0,[2,0,"0"],C.red);
+    setTimeout(()=>fadeUp(label(480,510,"6 + (−6)  =  0",{fill:C.red,size:16,f:"IBM Plex Mono"}),0),700);
+    setTimeout(()=>row.forEach(t=>t.style.opacity=0),2400)});
+  at(5800,()=>fadeUp(label(160,510,"a zero is never stored",{fill:C.red,size:15,anchor:"start"}),0));
+ }},
+{s:"CORE 4 · SPARSE",t:"8:00",vo:"Cost drops from n squared to roughly the total number of non-zeros. On a matrix that's one percent full, that's a hundred-fold saving — and it's exactly why every serious scientific library has a separate sparse code path.",
+ vis:"Two bars: O(n²) vs O(nnz).",act:"Second bar barely rises.",hold:"1400ms",dur:7000,
+ build(){
+  label(480,90,"1% DENSE",{fill:C.yellow,ls:"0.28em",size:14});
+  line(150,450,810,450,{stroke:"var(--line)",sw:1.5});
+  const b1=bar(260,450,150,C.red),b2=bar(610,450,150,C.green);
+  label(335,482,"dense loops",{size:14});label(685,482,"sparse merge",{size:14});
+  at(600,()=>{b1.grow(300,1000);
+    setTimeout(()=>fadeUp(label(335,120,"O(n²)",{fill:C.red,size:28,f:"IBM Plex Mono"}),0),1000)});
+  at(2200,()=>{b2.grow(3,700);
+    setTimeout(()=>fadeUp(label(685,420,"O(nnz)",{fill:C.green,size:26,f:"IBM Plex Mono"}),0),700)});
+  at(3600,()=>fadeUp(label(480,220,"100× less work",{fill:C.green,size:26,f:"Space Grotesk",w:700}),0));
+  at(4600,()=>fadeUp(label(480,516,"this is why every serious library has a sparse code path",{size:15}),0));
+ }},
+{s:"CLOSE",t:"8:15",vo:"Recap. Addition needs identical dimensions and costs n squared. Transpose swaps i and j, n squared, and can run in place for square matrices. Multiplication needs columns of A to equal rows of B, produces the outer dimensions, and costs n cubed because of the third loop. It isn't commutative. And sparse forms let you skip the zeros entirely.",
+ vis:"Five-item summary card.",act:"Instant draw, no stagger.",hold:"2100ms",dur:7600,
+ build(){
+  label(480,58,"RECAP",{fill:C.yellow,ls:"0.3em",size:13});
+  const D=[["01","Addition: identical dimensions","element-wise · O(n²) · can't do better"],
+           ["02","Transpose: [i][j] → [j][i]","O(n²) · in place for square, diagonal never moves"],
+           ["03","Multiply: inner must match","outer pair is the result's shape"],
+           ["04","O(n³) — because of the k loop","two loops pick the cell, one more computes it"],
+           ["05","Not commutative · sparse skips zeros","AB ≠ BA · merge tables instead of looping the grid"]];
+  D.forEach((d,i)=>{const y=90+i*88;
+    panel(70,y,820,74);
+    label(102,y+46,d[0],{fill:C.yellow,size:14,anchor:"start",f:"IBM Plex Mono"});
+    label(146,y+34,d[1],{fill:"var(--text)",size:18,anchor:"start",f:"Space Grotesk",w:500});
+    label(146,y+58,d[2],{size:12.5,anchor:"start"})});
+ }},
+{s:"CLOSE",t:"8:50",vo:"Exam question: A is four by three, B is three by five, C is five by four. Which of these products are legal — A B, B C, A C, or C A — and what are the dimensions of each legal one? Pause and work through all four.",
+ vis:"Question card with the three dimension labels.",act:"Card slides up.",hold:"2600ms",dur:7200,
+ build(){
+  const g=G({class:"p"});move(g,140,560);
+  E("rect",{width:680,height:340,rx:16,fill:"#141B25",stroke:C.yellow,"stroke-width":2},g);
+  const t1=E("text",{x:36,y:50,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":12,"letter-spacing":"0.24em"},g);
+  t1.textContent="EXAM QUESTION · 4 MARKS";
+  const t2=E("text",{x:36,y:96,fill:"var(--text)","font-family":"Space Grotesk","font-size":22,"font-weight":500},g);
+  t2.textContent="Which of these products are legal?";
+  E("rect",{x:36,y:118,width:608,height:70,rx:8,fill:"#0F151E",stroke:"var(--line)","stroke-width":1.5},g);
+  const t3=E("text",{x:58,y:162,fill:"#B9C4D2","font-family":"IBM Plex Mono","font-size":18},g);
+  t3.textContent="A: 4 × 3      B: 3 × 5      C: 5 × 4";
+  ["A B          B C          A C          C A"].forEach(s=>{
+    const t=E("text",{x:58,y:236,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":20},g);t.textContent=s});
+  const t5=E("text",{x:36,y:284,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t5.textContent="For each legal one, give its dimensions.";
+  const t6=E("text",{x:36,y:314,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t6.textContent="⏸  Pause and work through all four.";
+  at(300,()=>move(g,140,100));
+  at(4200,()=>{const bar2=E("rect",{x:176,y:466,width:0,height:4,rx:2,fill:C.yellow});
+    bar2.style.transition="width 2.6s linear";setTimeout(()=>bar2.setAttribute("width",608),30)});
+ }},
+{s:"CLOSE",t:"9:10",vo:"That closes Unit Two. Next: recursion — how a function calls itself without losing track, and why the stack is doing all the real work.",
+ vis:"End card, Unit 3 color bar.",act:"Fade.",hold:"End.",dur:6600,
+ build(){
+  const done=label(110,140,"UNIT 2 — COMPLETE",{fill:C.green,size:13,anchor:"start",ls:"0.24em"});
+  const b0=E("rect",{x:110,y:160,width:0,height:5,rx:3,fill:C.green,class:"p"});
+  at(300,()=>{b0.style.transition="width 1s ease";b0.setAttribute("width",360)});
+  const l=label(110,240,"NEXT · UNIT 3",{fill:"var(--dim)",size:14,anchor:"start",ls:"0.3em"});
+  const a=label(110,300,"Recursion",{fill:"var(--text)",size:42,f:"Space Grotesk",w:700,anchor:"start"});
+  const b=label(110,344,"how a function calls itself",{fill:"var(--dim)",size:17,anchor:"start"});
+  const b2=label(110,370,"without losing track",{fill:"var(--dim)",size:17,anchor:"start"});
+  const c=label(110,424,"VIDEO 10 · THE STACK DOES THE WORK",{fill:C.blue,size:13,anchor:"start",ls:"0.16em"});
+  [l,a,b,b2,c].forEach((n,i)=>{n.style.opacity=0;at(900+i*160,()=>n.style.opacity=1)});
+  const g=G({class:"p"});move(g,580,150);g.style.opacity=0;
+  E("rect",{width:310,height:230,rx:12,fill:"#101722",stroke:"var(--line)","stroke-width":1.5},g);
+  for(let i=0;i<4;i++){
+    E("rect",{x:36+i*14,y:36+i*46,width:210,height:38,rx:7,fill:"#1B2431",stroke:C.blue,"stroke-width":1.6},g);
+    const t=E("text",{x:141+i*14,y:61+i*46,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g);
+    t.textContent="fact("+(4-i)+")"}
+  at(1500,()=>g.style.opacity=1);
+  at(4600,()=>fadeUp(label(480,500,"SUBSCRIBE · UNIT 3 STARTS NEXT",{size:12,ls:"0.2em"}),0));
+ }}
+];
+
+/* small helper used by beat 1 for the check path */
+function drawIn2(p,ms){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{p.style.transition=`stroke-dashoffset ${ms}ms ease`;p.style.strokeDashoffset=0})}
+
+/* ── runner ── */
+let idx=0,elapsed=0,playing=false,rate=1,queue=[],last=0;
+const tickrow=document.getElementById("tickrow"),secrow=document.getElementById("secrow");
+const total=BEATS.reduce((a,b)=>a+b.dur,0);
+BEATS.forEach((b,i)=>{const t=document.createElement("button");t.className="tick";
+  t.style.flex=b.dur;t.innerHTML='<i></i><span>'+(i+1)+'</span>';
+  t.title="Beat "+(i+1)+" — "+b.s;t.onclick=()=>go(i,playing);tickrow.appendChild(t)});
+let cur=null;BEATS.forEach(b=>{if(!cur||cur.s!==b.s){cur={s:b.s,d:0};const el=document.createElement("div");el.className="sec";el.textContent=b.s;el.dataset.s=b.s;secrow.appendChild(el)}
+  cur.d+=b.dur;secrow.lastChild.style.flex=cur.d});
+
+function go(i,autoplay){
+  idx=Math.max(0,Math.min(BEATS.length-1,i));elapsed=0;queue=[];
+  clearStage();const b=BEATS[idx];
+  at=(ms,fn)=>queue.push({ms,fn,done:false});
+  b.build();
+  document.getElementById("bn").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("bt").textContent=b.t;
+  document.getElementById("f-vo").textContent=b.vo;
+  document.getElementById("f-vis").textContent=b.vis;
+  document.getElementById("f-act").textContent=b.act;
+  document.getElementById("f-hold").textContent=b.hold;
+  [...tickrow.children].forEach((t,k)=>{t.classList.toggle("now",k===idx);t.classList.toggle("done",k<idx)});
+  playing=!!autoplay;paint();
+}
+function paint(){document.getElementById("play").textContent=playing?"❚❚ PAUSE":"▶ PLAY";
+  const t=tickrow.children[idx];t.querySelector("i").style.transform=`scaleX(${elapsed/BEATS[idx].dur})`}
+function frame(ts){const dt=Math.min(64,ts-(last||ts));last=ts;
+  if(playing){elapsed+=dt*rate;
+    queue.forEach(q=>{if(!q.done&&elapsed>=q.ms){q.done=true;q.fn()}});
+    if(elapsed>=BEATS[idx].dur){if(idx<BEATS.length-1)go(idx+1,true);else{playing=false;elapsed=BEATS[idx].dur}}
+    paint()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+document.getElementById("play").onclick=()=>{if(!playing&&elapsed>=BEATS[idx].dur)go(idx,true);else{playing=!playing;paint()}};
+document.getElementById("next").onclick=()=>go(idx+1,playing);
+document.getElementById("prev").onclick=()=>go(idx-1,playing);
+document.getElementById("replay").onclick=()=>go(idx,true);
+document.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>{rate=parseFloat(b.dataset.r);
+  document.querySelectorAll(".rate button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;
+  if(e.key===" "){e.preventDefault();document.getElementById("play").click()}
+  if(e.key==="ArrowRight")go(idx+1,playing);if(e.key==="ArrowLeft")go(idx-1,playing);
+  if(e.key.toLowerCase()==="r")go(idx,true)});
+
+go(0,false);
+</script>
+</body>
+</html>

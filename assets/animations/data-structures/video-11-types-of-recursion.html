@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video 11 — Tail, Head, and Nested Recursion · Animatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080A0D; --panel:#0D1116; --stage:#12161C; --line:#1E252E;
+  --cellf:#28313D; --cells:#3B4756;
+  --blue:#4C8DFF; --green:#3DD68C; --red:#FF6B6B; --yellow:#FFC94D;
+  --text:#E7ECF3; --dim:#7C8899; --faint:#4A5464;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--disp)}
+body{padding:18px 16px 60px;max-width:1180px;margin:0 auto}
+
+/* ── masthead ── */
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.slate{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink);background:var(--yellow);padding:3px 8px;border-radius:3px;font-weight:600}
+h1{font-size:clamp(19px,4vw,27px);font-weight:700;letter-spacing:-.02em;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;margin-left:auto}
+
+/* ── stage ── */
+.stagewrap{margin-top:14px;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--stage)}
+svg#stage{display:block;width:100%;height:auto;background:
+  linear-gradient(rgba(76,141,255,.035) 1px,transparent 1px) 0 0/100% 36px,
+  linear-gradient(90deg,rgba(76,141,255,.035) 1px,transparent 1px) 0 0/36px 100%,
+  var(--stage)}
+.badge{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint)}
+.badge b{color:var(--blue);font-weight:600}
+
+/* ── ruler (signature) ── */
+.ruler{margin-top:12px}
+.secrow,.tickrow{display:flex;gap:2px}
+.secrow{margin-bottom:5px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--faint);border-top:1px solid var(--line);padding-top:4px;overflow:hidden;white-space:nowrap}
+.tick{height:26px;background:#131922;border:0;padding:0;border-radius:2px;position:relative;cursor:pointer;overflow:hidden}
+.tick:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tick i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:var(--faint)}
+.tick.done i{transform:scaleX(1)}
+.tick.now i{background:var(--blue)}
+.tick span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--dim)}
+.tick.now span{color:#fff}
+
+/* ── transport ── */
+.transport{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.ctl{font-family:var(--mono);font-size:12px;color:var(--text);background:#131922;border:1px solid var(--line);border-radius:6px;padding:9px 13px;cursor:pointer}
+button.ctl:hover{border-color:var(--faint)}
+button.ctl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.ctl.primary{background:var(--blue);color:#06101F;border-color:var(--blue);font-weight:600;min-width:96px}
+.rate{margin-left:auto;display:flex;gap:2px}
+.rate button{padding:9px 10px}
+.rate button[aria-pressed="true"]{background:#1B2431;border-color:var(--faint);color:var(--yellow)}
+
+/* ── spec sheet ── */
+.spec{margin-top:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.vo{border-left:2px solid var(--yellow);padding:2px 0 2px 14px}
+.vo .lab,.fld .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.vo p{margin:6px 0 0;font-size:clamp(16px,2.4vw,20px);line-height:1.45;letter-spacing:-.01em}
+.fields{display:grid;gap:10px}
+.fld{border-left:1px solid var(--line);padding-left:14px}
+.fld p{margin:4px 0 0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#B9C4D2}
+.fld.hold p{color:var(--green)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:760px){.spec{grid-template-columns:1fr}.meta{margin-left:0;width:100%}.tick span{display:none}}
+
+/* ── stage element transitions ── */
+.p{transition:transform .55s cubic-bezier(.2,.8,.25,1),opacity .4s ease,fill .3s ease,stroke .3s ease}
+.fast{transition:transform .25s ease,opacity .2s ease,fill .12s ease}
+.q{transition:none}
+@keyframes shake{0%,100%{transform:translate(var(--tx),var(--ty))}25%{transform:translate(calc(var(--tx) - 7px),var(--ty))}75%{transform:translate(calc(var(--tx) + 7px),var(--ty))}}
+.shake{animation:shake .28s 2}
+@media(prefers-reduced-motion:reduce){.p,.fast{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slate">VID 11</span>
+  <h1>Tail, Head, and Nested Recursion</h1>
+  <span class="meta">UNIT 3 · TARGET 9:30 · 31 BEATS · ANIMATIC v1</span>
+</header>
+
+<div class="stagewrap">
+  <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Animation stage"></svg>
+  <div class="badge">BEAT <b id="bn">01</b> · <span id="bt">0:00</span></div>
+</div>
+
+<div class="ruler">
+  <div class="secrow" id="secrow"></div>
+  <div class="tickrow" id="tickrow"></div>
+</div>
+
+<div class="transport">
+  <button class="ctl" id="prev" aria-label="Previous beat">◀ PREV</button>
+  <button class="ctl primary" id="play">▶ PLAY</button>
+  <button class="ctl" id="next" aria-label="Next beat">NEXT ▶</button>
+  <button class="ctl" id="replay">↻ BEAT</button>
+  <div class="rate" role="group" aria-label="Playback rate">
+    <button class="ctl" data-r="0.5">.5×</button>
+    <button class="ctl" data-r="1" aria-pressed="true">1×</button>
+    <button class="ctl" data-r="2">2×</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div class="vo"><span class="lab">VO</span><p id="f-vo"></p></div>
+  <div class="fields">
+    <div class="fld"><span class="lab">VIS</span><p id="f-vis"></p></div>
+    <div class="fld"><span class="lab">ACT</span><p id="f-act"></p></div>
+    <div class="fld hold"><span class="lab">HOLD</span><p id="f-hold"></p></div>
+  </div>
+</div>
+
+<footer>
+  ANIMATIC RUNS AT STORYBOARD PACE — REAL CUT IS TIMED TO VO (9:30).<br>
+  KEYS: SPACE PLAY/PAUSE · ← → STEP BEAT · R REPLAY BEAT.<br>
+  THIS FILE IS THE FORMAT SPEC. CLONE FOR VIDEOS 02–48; REPLACE THE BEATS ARRAY ONLY.
+</footer>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const stage=document.getElementById("stage");
+let layer=document.createElementNS(NS,"g");stage.appendChild(layer);
+
+/* ── primitive kit ── */
+function E(t,a={},p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);(p||layer).appendChild(n);return n}
+function G(a={},p){return E("g",a,p)}
+function move(n,x,y){n.style.setProperty("--tx",x+"px");n.style.setProperty("--ty",y+"px");n.style.transform=`translate(${x}px,${y}px)`}
+function cell(x,y,o={}){const w=o.w||46,h=o.h||46;
+  const g=G({class:o.cls||"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:o.rx??9,fill:o.fill||"var(--cellf)",stroke:o.stroke||"var(--cells)","stroke-width":1.5,class:o.cls||"p"},g);
+  if(o.label!=null)E("text",{x:w/2,y:h/2+5,fill:o.tf||"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g).textContent=o.label;
+  g.rect=r;g.opacity=v=>g.style.opacity=v;return g}
+function label(x,y,s,o={}){const t=E("text",{x,y,fill:o.fill||"var(--dim)","font-family":o.f||"IBM Plex Mono","font-size":o.size||13,"text-anchor":o.anchor||"middle","letter-spacing":o.ls||0,class:o.cls||"p","font-weight":o.w||400},o.p);t.textContent=s;if(o.o!=null)t.style.opacity=o.o;return t}
+function line(x1,y1,x2,y2,o={}){return E("line",{x1,y1,x2,y2,stroke:o.stroke||"var(--cells)","stroke-width":o.sw||2,"stroke-linecap":"round",class:"p",...(o.attrs||{})})}
+function drawIn(l,ms,delay){const len=Math.hypot(l.x2.baseVal.value-l.x1.baseVal.value,l.y2.baseVal.value-l.y1.baseVal.value);
+  l.style.strokeDasharray=len;l.style.strokeDashoffset=len;l.style.transition="none";
+  requestAnimationFrame(()=>{l.style.transition=`stroke-dashoffset ${ms||420}ms cubic-bezier(.3,.7,.3,1) ${delay||0}ms, stroke .3s`;l.style.strokeDashoffset=0});return l}
+function arrow(x1,y1,x2,y2,o={}){const l=line(x1,y1,x2,y2,o);l.setAttribute("marker-end","url(#ah)");return l}
+function chip(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||(s.length*8.4+22);
+  const r=E("rect",{width:w,height:28,rx:14,fill:o.fill||"#1A2230",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const t=E("text",{x:w/2,y:19,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;g.w=w;return g}
+function nodeBox(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||64,h=o.h||44;
+  const r=E("rect",{width:w,height:h,rx:8,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:w/2,y:h/2+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;return g}
+function circleNode(cx,cy,s,o={}){const g=G({class:"p"});
+  const c=E("circle",{cx,cy,r:o.r||24,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.c=c;g.txt=t;return g}
+function fadeUp(n,d){n.style.opacity=0;setTimeout(()=>n.style.opacity=1,d||0);return n}
+function defs(){const d=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"},d);
+  E("path",{d:"M0 0 L10 5 L0 10 z",fill:"var(--cells)"},m)}
+function clearStage(){layer.remove();layer=document.createElementNS(NS,"g");stage.appendChild(layer);defs()}
+const C={blue:"var(--blue)",green:"var(--green)",red:"var(--red)",yellow:"var(--yellow)",grey:"var(--cellf)"};
+
+/* ── beats ── */
+let at; // scheduler injected per beat
+
+/* ── extra primitives for Video 11 ── */
+function panel(x,y,w,h,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:10,fill:o.fill||"#131A24",stroke:o.stroke||"var(--line)","stroke-width":o.sw||1.5,class:"p"},g);
+  g.rect=r;g.w=w;g.h=h;return g}
+function code(g,lines,o={}){const out=[];lines.forEach((s,i)=>{
+  const n=E("text",{x:o.x||18,y:(o.y||36)+i*(o.lh||28),fill:o.fill||"#B9C4D2","font-family":"IBM Plex Mono","font-size":o.size||13,class:"p"},g);
+  n.textContent=s;out.push(n)});return out}
+function bracket(x1,x2,y,txt,col,o={}){const g=G({class:"p"});const d=o.down?-1:1;
+  E("path",{d:`M${x1} ${y} v${-10*d} H${x2} v${10*d}`,stroke:col,"stroke-width":2,fill:"none",class:"p"},g);
+  const t=E("text",{x:(x1+x2)/2,y:y-16*d+(o.down?14:0),fill:col,"font-family":"IBM Plex Mono",
+    "font-size":o.size||13,"text-anchor":"middle",class:"p"},g);t.textContent=txt;g.txt=t;return g}
+function vbracket(y1,y2,x,txt,col,o={}){const g=G({class:"p"});const s=o.left?-1:1;
+  E("path",{d:`M${x} ${y1} h${10*s} V${y2} h${-10*s}`,stroke:col,"stroke-width":2,fill:"none",class:"p"},g);
+  const t=E("text",{x:x+22*s,y:(y1+y2)/2+5,fill:col,"font-family":"IBM Plex Mono","font-size":o.size||13,
+    "text-anchor":o.left?"end":"start",class:"p"},g);t.textContent=txt;g.txt=t;return g}
+/* stack frame plate (engine reserves frame(), so: fplate) */
+function fplate(x,y,w,h,ntxt,col,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:8,fill:o.fill||"#1B2431",stroke:col,"stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:18,y:h/2+6,fill:col,"font-family":"IBM Plex Mono","font-size":o.size||16,class:"p"},g);
+  t.textContent=ntxt;
+  const e=E("text",{x:w-18,y:h/2+6,fill:o.ef||"var(--dim)","font-family":"IBM Plex Mono",
+    "font-size":o.size||16,"text-anchor":"end",class:"p"},g);
+  e.textContent=o.expr||"";
+  g.rect=r;g.txt=t;g.expr=e;
+  g.tint=c=>{r.setAttribute("stroke",c);t.setAttribute("fill",c);
+    r.setAttribute("fill",c===C.green?"#122A21":c===C.red?"#2A1618":c===C.yellow?"#2A2415":"#1B2431")};
+  return g}
+/* output strip: .push(v) writes the next value */
+function outstrip(x,y,n,col,o={}){const g=G({class:"p"});const cells=[],vals=[];
+  for(let i=0;i<n;i++){
+    const r=E("rect",{x:x+i*(o.w||62),y,width:(o.w||62)-8,height:o.h||56,rx:7,fill:"#101720",
+      stroke:"var(--line)","stroke-width":1.4,"stroke-dasharray":"4 4",class:"fast"},g);
+    const t=E("text",{x:x+i*(o.w||62)+((o.w||62)-8)/2,y:y+(o.h||56)/2+8,fill:col,
+      "font-family":"IBM Plex Mono","font-size":o.size||24,"text-anchor":"middle",class:"fast"},g);
+    t.textContent="";cells.push(r);vals.push(t)}
+  g.cells=cells;g.vals=vals;
+  g.put=(i,v)=>{vals[i].textContent=v;cells[i].setAttribute("stroke",col);
+    cells[i].setAttribute("stroke-dasharray","none");
+    cells[i].setAttribute("fill",col===C.green?"#122A21":"#12213A")};
+  return g}
+function terms(cx,y,parts,size,o={}){const cw=size*0.6;
+  const total=parts.reduce((a,p)=>a+p.t.length,0)*cw;
+  let x=(o.anchor==="start")?cx:cx-total/2;const out=[];
+  parts.forEach(p=>{const t=E("text",{x,y,fill:p.c||"var(--text)","font-family":"IBM Plex Mono",
+    "font-size":size,"text-anchor":"start",class:"p"});t.textContent=p.t;out.push(t);x+=p.t.length*cw});
+  return out}
+
+const TAIL=["void print(int n) {","    if (n > 5) return;",'    printf("%d", n);',"    print(n+1);","}"];
+const HEAD=["void print(int n) {","    if (n > 5) return;","    print(n+1);",'    printf("%d", n);',"}"];
+const SY=i=>410-i*62;
+
+const BEATS=[
+{s:"HOOK",t:"0:00",vo:"Two recursive functions. Both print the numbers one to five. Both call themselves once. One prints one-two-three-four-five, the other prints five-four-three-two-one.",
+ vis:"Two code panels side by side, near-identical.",act:"Panels type on; outputs write beneath — 1 2 3 4 5 and 5 4 3 2 1.",hold:"1200ms",dur:7400,
+ build(){
+  const L=panel(40,120,420,220,{stroke:"var(--line)"});
+  const R=panel(500,120,420,220,{stroke:"var(--line)"});
+  const la=code(L,TAIL.map(()=>""),{y:44,lh:40,size:14});
+  const ra=code(R,HEAD.map(()=>""),{y:44,lh:40,size:14});
+  TAIL.forEach((s,i)=>at(300+i*300,()=>la[i].textContent=s));
+  HEAD.forEach((s,i)=>at(300+i*300,()=>ra[i].textContent=s));
+  at(2200,()=>{fadeUp(label(250,380,"OUTPUT",{fill:"var(--dim)",size:11,ls:"0.24em"}),0);
+    fadeUp(label(710,380,"OUTPUT",{fill:"var(--dim)",size:11,ls:"0.24em"}),0)});
+  const o1=[1,2,3,4,5],o2=[5,4,3,2,1];
+  o1.forEach((v,i)=>at(2800+i*260,()=>fadeUp(label(140+i*56,432,v,{fill:C.blue,size:32,f:"IBM Plex Mono"}),0)));
+  o2.forEach((v,i)=>at(2800+i*260,()=>fadeUp(label(600+i*56,432,v,{fill:C.yellow,size:32,f:"IBM Plex Mono"}),0)));
+  at(4600,()=>fadeUp(label(480,500,"same job · same one call each · opposite output",{size:16}),0));
+ }},
+{s:"HOOK",t:"0:12",vo:"The only difference is which line comes first — the print, or the call.",
+ vis:"Same panels.",act:"In the left panel, the print line highlights blue above the call. In the right, the call highlights above the print. Both pulse.",hold:"1300ms",dur:6400,
+ build(){
+  const L=panel(40,120,420,220,{stroke:"var(--line)"});
+  const R=panel(500,120,420,220,{stroke:"var(--line)"});
+  const la=code(L,TAIL,{y:44,lh:40,size:14});
+  const ra=code(R,HEAD,{y:44,lh:40,size:14});
+  label(140,432,"1 2 3 4 5",{fill:C.blue,size:26,f:"IBM Plex Mono",anchor:"start"});
+  label(600,432,"5 4 3 2 1",{fill:C.yellow,size:26,f:"IBM Plex Mono",anchor:"start"});
+  at(600,()=>{la[2].setAttribute("fill",C.green);la[3].setAttribute("fill",C.blue);
+    ra[2].setAttribute("fill",C.blue);ra[3].setAttribute("fill",C.green)});
+  at(1400,()=>{fadeUp(label(250,368,"print, then call",{fill:C.green,size:14}),0);
+    fadeUp(label(710,368,"call, then print",{fill:C.blue,size:14}),0)});
+  for(let k=0;k<2;k++){
+    at(2400+k*700,()=>{la[2].setAttribute("font-size",16);ra[3].setAttribute("font-size",16)});
+    at(2750+k*700,()=>{la[2].setAttribute("font-size",14);ra[3].setAttribute("font-size",14)})}
+  at(4200,()=>fadeUp(label(480,500,"two lines swapped. that is the entire difference.",{size:17}),0));
+ }},
+{s:"HOOK",t:"0:22",vo:"Swap two lines, reverse the output. That's not a trick — it's the difference between doing your work while winding down and doing it while unwinding back up.",
+ vis:"Title card.",act:'"TYPES OF RECURSION" types on.',hold:"600ms",dur:5600,
+ build(){
+  const a=arrow(300,140,300,280,{stroke:C.green});
+  const b=arrow(660,280,660,140,{stroke:C.blue});
+  at(300,()=>{drawIn(a,500);setTimeout(()=>fadeUp(label(300,310,"winding",{fill:C.green,size:14}),0),500)});
+  at(700,()=>{drawIn(b,500);setTimeout(()=>fadeUp(label(660,310,"unwinding",{fill:C.blue,size:14}),0),500)});
+  const t=label(480,400,"",{fill:C.blue,size:42,f:"Space Grotesk",w:700,ls:"0.02em"});
+  const full="TYPES OF RECURSION";
+  for(let i=0;i<=full.length;i++)at(1600+i*76,()=>t.textContent=full.slice(0,i)+(i<full.length?"▌":""));
+  at(1600+full.length*76+140,()=>{t.textContent=full;
+    fadeUp(label(480,448,"it's about WHERE your work happens",{size:15,ls:"0.08em"}),0)});
+ }},
+{s:"PROMISE",t:"0:30",vo:"Tail recursion, head recursion, nested recursion, plus the two extra types exams ask for — and why one of these is essentially free.",
+ vis:"Three chips: Tail · Head · Nested, with a smaller fourth: +2 more.",act:"Stagger 150ms.",hold:"500ms",dur:4600,
+ build(){
+  label(480,130,"IN THIS VIDEO",{ls:"0.28em",size:12});
+  ["Tail recursion","Head recursion","Nested recursion"].forEach((s,i)=>{
+    const c=chip(-340,190+i*68,s,{w:300});c.rect.setAttribute("height",48);c.txt.setAttribute("y",29);c.style.opacity=0;
+    const n=label(296,190+i*68+30,"0"+(i+1),{fill:C.blue,size:13});n.style.opacity=0;
+    at(200+i*150,()=>{move(c,330,190+i*68);c.style.opacity=1;n.style.opacity=1})});
+  at(800,()=>{const c=chip(370,404,"+ linear and tree",{w:220,stroke:"var(--faint)",tf:"var(--dim)"});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(1600,()=>fadeUp(label(480,480,"and why one of them is essentially free",{fill:C.green,size:16}),0));
+ }},
+{s:"CORE 1 · TAIL",t:"0:50",vo:"Tail recursion. The recursive call is the very last thing the function does. Nothing happens after it returns.",
+ vis:'Code panel: void print(int n) { if (n > 5) return; printf("%d", n); print(n+1); }',act:"Lines type on; the final call highlights blue.",hold:"1200ms",dur:6000,
+ build(){
+  label(480,90,"TAIL RECURSION",{fill:C.green,ls:"0.28em",size:15});
+  const P=panel(180,140,600,240,{stroke:C.green});
+  const ls=code(P,TAIL.map(()=>""),{y:52,lh:44,size:18});
+  TAIL.forEach((s,i)=>at(400+i*440,()=>ls[i].textContent=s));
+  at(2800,()=>ls[3].setAttribute("fill",C.blue));
+  at(3400,()=>fadeUp(label(480,420,"the call is the very last thing it does",{fill:C.blue,size:18}),0));
+  at(4300,()=>fadeUp(label(480,470,"nothing happens after it returns",{size:16}),0));
+ }},
+{s:"CORE 1 · TAIL",t:"1:05",vo:"Test it like this: after the recursive call, is there any pending work? Here — no. The call is the last statement. Nothing waits on its result.",
+ vis:"Code panel with everything after the call bracketed — the bracket is empty.",act:"Bracket draws, encloses nothing, flashes green.",hold:"1300ms",dur:6400,
+ build(){
+  const P=panel(180,130,600,240,{stroke:C.green});
+  const ls=code(P,TAIL,{y:52,lh:44,size:18});
+  ls[3].setAttribute("fill",C.blue);
+  at(500,()=>fadeUp(label(480,90,"is there pending work after the call?",{fill:C.yellow,size:18}),0));
+  at(1400,()=>{const b=vbracket(310,340,800,"",C.green);b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(2000,()=>fadeUp(label(830,330,"nothing here",{fill:C.green,size:15,anchor:"start"}),0));
+  at(2800,()=>fadeUp(label(480,420,"NO",{fill:C.green,size:56,f:"Space Grotesk",w:700}),0));
+  at(3800,()=>fadeUp(label(480,480,"nothing is waiting on the result",{fill:C.green,size:17}),0));
+ }},
+{s:"CORE 1 · TAIL",t:"1:22",vo:"Trace it. Print one, then call. Print two, then call. The work happens on the way down, during winding.",
+ vis:"Stack building left, output line right.",act:"Plates drop one at a time; each drop writes a number to the output before the next plate appears.",hold:"1500ms",dur:7600,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.22em",size:12});
+  label(720,100,"OUTPUT",{fill:C.green,ls:"0.22em",size:12});
+  line(480,120,480,470,{stroke:"var(--line)",sw:1});
+  E("line",{x1:60,y1:462,x2:420,y2:462,stroke:"var(--cells)","stroke-width":3});
+  const out=outstrip(560,220,5,C.green,{w:70,h:60});
+  const arr=arrow(500,180,500,420,{stroke:C.green});
+  at(200,()=>{drawIn(arr,900);setTimeout(()=>fadeUp(label(524,300,"winding",{fill:C.green,size:13,anchor:"start"}),0),900)});
+  for(let i=0;i<5;i++)at(900+i*900,()=>{
+    const f=fplate(70,SY(i),340,52,"n = "+(i+1),C.blue,{expr:"print"});
+    f.style.opacity=0;move(f,70,SY(i)-60);
+    setTimeout(()=>{f.style.opacity=1;move(f,70,SY(i))},20);
+    setTimeout(()=>out.put(i,i+1),380)});
+  at(6000,()=>fadeUp(label(720,340,"printed on the way DOWN",{fill:C.green,size:17}),0));
+ }},
+{s:"CORE 1 · TAIL",t:"1:45",vo:"By the time we hit the base case, the entire output is already printed. The unwinding phase does absolutely nothing.",
+ vis:"Full stack, complete output 1 2 3 4 5.",act:"Plates collapse one by one rapidly, output unchanged; a no work label sits beside the unwinding arrow.",hold:"1400ms",dur:7000,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.22em",size:12});
+  label(720,100,"OUTPUT",{fill:C.green,ls:"0.22em",size:12});
+  line(480,120,480,470,{stroke:"var(--line)",sw:1});
+  E("line",{x1:60,y1:462,x2:420,y2:462,stroke:"var(--cells)","stroke-width":3});
+  const out=outstrip(560,220,5,C.green,{w:70,h:60});
+  for(let i=0;i<5;i++)out.put(i,i+1);
+  const fs=[];for(let i=0;i<5;i++)fs.push(fplate(70,SY(i),340,52,"n = "+(i+1),C.blue,{expr:"print"}));
+  at(400,()=>{fs[4].tint(C.green);fs[4].expr.textContent="base case"});
+  at(1100,()=>{const a=arrow(500,420,500,180,{stroke:"var(--faint)"});drawIn(a,700)});
+  at(1900,()=>[4,3,2,1,0].forEach((k,i)=>setTimeout(()=>{
+    fs[k].tint(C.red);setTimeout(()=>fs[k].style.opacity=0,200)},i*280)));
+  at(3600,()=>fadeUp(label(524,300,"NO WORK",{fill:"var(--faint)",size:18,anchor:"start",ls:"0.14em"}),0));
+  at(4400,()=>fadeUp(label(240,300,"already complete",{fill:C.green,size:16}),0));
+  at(5200,()=>fadeUp(label(480,510,"the unwinding phase does absolutely nothing",{size:16}),0));
+ }},
+{s:"CORE 1 · TAIL",t:"2:05",vo:"Which raises a question. If the frames do nothing on the way back — why keep them at all?",
+ vis:"Empty stack region.",act:"Question mark appears in the stack column.",hold:"1000ms",dur:5000,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.22em",size:12});
+  E("line",{x1:60,y1:462,x2:420,y2:462,stroke:"var(--cells)","stroke-width":3});
+  const fs=[];for(let i=0;i<5;i++)fs.push(fplate(70,SY(i),340,52,"n = "+(i+1),"var(--faint)",{expr:"nothing to do"}));
+  at(700,()=>fs.forEach((f,i)=>setTimeout(()=>f.expr.setAttribute("fill",C.red),i*140)));
+  at(1800,()=>{const q=label(700,300,"?",{fill:C.yellow,size:120,f:"Space Grotesk",w:700});
+    q.style.opacity=0;setTimeout(()=>q.style.opacity=1,20)});
+  at(2800,()=>fadeUp(label(700,400,"so why keep them at all?",{fill:C.yellow,size:19}),0));
+ }},
+{s:"CORE 1 · TAIL",t:"2:18",vo:"They don't have to. Compilers can spot tail recursion and reuse one single frame, overwriting the parameter instead of pushing a new one. It's called tail call optimization.",
+ vis:"Single frame plate.",act:"One plate stays fixed; its n value updates 1→2→3→4→5 in place; no new plates appear.",hold:"1600ms",dur:7600,
+ build(){
+  label(480,90,"TAIL CALL OPTIMIZATION",{fill:C.green,ls:"0.2em",size:15});
+  E("line",{x1:200,y1:440,x2:760,y2:440,stroke:"var(--cells)","stroke-width":3});
+  const f=fplate(200,370,560,64,"n = 1",C.green,{expr:"reused",size:20});
+  const out=outstrip(300,180,5,C.green,{w:78,h:64});
+  at(700,()=>out.put(0,1));
+  for(let i=1;i<5;i++)at(1200+i*900,()=>{
+    f.rect.setAttribute("fill","#1E4A38");
+    f.txt.textContent="n = "+(i+1);
+    setTimeout(()=>f.rect.setAttribute("fill","#122A21"),260);
+    out.put(i,i+1)});
+  at(5400,()=>fadeUp(label(480,300,"one frame · overwritten in place",{fill:C.green,size:19}),0));
+  at(6200,()=>fadeUp(label(480,500,"no new frame was ever pushed",{fill:C.green,size:16}),0));
+ }},
+{s:"CORE 1 · TAIL",t:"2:45",vo:"When that happens, space drops from O of n to O of one. The recursion becomes a loop — literally. Same machine code.",
+ vis:"Two chips: O(n) → O(1) and a code panel morphing from recursion to a while loop.",act:"Chip flashes green; code panel cross-fades to the loop version.",hold:"1500ms",dur:7000,
+ build(){
+  at(300,()=>{const c=chip(230,110,"O(n) space",{w:200,stroke:C.yellow,tf:C.yellow});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(900,()=>drawIn(arrow(450,124,520,124,{stroke:"var(--dim)"}),300));
+  at(1300,()=>{const c=chip(540,110,"O(1) space",{w:200,stroke:C.green,tf:C.green});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  const A=panel(180,190,600,210,{stroke:C.blue});
+  const la=code(A,['    printf("%d", n);',"    print(n+1);"],{y:70,lh:56,size:19});
+  const B=panel(180,190,600,210,{stroke:C.green});B.style.opacity=0;
+  const lb=code(B,["    while (n <= 5) {",'        printf("%d", n);',"        n++;","    }"],{y:52,lh:44,size:18,fill:C.green});
+  at(2600,()=>{A.style.opacity=0;la.forEach(l=>l.style.opacity=0);B.style.opacity=1});
+  at(4000,()=>fadeUp(label(480,450,"the recursion becomes a loop — literally",{fill:C.green,size:18}),0));
+  at(4900,()=>fadeUp(label(480,496,"the compiler emits the same machine code",{size:15}),0));
+ }},
+{s:"CORE 1 · TAIL",t:"3:05",vo:"One caution for exams and for real life: C compilers may do this, at higher optimization levels. It isn't guaranteed. Don't write a million-deep tail recursion and assume you're safe.",
+ vis:"Chip with a caveat marker.",act:"Yellow warning label appears beside the green chip.",hold:"1300ms",dur:6400,
+ build(){
+  const c=chip(180,150,"O(1) space",{w:240,stroke:C.green,tf:C.green});
+  c.rect.setAttribute("height",64);c.txt.setAttribute("y",40);c.txt.setAttribute("font-size",22);
+  at(700,()=>{const w=panel(500,150,380,64,{stroke:C.yellow});w.style.opacity=0;
+    setTimeout(()=>w.style.opacity=1,20);
+    label(690,190,"…if the compiler does it",{fill:C.yellow,size:17,f:"IBM Plex Mono"})});
+  at(1800,()=>{fadeUp(label(480,290,"gcc -O2  ·  clang -O2",{fill:"var(--dim)",size:18,f:"IBM Plex Mono"}),0)});
+  at(2600,()=>fadeUp(label(480,350,"MAY do it. not guaranteed.",{fill:C.yellow,size:22}),0));
+  at(3600,()=>fadeUp(label(480,430,"don't write a million-deep tail recursion",{fill:C.red,size:17}),0));
+  at(4000,()=>fadeUp(label(480,466,"and assume you're safe",{fill:C.red,size:17}),0));
+ }},
+{s:"CORE 2 · HEAD",t:"3:30",vo:"Head recursion. The mirror image — the recursive call comes first, before any real work.",
+ vis:'Code panel: void print(int n) { if (n > 5) return; print(n+1); printf("%d", n); }',act:"Lines type on; the call highlights blue, sitting above the print.",hold:"1100ms",dur:5800,
+ build(){
+  label(480,90,"HEAD RECURSION",{fill:C.yellow,ls:"0.28em",size:15});
+  const P=panel(180,140,600,240,{stroke:C.yellow});
+  const ls=code(P,HEAD.map(()=>""),{y:52,lh:44,size:18});
+  HEAD.forEach((s,i)=>at(400+i*420,()=>ls[i].textContent=s));
+  at(2600,()=>ls[2].setAttribute("fill",C.blue));
+  at(3200,()=>ls[3].setAttribute("fill",C.green));
+  at(3800,()=>fadeUp(label(480,420,"the call comes FIRST",{fill:C.blue,size:19}),0));
+  at(4500,()=>fadeUp(label(480,470,"before any real work at all",{size:16}),0));
+ }},
+{s:"CORE 2 · HEAD",t:"3:45",vo:"Now the same test. After the recursive call, is there pending work? Yes — the print statement is still waiting.",
+ vis:"Bracket drawn after the call, containing the print line.",act:"Bracket draws yellow around the print statement.",hold:"1200ms",dur:6200,
+ build(){
+  const P=panel(180,130,600,240,{stroke:C.yellow});
+  const ls=code(P,HEAD,{y:52,lh:44,size:18});
+  ls[2].setAttribute("fill",C.blue);ls[3].setAttribute("fill",C.green);
+  at(400,()=>fadeUp(label(480,90,"is there pending work after the call?",{fill:C.yellow,size:18}),0));
+  at(1300,()=>{const b=vbracket(268,312,800,"still waiting",C.yellow);
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(2400,()=>fadeUp(label(480,420,"YES",{fill:C.yellow,size:56,f:"Space Grotesk",w:700}),0));
+  at(3400,()=>fadeUp(label(480,480,"the print statement has not run yet",{fill:C.yellow,size:17}),0));
+  at(4300,()=>fadeUp(label(480,520,"so the frame has to survive the call",{size:14}),0));
+ }},
+{s:"CORE 2 · HEAD",t:"4:00",vo:"So watch the trace. Call, call, call, call, call — nothing printed yet. Five frames deep and the output is still empty.",
+ vis:"Stack building, output line empty.",act:"Five plates drop rapidly; output area stays blank and dims.",hold:"1400ms",dur:7000,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.22em",size:12});
+  label(720,100,"OUTPUT",{fill:"var(--faint)",ls:"0.22em",size:12});
+  line(480,120,480,470,{stroke:"var(--line)",sw:1});
+  E("line",{x1:60,y1:462,x2:420,y2:462,stroke:"var(--cells)","stroke-width":3});
+  const out=outstrip(560,220,5,C.yellow,{w:70,h:60});
+  for(let i=0;i<5;i++)at(500+i*560,()=>{
+    const f=fplate(70,SY(i),340,52,"n = "+(i+1),C.blue,{expr:"print pending"});
+    f.expr.setAttribute("fill",C.yellow);
+    f.style.opacity=0;move(f,70,SY(i)-60);
+    setTimeout(()=>{f.style.opacity=1;move(f,70,SY(i))},20)});
+  at(3600,()=>fadeUp(label(720,340,"still empty",{fill:C.red,size:20}),0));
+  at(4400,()=>fadeUp(label(720,390,"five frames deep",{fill:"var(--dim)",size:15}),0));
+  at(5200,()=>fadeUp(label(480,510,"nothing has been printed yet",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 2 · HEAD",t:"4:20",vo:"Base case hits. Now unwinding — and now the printing happens, in reverse order, as each frame resumes its pending work.",
+ vis:"Stack collapsing.",act:"Each plate vanishing writes its number to the output: 5, then 4, then 3, 2, 1.",hold:"1600ms",dur:8000,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.22em",size:12});
+  label(720,100,"OUTPUT",{fill:C.yellow,ls:"0.22em",size:12});
+  line(480,120,480,470,{stroke:"var(--line)",sw:1});
+  E("line",{x1:60,y1:462,x2:420,y2:462,stroke:"var(--cells)","stroke-width":3});
+  const out=outstrip(560,220,5,C.yellow,{w:70,h:60});
+  const fs=[];for(let i=0;i<5;i++){const f=fplate(70,SY(i),340,52,"n = "+(i+1),C.blue,{expr:"print pending"});
+    f.expr.setAttribute("fill",C.yellow);fs.push(f)}
+  at(400,()=>{fs[4].tint(C.green);fs[4].expr.textContent="base case"});
+  at(1000,()=>{const a=arrow(500,420,500,180,{stroke:C.yellow});drawIn(a,700);
+    setTimeout(()=>fadeUp(label(524,300,"unwinding",{fill:C.yellow,size:13,anchor:"start"}),0),700)});
+  [4,3,2,1,0].forEach((k,i)=>at(2000+i*1000,()=>{
+    fs[k].tint(C.yellow);
+    setTimeout(()=>out.put(i,k+1),300);
+    setTimeout(()=>{fs[k].tint(C.red);fs[k].style.opacity=0},620)}));
+  at(6800,()=>fadeUp(label(480,510,"printed on the way BACK UP — in reverse",{fill:C.yellow,size:17}),0));
+ }},
+{s:"CORE 2 · HEAD",t:"4:45",vo:"That's why the output reversed. Not because we changed the logic — because we moved the work from winding to unwinding.",
+ vis:"Both outputs side by side with their phase arrows.",act:"Tail version labeled winding, head version labeled unwinding; arrows pulse.",hold:"1400ms",dur:6800,
+ build(){
+  line(480,90,480,480,{stroke:"var(--line)",sw:1});
+  label(240,130,"TAIL",{fill:C.green,ls:"0.3em",size:16});
+  label(720,130,"HEAD",{fill:C.yellow,ls:"0.3em",size:16});
+  const a=arrow(240,190,240,300,{stroke:C.green});
+  const b=arrow(720,300,720,190,{stroke:C.yellow});
+  at(400,()=>drawIn(a,500));
+  at(900,()=>drawIn(b,500));
+  at(1600,()=>{fadeUp(label(240,340,"work while WINDING",{fill:C.green,size:15}),0);
+    fadeUp(label(720,340,"work while UNWINDING",{fill:C.yellow,size:15}),150)});
+  at(2600,()=>{fadeUp(label(240,410,"1 2 3 4 5",{fill:C.green,size:30,f:"IBM Plex Mono"}),0)});
+  at(3000,()=>{fadeUp(label(720,410,"5 4 3 2 1",{fill:C.yellow,size:30,f:"IBM Plex Mono"}),0)});
+  for(let k=0;k<2;k++){
+    at(3800+k*600,()=>{a.setAttribute("stroke-width",5);b.setAttribute("stroke-width",5)});
+    at(4100+k*600,()=>{a.setAttribute("stroke-width",2);b.setAttribute("stroke-width",2)})}
+  at(5200,()=>fadeUp(label(480,510,"the logic never changed — only the phase did",{size:16}),0));
+ }},
+{s:"CORE 2 · HEAD",t:"5:00",vo:"And head recursion can never be optimized away. The frame has to survive the call, because it still has a job to do afterwards. O of n space, always.",
+ vis:"Stack of 5 plates, each showing a pending statement.",act:"Plates hold, each with a small yellow pending marker; chip writes O(n) yellow.",hold:"1400ms",dur:6800,
+ build(){
+  label(200,100,"CALL STACK",{fill:C.blue,ls:"0.22em",size:12});
+  E("line",{x1:60,y1:462,x2:420,y2:462,stroke:"var(--cells)","stroke-width":3});
+  const fs=[];for(let i=0;i<5;i++)fs.push(fplate(70,SY(i),340,52,"n = "+(i+1),C.blue));
+  at(600,()=>fs.forEach((f,i)=>setTimeout(()=>{f.expr.textContent="⧗ pending";f.expr.setAttribute("fill",C.yellow)},i*180)));
+  at(2000,()=>fadeUp(label(700,180,"every frame still has a job",{fill:C.yellow,size:17}),0));
+  at(2800,()=>fadeUp(label(700,230,"so none can be discarded",{fill:C.yellow,size:17}),0));
+  at(3600,()=>{const c=chip(600,300,"O(n) space",{w:220,stroke:C.yellow,tf:C.yellow});
+    c.rect.setAttribute("height",60);c.txt.setAttribute("y",38);c.txt.setAttribute("font-size",22);
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(4600,()=>fadeUp(label(700,410,"always. no optimization possible.",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 2 · HEAD",t:"5:15",vo:"This is a genuinely useful pattern, though. Printing a linked list backwards, reversing a string, post-order traversal — all head recursion, all exploiting the free reversal.",
+ vis:"Three small icons.",act:"Stagger in.",hold:"1200ms",dur:6000,
+ build(){
+  label(480,100,"WHERE YOU ACTUALLY WANT THIS",{fill:C.green,ls:"0.18em",size:14});
+  const EX=[["Print a list backwards","without reversing it first"],
+            ["Reverse a string","the stack does it for you"],
+            ["Post-order traversal","children before the parent"]];
+  EX.forEach((e,i)=>at(400+i*500,()=>{
+    const p=panel(40+i*310,170,280,200,{stroke:C.green});p.style.opacity=0;setTimeout(()=>p.style.opacity=1,20);
+    label(180+i*310,240,e[0],{fill:"var(--text)",size:17,f:"Space Grotesk",w:500});
+    label(180+i*310,280,e[1],{size:13})}));
+  at(2400,()=>fadeUp(label(480,430,"reversal, for free",{fill:C.green,size:22}),0));
+  at(3400,()=>fadeUp(label(480,480,"you get it from the stack, not from your code",{size:15}),0));
+ }},
+{s:"CORE 3 · NESTED",t:"5:30",vo:"Nested recursion is the strange one. The recursive call's argument is itself a recursive call.",
+ vis:"Code panel: if (n > 100) return n - 10; else return F(F(n + 11));",act:"Line types on; the inner F(n+11) highlights yellow inside the outer F(...).",hold:"1400ms",dur:6600,
+ build(){
+  label(480,90,"NESTED RECURSION",{fill:C.red,ls:"0.26em",size:15});
+  const P=panel(120,140,720,190,{stroke:C.red});
+  const ls=code(P,["",""],{y:70,lh:60,size:19});
+  at(400,()=>ls[0].textContent="if (n > 100) return n - 10;");
+  at(1400,()=>ls[1].textContent="else return F(F(n + 11));");
+  at(2600,()=>{const T=terms(480,392,[{t:"F(",c:"var(--text)"},{t:"F(n + 11)",c:C.yellow},{t:")",c:"var(--text)"}],38);
+    T.forEach((t,i)=>{t.style.opacity=0;setTimeout(()=>t.style.opacity=1,i*250)})});
+  at(4000,()=>fadeUp(label(480,450,"the argument is itself a recursive call",{fill:C.yellow,size:18}),0));
+  at(4900,()=>fadeUp(label(480,496,"that's the whole definition",{size:15}),0));
+ }},
+{s:"CORE 3 · NESTED",t:"5:45",vo:"Read that inside out. Before the outer call can even start, the inner one must finish — and the inner one may itself split again.",
+ vis:"Nested brackets drawn around the expression.",act:"Inner bracket flashes first, then outer.",hold:"1300ms",dur:6400,
+ build(){
+  const T=terms(480,240,[{t:"F(",c:"var(--text)"},{t:"F(n + 11)",c:C.yellow},{t:")",c:"var(--text)"}],44);
+  at(600,()=>{const b=bracket(400,660,300,"runs FIRST",C.yellow,{down:true});
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(1800,()=>{const b=bracket(348,712,180,"can't start until the inner one finishes",C.blue);
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20);
+    T[0].setAttribute("fill",C.blue);T[2].setAttribute("fill",C.blue)});
+  at(3200,()=>fadeUp(label(480,400,"read it inside out",{fill:"var(--text)",size:22}),0));
+  at(4000,()=>fadeUp(label(480,460,"and the inner one may split again",{fill:C.red,size:17}),0));
+ }},
+{s:"CORE 3 · NESTED",t:"6:00",vo:"Trace it with n equals ninety-five. The inner call runs first, returns a value, and only then does that value become the argument for the outer call.",
+ vis:"Two-level frame stack with the inner resolving first.",act:"Inner frame drops, resolves green, value flies up into the outer frame's argument slot which was blank.",hold:"1600ms",dur:7600,
+ build(){
+  label(480,90,"n = 95",{fill:C.yellow,size:22,f:"IBM Plex Mono"});
+  E("line",{x1:120,y1:452,x2:840,y2:452,stroke:"var(--cells)","stroke-width":3});
+  const outer=fplate(120,380,720,60,"outer  F(",C.blue,{expr:"___ )",size:19});
+  outer.expr.setAttribute("fill",C.red);
+  at(700,()=>fadeUp(label(480,340,"waiting on its own argument",{fill:C.red,size:15}),0));
+  const inner=fplate(160,300,640,56,"inner  F(95 + 11)",C.yellow,{expr:"= F(106)",size:17});
+  inner.style.opacity=0;move(inner,160,240);
+  at(1600,()=>{inner.style.opacity=1;move(inner,160,300)});
+  at(2600,()=>{inner.tint(C.green);inner.expr.textContent="106 > 100 → 96";inner.expr.setAttribute("fill",C.green)});
+  at(3600,()=>{const v=label(700,330,"96",{fill:C.green,size:30,f:"IBM Plex Mono"});
+    v.style.opacity=0;setTimeout(()=>{v.style.opacity=1;v.style.transition="transform .7s ease";move(v,0,78)},20)});
+  at(4600,()=>{inner.style.opacity=0;outer.expr.textContent="96 )";outer.expr.setAttribute("fill",C.green);
+    outer.tint(C.green)});
+  at(5400,()=>fadeUp(label(480,510,"only now can the outer call begin",{fill:C.green,size:17}),0));
+ }},
+{s:"CORE 3 · NESTED",t:"6:20",vo:"The depth is unpredictable. You can't look at the code and say how many frames this will use, because the argument itself depends on a computation.",
+ vis:"Stack growing to varying depths.",act:"Stack grows, shrinks, grows deeper — irregular rhythm.",hold:"1400ms",dur:7400,
+ build(){
+  label(480,90,"UNPREDICTABLE DEPTH",{fill:C.red,ls:"0.22em",size:14});
+  E("line",{x1:300,y1:472,x2:660,y2:472,stroke:"var(--cells)","stroke-width":3});
+  const fs=[];
+  const SEQ=[1,1,1,-1,1,1,-1,-1,1,1,1,1];
+  let d=0;
+  SEQ.forEach((s,i)=>at(600+i*440,()=>{
+    if(s>0){const f=fplate(300,410-d*44,360,38,"F(…)",C.blue,{size:13});
+      f.style.opacity=0;move(f,300,410-d*44-40);
+      setTimeout(()=>{f.style.opacity=1;move(f,300,410-d*44)},20);fs.push(f);d++}
+    else{const f=fs.pop();if(f){f.tint(C.red);setTimeout(()=>f.style.opacity=0,180);d--}}}));
+  at(5900,()=>fadeUp(label(480,510,"you cannot read the depth off the code",{fill:C.red,size:17}),0));
+ }},
+{s:"CORE 3 · NESTED",t:"6:40",vo:"You'll rarely write this deliberately. Know the definition, be able to identify it, and move on.",
+ vis:"Definition card.",act:"Card holds.",hold:"1100ms",dur:5200,
+ build(){
+  const P=panel(140,160,680,180,{stroke:C.red});
+  label(480,220,"NESTED RECURSION",{fill:C.red,size:20,ls:"0.2em"});
+  label(480,280,"the argument of a recursive call",{fill:"var(--text)",size:22,f:"Space Grotesk",w:500});
+  label(480,314,"is itself a recursive call",{fill:"var(--text)",size:22,f:"Space Grotesk",w:500});
+  at(1400,()=>fadeUp(label(480,400,"you will rarely write this on purpose",{size:16}),0));
+  at(2400,()=>fadeUp(label(480,450,"know it · identify it · move on",{fill:C.yellow,size:18,ls:"0.06em"}),0));
+ }},
+{s:"CORE 4 · LINEAR & TREE",t:"7:00",vo:"Two more that exams list. Linear recursion — the function calls itself exactly once per invocation. Everything so far has been linear.",
+ vis:"Chain of frames, each spawning one child.",act:"Straight vertical chain draws.",hold:"1100ms",dur:5800,
+ build(){
+  label(480,90,"LINEAR RECURSION",{fill:C.green,ls:"0.26em",size:15});
+  const ns=[];
+  for(let i=0;i<5;i++)at(400+i*400,()=>{
+    const c=circleNode(480,160+i*72,"",{r:24,stroke:C.green});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20);
+    if(i)drawIn(line(480,136+i*72,480,160+i*72-24,{stroke:C.green}),200);
+    ns.push(c)});
+  at(2600,()=>fadeUp(label(680,260,"one call",{fill:C.green,size:17}),0));
+  at(2900,()=>fadeUp(label(680,292,"per invocation",{fill:C.green,size:17}),0));
+  at(3800,()=>fadeUp(label(480,510,"everything so far in this course has been linear",{size:16}),0));
+ }},
+{s:"CORE 4 · LINEAR & TREE",t:"7:15",vo:"Tree recursion — the function calls itself more than once. And the moment it does, the shape stops being a chain and becomes a tree.",
+ vis:"Code panel return fib(n-1) + fib(n-2); with a branching structure beneath.",act:"Root spawns two children, each spawning two more, three levels.",hold:"1500ms",dur:7400,
+ build(){
+  label(480,80,"TREE RECURSION",{fill:C.red,ls:"0.26em",size:15});
+  label(480,124,"return fib(n-1) + fib(n-2);",{fill:C.yellow,size:20,f:"IBM Plex Mono"});
+  const LV=[[480],[330,630],[250,410,550,710],[210,290,370,450,510,590,670,750]];
+  const YY=i=>180+i*90;
+  at(500,()=>circleNode(480,YY(0),"",{r:22,stroke:C.red}));
+  [1,2,3].forEach(lv=>at(1000+(lv-1)*1400,()=>{
+    LV[lv].forEach((x,k)=>setTimeout(()=>{
+      const px=LV[lv-1][Math.floor(k/2)];
+      drawIn(line(px,YY(lv-1)+(lv===3?15:22),x,YY(lv)-(lv===3?15:22),{stroke:"#2C3644",sw:1.6}),200);
+      const c=circleNode(x,YY(lv),"",{r:lv===3?15:22,stroke:C.red});
+      c.style.opacity=0;setTimeout(()=>c.style.opacity=1,180)},k*140))}));
+  at(5800,()=>fadeUp(label(480,510,"two calls — and the chain becomes a tree",{fill:C.red,size:17}),0));
+ }},
+{s:"CORE 4 · LINEAR & TREE",t:"7:35",vo:"That's the difference between n frames and two-to-the-n calls. Same syntax, wildly different cost — and it's exactly the Fibonacci explosion from video three.",
+ vis:"Chain versus tree side by side, with chips.",act:"Chips write O(n) green and O(2ⁿ) red.",hold:"1500ms",dur:6800,
+ build(){
+  line(480,110,480,470,{stroke:"var(--line)",sw:1});
+  label(240,140,"LINEAR",{fill:C.green,ls:"0.24em",size:14});
+  label(720,140,"TREE",{fill:C.red,ls:"0.24em",size:14});
+  for(let i=0;i<4;i++){circleNode(240,200+i*66,"",{r:19,stroke:C.green});
+    if(i)line(240,181+i*66,240,200+i*66-19,{stroke:C.green,sw:1.6})}
+  const LV=[[720],[640,800],[600,680,760,840]];
+  [1,2].forEach(lv=>LV[lv].forEach((x,k)=>{
+    line(LV[lv-1][Math.floor(k/2)],200+(lv-1)*80+17,x,200+lv*80-17,{stroke:"#2C3644",sw:1.5})}));
+  LV.forEach((row,lv)=>row.forEach(x=>circleNode(x,200+lv*80,"",{r:17,stroke:C.red})));
+  at(900,()=>{const c=chip(140,410,"O(n) calls",{w:200,stroke:C.green,tf:C.green});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(1700,()=>{const c=chip(620,410,"O(2ⁿ) calls",{w:200,stroke:C.red,tf:C.red});
+    c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(2800,()=>fadeUp(label(480,80,"same syntax · wildly different cost",{fill:C.yellow,size:18}),0));
+  at(3900,()=>fadeUp(label(480,500,"this is exactly the Fibonacci explosion from video 03",{size:15}),0));
+ }},
+{s:"CORE 4 · LINEAR & TREE",t:"7:55",vo:"One thing to keep straight: the depth of the stack is the height of that tree, not the number of nodes. Tree recursion makes enormous numbers of calls but doesn't necessarily stack them all at once.",
+ vis:"Tree with its height bracketed on the left.",act:"Height bracket draws blue; node count writes separately in yellow.",hold:"1600ms",dur:7600,
+ build(){
+  label(480,80,"DEPTH  ≠  NUMBER OF CALLS",{fill:C.yellow,ls:"0.16em",size:15});
+  const LV=[[520],[420,620],[370,470,570,670],[345,395,445,495,545,595,645,695]];
+  const YY=i=>150+i*90;
+  LV.forEach((row,lv)=>row.forEach((x,k)=>{
+    if(lv)line(LV[lv-1][Math.floor(k/2)],YY(lv-1)+18,x,YY(lv)-18,{stroke:"#2C3644",sw:1.4});
+    circleNode(x,YY(lv),"",{r:lv===3?13:18,stroke:"var(--cells)"})}));
+  at(700,()=>{const b=vbracket(YY(0)-20,YY(3)+20,290,"height = 4",C.blue,{left:true});
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(1600,()=>fadeUp(label(180,300,"stack depth",{fill:C.blue,size:18,anchor:"middle"}),0));
+  at(2600,()=>fadeUp(label(800,240,"15 nodes",{fill:C.yellow,size:26,f:"IBM Plex Mono"}),0));
+  at(3000,()=>fadeUp(label(800,290,"total calls",{fill:C.yellow,size:16}),0));
+  at(4000,()=>fadeUp(label(480,500,"enormous call counts — but never all stacked at once",{size:16}),0));
+ }},
+{s:"CLOSE",t:"8:15",vo:"Recap. Tail recursion: call last, work on the way down, optimizable to O of one. Head recursion: call first, work on the way back up, gives you reversal for free, always O of n. Nested: the argument is a recursive call. Linear: one call per invocation. Tree: more than one, and the cost explodes.",
+ vis:"Five-item summary card.",act:"Instant draw, no stagger.",hold:"2200ms",dur:7800,
+ build(){
+  label(480,58,"RECAP",{fill:C.blue,ls:"0.3em",size:13});
+  const D=[["TAIL","call last · work while winding","optimizable to O(1) — if the compiler does it"],
+           ["HEAD","call first · work while unwinding","reversal for free · always O(n)"],
+           ["NESTED","the argument is a recursive call","depth is unpredictable"],
+           ["LINEAR","exactly one call per invocation","n frames"],
+           ["TREE","more than one call","O(2ⁿ) calls — but depth is only the height"]];
+  D.forEach((d,i)=>{const y=90+i*88;
+    panel(70,y,820,74);
+    label(102,y+46,d[0],{fill:C.blue,size:13,anchor:"start",f:"IBM Plex Mono"});
+    label(210,y+34,d[1],{fill:"var(--text)",size:18,anchor:"start",f:"Space Grotesk",w:500});
+    label(210,y+58,d[2],{size:12.5,anchor:"start"})});
+ }},
+{s:"CLOSE",t:"8:50",vo:"Exam question: write a recursive function that prints a string in reverse — then say which type it is, and whether it could be tail-call optimized. Pause and answer all three parts.",
+ vis:"Question card.",act:"Card slides up.",hold:"2400ms",dur:7000,
+ build(){
+  const g=G({class:"p"});move(g,140,560);
+  E("rect",{width:680,height:330,rx:16,fill:"#141B25",stroke:C.blue,"stroke-width":2},g);
+  const t1=E("text",{x:36,y:50,fill:C.blue,"font-family":"IBM Plex Mono","font-size":12,"letter-spacing":"0.24em"},g);
+  t1.textContent="EXAM QUESTION · 6 MARKS";
+  const t2=E("text",{x:36,y:96,fill:"var(--text)","font-family":"Space Grotesk","font-size":22,"font-weight":500},g);
+  t2.textContent="Print a string in reverse, recursively.";
+  E("rect",{x:36,y:120,width:608,height:132,rx:8,fill:"#0F151E",stroke:"var(--line)","stroke-width":1.5},g);
+  ["(a)  Write the function.","(b)  Which type of recursion is it?","(c)  Could it be tail-call optimized?"].forEach((s,i)=>{
+    const t=E("text",{x:58,y:156+i*36,fill:"#B9C4D2","font-family":"IBM Plex Mono","font-size":15},g);t.textContent=s});
+  const t3=E("text",{x:36,y:300,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t3.textContent="⏸  Pause and answer all three parts.";
+  at(300,()=>move(g,140,110));
+  at(4000,()=>{const bar2=E("rect",{x:176,y:466,width:0,height:4,rx:2,fill:C.blue});
+    bar2.style.transition="width 2.4s linear";setTimeout(()=>bar2.setAttribute("width",608),30)});
+ }},
+{s:"CLOSE",t:"9:10",vo:"Next video: Fibonacci and the Towers of Hanoi — the two problems every exam uses to test whether you actually understand any of this.",
+ vis:"End card.",act:"Fade.",hold:"End.",dur:6400,
+ build(){
+  const l=label(110,200,"NEXT",{fill:"var(--dim)",size:14,anchor:"start",ls:"0.3em"});
+  const a=label(110,262,"Fibonacci & Hanoi",{fill:"var(--text)",size:40,f:"Space Grotesk",w:700,anchor:"start"});
+  const b=label(110,306,"the two problems every exam uses",{fill:"var(--dim)",size:17,anchor:"start"});
+  const b2=label(110,332,"to test whether you actually understand",{fill:"var(--dim)",size:17,anchor:"start"});
+  const c=label(110,392,"VIDEO 12 · UNIT 3",{fill:C.blue,size:13,anchor:"start",ls:"0.16em"});
+  [l,a,b,b2,c].forEach((n,i)=>{n.style.opacity=0;at(200+i*160,()=>n.style.opacity=1)});
+  const g=G({class:"p"});move(g,570,150);g.style.opacity=0;
+  E("rect",{width:330,height:230,rx:12,fill:"#101722",stroke:"var(--line)","stroke-width":1.5},g);
+  [0,1,2].forEach(i=>E("line",{x1:70+i*95,y1:70,x2:70+i*95,y2:170,stroke:"var(--cells)","stroke-width":4},g));
+  E("line",{x1:40,y1:172,x2:290,y2:172,stroke:"var(--cells)","stroke-width":5},g);
+  [[70,150,74],[70,132,60],[70,114,44]].forEach((d,i)=>
+    E("rect",{x:d[0]-d[2]/2,y:d[1],width:d[2],height:14,rx:4,fill:"#1B2431",stroke:C.yellow,"stroke-width":1.6},g));
+  const t=E("text",{x:165,y:206,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle"},g);
+  t.textContent="2ⁿ − 1 moves";
+  at(1100,()=>g.style.opacity=1);
+  at(4400,()=>fadeUp(label(480,500,"SUBSCRIBE · UNIT 3 CONTINUES",{size:12,ls:"0.2em"}),0));
+ }}
+];
+
+/* small helper used by beat 1 for the check path */
+function drawIn2(p,ms){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{p.style.transition=`stroke-dashoffset ${ms}ms ease`;p.style.strokeDashoffset=0})}
+
+/* ── runner ── */
+let idx=0,elapsed=0,playing=false,rate=1,queue=[],last=0;
+const tickrow=document.getElementById("tickrow"),secrow=document.getElementById("secrow");
+const total=BEATS.reduce((a,b)=>a+b.dur,0);
+BEATS.forEach((b,i)=>{const t=document.createElement("button");t.className="tick";
+  t.style.flex=b.dur;t.innerHTML='<i></i><span>'+(i+1)+'</span>';
+  t.title="Beat "+(i+1)+" — "+b.s;t.onclick=()=>go(i,playing);tickrow.appendChild(t)});
+let cur=null;BEATS.forEach(b=>{if(!cur||cur.s!==b.s){cur={s:b.s,d:0};const el=document.createElement("div");el.className="sec";el.textContent=b.s;el.dataset.s=b.s;secrow.appendChild(el)}
+  cur.d+=b.dur;secrow.lastChild.style.flex=cur.d});
+
+function go(i,autoplay){
+  idx=Math.max(0,Math.min(BEATS.length-1,i));elapsed=0;queue=[];
+  clearStage();const b=BEATS[idx];
+  at=(ms,fn)=>queue.push({ms,fn,done:false});
+  b.build();
+  document.getElementById("bn").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("bt").textContent=b.t;
+  document.getElementById("f-vo").textContent=b.vo;
+  document.getElementById("f-vis").textContent=b.vis;
+  document.getElementById("f-act").textContent=b.act;
+  document.getElementById("f-hold").textContent=b.hold;
+  [...tickrow.children].forEach((t,k)=>{t.classList.toggle("now",k===idx);t.classList.toggle("done",k<idx)});
+  playing=!!autoplay;paint();
+}
+function paint(){document.getElementById("play").textContent=playing?"❚❚ PAUSE":"▶ PLAY";
+  const t=tickrow.children[idx];t.querySelector("i").style.transform=`scaleX(${elapsed/BEATS[idx].dur})`}
+function frame(ts){const dt=Math.min(64,ts-(last||ts));last=ts;
+  if(playing){elapsed+=dt*rate;
+    queue.forEach(q=>{if(!q.done&&elapsed>=q.ms){q.done=true;q.fn()}});
+    if(elapsed>=BEATS[idx].dur){if(idx<BEATS.length-1)go(idx+1,true);else{playing=false;elapsed=BEATS[idx].dur}}
+    paint()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+document.getElementById("play").onclick=()=>{if(!playing&&elapsed>=BEATS[idx].dur)go(idx,true);else{playing=!playing;paint()}};
+document.getElementById("next").onclick=()=>go(idx+1,playing);
+document.getElementById("prev").onclick=()=>go(idx-1,playing);
+document.getElementById("replay").onclick=()=>go(idx,true);
+document.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>{rate=parseFloat(b.dataset.r);
+  document.querySelectorAll(".rate button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;
+  if(e.key===" "){e.preventDefault();document.getElementById("play").click()}
+  if(e.key==="ArrowRight")go(idx+1,playing);if(e.key==="ArrowLeft")go(idx-1,playing);
+  if(e.key.toLowerCase()==="r")go(idx,true)});
+
+go(0,false);
+</script>
+</body>
+</html>
