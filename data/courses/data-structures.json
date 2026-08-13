@@ -36,6 +36,16 @@
           "title": "Big-O, Omega, Theta: asymptotic notation",
           "file": "video-04-asymptotic-notation.html",
           "meta": "Unit 1 · ~10:00"
+        }, 
+        {
+          "title": "Arrays: how they actually sit in memory",
+          "file": "video-05-arrays-in-memory.html",
+          "meta": "Unit 2 · ~9:15"
+        },
+        {
+          "title": "The index formula: derived, not memorized",
+          "file": "video-06-index-formula.html",
+          "meta": "Unit 2 · ~10:30"
         }
       ]
     },

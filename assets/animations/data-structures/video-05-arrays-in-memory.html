@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video 05 — Arrays: How They Actually Sit in Memory · Animatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080A0D; --panel:#0D1116; --stage:#12161C; --line:#1E252E;
+  --cellf:#28313D; --cells:#3B4756;
+  --blue:#4C8DFF; --green:#3DD68C; --red:#FF6B6B; --yellow:#FFC94D;
+  --text:#E7ECF3; --dim:#7C8899; --faint:#4A5464;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--disp)}
+body{padding:18px 16px 60px;max-width:1180px;margin:0 auto}
+
+/* ── masthead ── */
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.slate{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink);background:var(--yellow);padding:3px 8px;border-radius:3px;font-weight:600}
+h1{font-size:clamp(19px,4vw,27px);font-weight:700;letter-spacing:-.02em;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;margin-left:auto}
+
+/* ── stage ── */
+.stagewrap{margin-top:14px;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--stage)}
+svg#stage{display:block;width:100%;height:auto;background:
+  linear-gradient(rgba(76,141,255,.035) 1px,transparent 1px) 0 0/100% 36px,
+  linear-gradient(90deg,rgba(76,141,255,.035) 1px,transparent 1px) 0 0/36px 100%,
+  var(--stage)}
+.badge{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint)}
+.badge b{color:var(--blue);font-weight:600}
+
+/* ── ruler (signature) ── */
+.ruler{margin-top:12px}
+.secrow,.tickrow{display:flex;gap:2px}
+.secrow{margin-bottom:5px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--faint);border-top:1px solid var(--line);padding-top:4px;overflow:hidden;white-space:nowrap}
+.tick{height:26px;background:#131922;border:0;padding:0;border-radius:2px;position:relative;cursor:pointer;overflow:hidden}
+.tick:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tick i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:var(--faint)}
+.tick.done i{transform:scaleX(1)}
+.tick.now i{background:var(--blue)}
+.tick span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--dim)}
+.tick.now span{color:#fff}
+
+/* ── transport ── */
+.transport{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.ctl{font-family:var(--mono);font-size:12px;color:var(--text);background:#131922;border:1px solid var(--line);border-radius:6px;padding:9px 13px;cursor:pointer}
+button.ctl:hover{border-color:var(--faint)}
+button.ctl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.ctl.primary{background:var(--blue);color:#06101F;border-color:var(--blue);font-weight:600;min-width:96px}
+.rate{margin-left:auto;display:flex;gap:2px}
+.rate button{padding:9px 10px}
+.rate button[aria-pressed="true"]{background:#1B2431;border-color:var(--faint);color:var(--yellow)}
+
+/* ── spec sheet ── */
+.spec{margin-top:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.vo{border-left:2px solid var(--yellow);padding:2px 0 2px 14px}
+.vo .lab,.fld .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.vo p{margin:6px 0 0;font-size:clamp(16px,2.4vw,20px);line-height:1.45;letter-spacing:-.01em}
+.fields{display:grid;gap:10px}
+.fld{border-left:1px solid var(--line);padding-left:14px}
+.fld p{margin:4px 0 0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#B9C4D2}
+.fld.hold p{color:var(--green)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:760px){.spec{grid-template-columns:1fr}.meta{margin-left:0;width:100%}.tick span{display:none}}
+
+/* ── stage element transitions ── */
+.p{transition:transform .55s cubic-bezier(.2,.8,.25,1),opacity .4s ease,fill .3s ease,stroke .3s ease}
+.fast{transition:transform .25s ease,opacity .2s ease,fill .12s ease}
+.q{transition:none}
+@keyframes shake{0%,100%{transform:translate(var(--tx),var(--ty))}25%{transform:translate(calc(var(--tx) - 7px),var(--ty))}75%{transform:translate(calc(var(--tx) + 7px),var(--ty))}}
+.shake{animation:shake .28s 2}
+@media(prefers-reduced-motion:reduce){.p,.fast{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slate">VID 05</span>
+  <h1>Arrays: How They Actually Sit in Memory</h1>
+  <span class="meta">UNIT 2 · TARGET 9:15 · 33 BEATS · UNIT 2 OPENER</span>
+</header>
+
+<div class="stagewrap">
+  <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Animation stage"></svg>
+  <div class="badge">BEAT <b id="bn">01</b> · <span id="bt">0:00</span></div>
+</div>
+
+<div class="ruler">
+  <div class="secrow" id="secrow"></div>
+  <div class="tickrow" id="tickrow"></div>
+</div>
+
+<div class="transport">
+  <button class="ctl" id="prev" aria-label="Previous beat">◀ PREV</button>
+  <button class="ctl primary" id="play">▶ PLAY</button>
+  <button class="ctl" id="next" aria-label="Next beat">NEXT ▶</button>
+  <button class="ctl" id="replay">↻ BEAT</button>
+  <div class="rate" role="group" aria-label="Playback rate">
+    <button class="ctl" data-r="0.5">.5×</button>
+    <button class="ctl" data-r="1" aria-pressed="true">1×</button>
+    <button class="ctl" data-r="2">2×</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div class="vo"><span class="lab">VO</span><p id="f-vo"></p></div>
+  <div class="fields">
+    <div class="fld"><span class="lab">VIS</span><p id="f-vis"></p></div>
+    <div class="fld"><span class="lab">ACT</span><p id="f-act"></p></div>
+    <div class="fld hold"><span class="lab">HOLD</span><p id="f-hold"></p></div>
+  </div>
+</div>
+
+<footer>
+  ANIMATIC RUNS AT STORYBOARD PACE — REAL CUT IS TIMED TO VO (9:15).<br>
+  KEYS: SPACE PLAY/PAUSE · ← → STEP BEAT · R REPLAY BEAT.<br>
+  THIS FILE IS THE FORMAT SPEC. CLONE FOR VIDEOS 02–48; REPLACE THE BEATS ARRAY ONLY.
+</footer>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const stage=document.getElementById("stage");
+let layer=document.createElementNS(NS,"g");stage.appendChild(layer);
+
+/* ── primitive kit ── */
+function E(t,a={},p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);(p||layer).appendChild(n);return n}
+function G(a={},p){return E("g",a,p)}
+function move(n,x,y){n.style.setProperty("--tx",x+"px");n.style.setProperty("--ty",y+"px");n.style.transform=`translate(${x}px,${y}px)`}
+function cell(x,y,o={}){const w=o.w||46,h=o.h||46;
+  const g=G({class:o.cls||"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:o.rx??9,fill:o.fill||"var(--cellf)",stroke:o.stroke||"var(--cells)","stroke-width":1.5,class:o.cls||"p"},g);
+  if(o.label!=null)E("text",{x:w/2,y:h/2+5,fill:o.tf||"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g).textContent=o.label;
+  g.rect=r;g.opacity=v=>g.style.opacity=v;return g}
+function label(x,y,s,o={}){const t=E("text",{x,y,fill:o.fill||"var(--dim)","font-family":o.f||"IBM Plex Mono","font-size":o.size||13,"text-anchor":o.anchor||"middle","letter-spacing":o.ls||0,class:o.cls||"p","font-weight":o.w||400},o.p);t.textContent=s;if(o.o!=null)t.style.opacity=o.o;return t}
+function line(x1,y1,x2,y2,o={}){return E("line",{x1,y1,x2,y2,stroke:o.stroke||"var(--cells)","stroke-width":o.sw||2,"stroke-linecap":"round",class:"p",...(o.attrs||{})})}
+function drawIn(l,ms,delay){const len=Math.hypot(l.x2.baseVal.value-l.x1.baseVal.value,l.y2.baseVal.value-l.y1.baseVal.value);
+  l.style.strokeDasharray=len;l.style.strokeDashoffset=len;l.style.transition="none";
+  requestAnimationFrame(()=>{l.style.transition=`stroke-dashoffset ${ms||420}ms cubic-bezier(.3,.7,.3,1) ${delay||0}ms, stroke .3s`;l.style.strokeDashoffset=0});return l}
+function arrow(x1,y1,x2,y2,o={}){const l=line(x1,y1,x2,y2,o);l.setAttribute("marker-end","url(#ah)");return l}
+function chip(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||(s.length*8.4+22);
+  const r=E("rect",{width:w,height:28,rx:14,fill:o.fill||"#1A2230",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const t=E("text",{x:w/2,y:19,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;g.w=w;return g}
+function nodeBox(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||64,h=o.h||44;
+  const r=E("rect",{width:w,height:h,rx:8,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:w/2,y:h/2+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;return g}
+function circleNode(cx,cy,s,o={}){const g=G({class:"p"});
+  const c=E("circle",{cx,cy,r:o.r||24,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.c=c;g.txt=t;return g}
+function fadeUp(n,d){n.style.opacity=0;setTimeout(()=>n.style.opacity=1,d||0);return n}
+function defs(){const d=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"},d);
+  E("path",{d:"M0 0 L10 5 L0 10 z",fill:"var(--cells)"},m)}
+function clearStage(){layer.remove();layer=document.createElementNS(NS,"g");stage.appendChild(layer);defs()}
+const C={blue:"var(--blue)",green:"var(--green)",red:"var(--red)",yellow:"var(--yellow)",grey:"var(--cellf)"};
+
+/* ── beats ── */
+let at; // scheduler injected per beat
+
+/* ── extra primitives for Video 05 ── */
+function panel(x,y,w,h,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:10,fill:o.fill||"#131A24",stroke:o.stroke||"var(--line)","stroke-width":o.sw||1.5,class:"p"},g);
+  g.rect=r;g.w=w;g.h=h;return g}
+function code(g,lines,o={}){const out=[];lines.forEach((s,i)=>{
+  const n=E("text",{x:o.x||18,y:(o.y||36)+i*(o.lh||28),fill:o.fill||"#B9C4D2","font-family":"IBM Plex Mono","font-size":o.size||13,class:"p"},g);
+  n.textContent=s;out.push(n)});return out}
+function hatchDefs(){const d=E("defs",{});
+  const p=E("pattern",{id:"hz",width:12,height:12,patternUnits:"userSpaceOnUse",patternTransform:"rotate(45)"},d);
+  E("rect",{width:12,height:12,fill:"rgba(255,107,107,.10)"},p);
+  E("line",{x1:0,y1:0,x2:0,y2:12,stroke:"rgba(255,107,107,.55)","stroke-width":4},p)}
+function bracket(x1,x2,y,txt,col,o={}){const g=G({class:"p"});const d=o.down?-1:1;
+  E("path",{d:`M${x1} ${y} v${-10*d} H${x2} v${10*d}`,stroke:col,"stroke-width":2,fill:"none",class:"p"},g);
+  const t=E("text",{x:(x1+x2)/2,y:y-16*d+(o.down?14:0),fill:col,"font-family":"IBM Plex Mono","font-size":o.size||13,"text-anchor":"middle",class:"p"},g);
+  t.textContent=txt;g.txt=t;return g}
+function wall(x,y,h,col){return E("rect",{x,y,width:9,height:h,rx:3,fill:col||"var(--red)",opacity:.8,class:"p"})}
+function slot(x,y,w,h){return E("rect",{x,y,width:w,height:h,rx:8,fill:"#101720",stroke:"var(--line)","stroke-width":1.5,"stroke-dasharray":"5 5",class:"p"})}
+function pointerTri(x,y,col){const p=E("path",{d:"M-11 -16 L11 -16 L0 0 z",fill:col,class:"p"});move(p,x,y);return p}
+
+const ADDR=[1000,1004,1008,1012,1016,1020];
+const GX=i=>300+i*76, GY=r=>130+r*76;      /* 3×4 grid */
+const RX=i=>92+i*66,  RY=390;               /* 12-slot ribbon */
+
+const BEATS=[
+{s:"HOOK",t:"0:00",vo:"An array of a million elements. You ask for element number 847,000. How long does it take to find?",
+ vis:"Long strip of cells receding into the distance, one highlighted far right.",act:"Strip draws; target cell pulses yellow.",hold:"800ms",dur:5600,
+ build(){
+  const cs=[];let x=60;
+  for(let i=0;i<26;i++){const w=64-i*1.9,h=w;const y=290-h/2+i*1.2;
+    const c=cell(x,y,{w,h,rx:7});c.style.opacity=0;cs.push(c);x+=w+6}
+  cs.forEach((c,i)=>at(200+i*55,()=>c.style.opacity=1));
+  at(1800,()=>fadeUp(label(120,400,"arr[0]",{size:13,f:"IBM Plex Mono"}),0));
+  const tgt=cs[24];
+  at(2300,()=>{tgt.rect.setAttribute("stroke",C.yellow);tgt.rect.setAttribute("fill","#2A2415")});
+  at(2700,()=>tgt.rect.setAttribute("fill","var(--cellf)"));
+  at(3000,()=>tgt.rect.setAttribute("fill","#2A2415"));
+  at(3300,()=>fadeUp(label(850,215,"arr[847000]",{fill:C.yellow,size:13,f:"IBM Plex Mono",anchor:"end"}),0));
+  at(3900,()=>fadeUp(label(480,470,"how long does it take to find?",{size:17}),0));
+ }},
+{s:"HOOK",t:"0:10",vo:"The same time as element zero. The computer doesn't search — it doesn't even look at the other elements. It calculates.",
+ vis:"Same strip.",act:"A single arrow jumps directly from the start to the target, no intermediate steps. Target turns green.",hold:"1100ms",dur:6000,
+ build(){
+  const cs=[];let x=60;
+  for(let i=0;i<26;i++){const w=64-i*1.9,h=w;const y=290-h/2+i*1.2;cs.push(cell(x,y,{w,h,rx:7}));x+=w+6}
+  const tgt=cs[24];tgt.rect.setAttribute("stroke",C.yellow);
+  at(600,()=>{const p=E("path",{d:"M92 270 C 300 90, 700 90, 858 250",stroke:C.blue,"stroke-width":4,fill:"none","stroke-linecap":"round","marker-end":"url(#ah)",class:"p"});
+    drawIn2(p,900)});
+  at(1700,()=>{tgt.rect.setAttribute("stroke",C.green);tgt.rect.setAttribute("fill","#122A21")});
+  at(2300,()=>fadeUp(label(480,120,"one jump · no scanning",{fill:C.blue,size:16}),0));
+  at(3100,()=>fadeUp(label(480,430,"it doesn't search — it calculates",{fill:C.green,size:19,f:"Space Grotesk",w:700}),0));
+  at(4000,()=>{const c=chip(390,470,"O(1) access",{w:190,stroke:C.green,tf:C.green});c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+ }},
+{s:"HOOK",t:"0:20",vo:"That one property — instant access at any position — is why arrays are still everywhere, fifty years on. And it comes entirely from how they're laid out in memory.",
+ vis:"Title card.",act:'"ARRAYS IN MEMORY" types on, Unit 2 accent.',hold:"600ms",dur:5200,
+ build(){
+  const cs=[];for(let i=0;i<8;i++)cs.push(cell(232+i*58,190,{w:50,h:50,stroke:C.yellow}));
+  at(300,()=>cs.forEach((c,i)=>setTimeout(()=>c.rect.setAttribute("fill","#2A2415"),i*70)));
+  const t=label(480,340,"",{fill:C.yellow,size:46,f:"Space Grotesk",w:700,ls:"0.02em"});
+  const full="ARRAYS IN MEMORY";
+  for(let i=0;i<=full.length;i++)at(1100+i*78,()=>t.textContent=full.slice(0,i)+(i<full.length?"▌":""));
+  at(1100+full.length*78+140,()=>{t.textContent=full;
+    fadeUp(label(480,392,"UNIT 2 · LINEAR STRUCTURES",{size:13,ls:"0.22em"}),0)});
+  at(3600,()=>fadeUp(label(480,450,"the layout is the whole story",{size:15}),0));
+ }},
+{s:"PROMISE",t:"0:30",vo:"Three things: the two rules that define an array, what a two-dimensional array really is underneath, and the three limitations that push you toward linked lists later.",
+ vis:"Three chips slide in: Rules · 2-D Reality · Limits.",act:"Stagger 150ms.",hold:"500ms",dur:4400,
+ build(){
+  label(480,150,"IN THIS VIDEO",{ls:"0.28em",size:12});
+  ["The two rules","What 2-D really is","The three limits"].forEach((s,i)=>{
+    const c=chip(-320,236+i*62,s,{w:280});c.rect.setAttribute("height",44);c.txt.setAttribute("y",27);c.style.opacity=0;
+    const n=label(296,236+i*62+28,"0"+(i+1),{fill:C.yellow,size:13});n.style.opacity=0;
+    at(200+i*150,()=>{move(c,340,236+i*62);c.style.opacity=1;n.style.opacity=1})});
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"0:50",vo:"An array is a collection of elements, and it obeys exactly two rules. Break either one and it isn't an array anymore.",
+ vis:"Clear canvas, two empty rule slots.",act:"Slots outline.",hold:"500ms",dur:3800,
+ build(){
+  label(480,120,"TWO RULES · BREAK EITHER AND IT ISN'T AN ARRAY",{fill:C.yellow,ls:"0.14em",size:13});
+  [0,1].forEach(i=>at(400+i*300,()=>{
+    const r=E("rect",{x:100+i*400,y:190,width:360,height:200,rx:12,fill:"#101720",stroke:"var(--line)","stroke-width":2,"stroke-dasharray":"7 7",class:"p"});
+    r.style.opacity=0;setTimeout(()=>r.style.opacity=1,20);
+    label(280+i*400,300,"RULE 0"+(i+1),{fill:"var(--faint)",size:22,f:"IBM Plex Mono"})}));
+  at(1600,()=>fadeUp(label(480,460,"both must hold, always",{size:15}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"1:00",vo:"Rule one: homogeneous. Every element is the same data type, so every element occupies the same number of bytes.",
+ vis:"Row of 6 cells, all labeled int, each with 4B beneath.",act:"Cells fill in, byte labels stagger.",hold:"900ms",dur:5400,
+ build(){
+  label(480,110,"RULE 01 · HOMOGENEOUS",{fill:C.yellow,ls:"0.2em",size:14});
+  const cs=[];
+  for(let i=0;i<6;i++){const c=cell(150+i*112,200,{w:96,h:88,label:"int",stroke:C.yellow,tf:"var(--text)"});
+    c.style.opacity=0;cs.push(c);at(400+i*180,()=>c.style.opacity=1)}
+  for(let i=0;i<6;i++)at(1600+i*140,()=>fadeUp(label(198+i*112,320,"4 B",{fill:C.blue,size:14,f:"IBM Plex Mono"}),0));
+  at(2900,()=>fadeUp(label(480,400,"same type  →  same size, every single element",{size:16}),0));
+  at(3700,()=>fadeUp(label(480,450,"that uniformity is what makes the arithmetic possible",{fill:C.blue,size:14}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"1:20",vo:"Rule two: contiguous. The elements sit in one unbroken block of memory. No gaps, no scattering.",
+ vis:"Memory ribbon with address labels: 1000, 1004, 1008, 1012, 1016, 1020.",act:"Cells snap flush against each other; addresses write beneath.",hold:"1000ms",dur:6000,
+ build(){
+  label(480,110,"RULE 02 · CONTIGUOUS",{fill:C.yellow,ls:"0.2em",size:14});
+  const SC=[[130,180],[300,300],[470,170],[620,320],[760,200],[860,300]];
+  const cs=SC.map(p=>cell(p[0],p[1],{w:96,h:88,label:"int",stroke:C.yellow}));
+  at(800,()=>cs.forEach((c,i)=>move(c,150+i*106,240)));
+  at(1700,()=>ADDR.forEach((a,i)=>setTimeout(()=>fadeUp(label(198+i*106,360,a,{fill:C.blue,size:14,f:"IBM Plex Mono"}),0),i*120)));
+  at(2900,()=>fadeUp(label(480,412,"one unbroken block — no gaps, no scattering",{size:16}),0));
+  at(3800,()=>fadeUp(label(480,462,"addresses run 1000 → 1024, four bytes at a time",{fill:C.blue,size:14,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"1:40",vo:"Those two rules together are what buy you instant access. Same size each, packed back to back — so position n is always a fixed distance from the start.",
+ vis:"Same ribbon.",act:"Equal-width brackets draw between consecutive addresses, all showing +4.",hold:"1200ms",dur:6000,
+ build(){
+  const cs=[];for(let i=0;i<6;i++)cs.push(cell(150+i*106,220,{w:96,h:88,label:"int",stroke:C.yellow}));
+  ADDR.forEach((a,i)=>label(198+i*106,340,a,{fill:C.blue,size:14,f:"IBM Plex Mono"}));
+  for(let i=0;i<5;i++)at(500+i*280,()=>{const b=bracket(198+i*106,198+(i+1)*106,390,"+4",C.green,{down:true});
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(2400,()=>fadeUp(label(480,470,"every step is the same distance — always",{fill:C.green,size:17}),0));
+  at(3300,()=>fadeUp(label(480,150,"same size  +  packed back to back  =  instant access",{fill:C.yellow,size:15}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"2:05",vo:"The name of the array is just the address of the first element. Everything else is arithmetic from there.",
+ vis:"Label arr with an arrow pointing at address 1000.",act:"Arrow draws.",hold:"900ms",dur:5000,
+ build(){
+  const cs=[];for(let i=0;i<6;i++)cs.push(cell(150+i*106,220,{w:96,h:88,label:"int",stroke:C.yellow}));
+  ADDR.forEach((a,i)=>label(198+i*106,340,a,{fill:"var(--dim)",size:14,f:"IBM Plex Mono"}));
+  const nm=label(198,140,"arr",{fill:C.blue,size:30,f:"IBM Plex Mono"});nm.style.opacity=0;
+  at(400,()=>nm.style.opacity=1);
+  at(900,()=>drawIn(arrow(198,158,198,210,{stroke:C.blue}),400));
+  at(1500,()=>{cs[0].rect.setAttribute("stroke",C.blue);cs[0].rect.setAttribute("fill","#12213A");
+  });
+  at(1800,()=>fadeUp(label(480,430,"the array's name IS an address",{fill:C.blue,size:19,f:"Space Grotesk",w:700}),0));
+  at(2700,()=>fadeUp(label(480,478,"everything after that is arithmetic",{size:15}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"2:25",vo:"Want element three? Start at 1000, add three times four bytes, land at 1012. One multiplication, one addition. Done — regardless of array size.",
+ vis:"Calculation writes beneath: 1000 + 3 × 4 = 1012.",act:"Arrow jumps from 1000 to 1012; cell turns green; full derivation comes next video.",hold:"1300ms",dur:6600,
+ build(){
+  const cs=[];for(let i=0;i<6;i++)cs.push(cell(150+i*106,190,{w:96,h:88,label:"int",stroke:C.yellow}));
+  ADDR.forEach((a,i)=>label(198+i*106,310,a,{fill:"var(--dim)",size:14,f:"IBM Plex Mono"}));
+  label(198,150,"arr",{fill:C.blue,size:22,f:"IBM Plex Mono"});
+  const parts=["1000","  +  3","  ×  4","  =  1012"];
+  const t=label(480,400,"",{fill:"var(--text)",size:32,f:"IBM Plex Mono"});
+  parts.forEach((p,i)=>at(500+i*700,()=>t.textContent+=p));
+  at(2900,()=>{const p=E("path",{d:"M198 172 C 300 100, 420 100, 516 172",stroke:C.green,"stroke-width":3.5,fill:"none","marker-end":"url(#ah)",class:"p"});drawIn2(p,700)});
+  at(3600,()=>{cs[3].rect.setAttribute("stroke",C.green);cs[3].rect.setAttribute("fill","#122A21");t.setAttribute("fill",C.green)});
+  at(4400,()=>fadeUp(label(480,460,"one multiply, one add — whatever the array's size",{fill:C.green,size:16}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"2:50",vo:"And now the question everyone asks: why does indexing start at zero?",
+ vis:"Index labels 0 1 2 3 4 5 beneath the cells, the 0 enlarged.",act:"0 pulses accent blue.",hold:"700ms",dur:4400,
+ build(){
+  const cs=[];for(let i=0;i<6;i++)cs.push(cell(150+i*106,200,{w:96,h:88,stroke:C.yellow,label:""}));
+  const idx=[];for(let i=0;i<6;i++)at(400+i*120,()=>idx.push(fadeUp(label(198+i*106,340,i,{fill:"var(--dim)",size:20,f:"IBM Plex Mono"}),0)));
+  const zero=label(198,410,"0",{fill:C.blue,size:54,f:"IBM Plex Mono"});zero.style.opacity=0;
+  at(1400,()=>zero.style.opacity=1);
+  at(1900,()=>zero.setAttribute("fill","var(--text)"));
+  at(2200,()=>zero.setAttribute("fill",C.blue));
+  at(2600,()=>fadeUp(label(560,400,"why does it start here?",{fill:C.blue,size:19,anchor:"start"}),0));
+ }},
+{s:"CORE 1 · THE TWO RULES",t:"3:00",vo:"Because the index isn't a position. It's an offset — the distance from the start. The first element is zero bytes away from the start. It isn't a design choice, it's the arithmetic.",
+ vis:"Same ribbon, brackets redrawn as offsets from arr.",act:"Offset brackets draw: 0, 4, 8, 12… labeled +0×4, +1×4, +2×4.",hold:"1400ms",dur:7000,
+ build(){
+  const cs=[];for(let i=0;i<6;i++)cs.push(cell(150+i*106,150,{w:96,h:80,stroke:C.yellow,label:i,tf:"var(--dim)"}));
+  label(198,120,"arr",{fill:C.blue,size:18,f:"IBM Plex Mono"});
+  const labs=["+0 × 4","+1 × 4","+2 × 4","+3 × 4","+4 × 4","+5 × 4"];
+  labs.forEach((s,i)=>at(500+i*450,()=>{
+    const b=bracket(198,198+i*106,270+i*34,s,i?C.blue:C.green,{down:false,size:12});
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)}));
+  at(3400,()=>fadeUp(label(760,180,"the index is a DISTANCE",{fill:C.blue,size:16,anchor:"end"}),0));
+  at(4200,()=>fadeUp(label(480,506,"element 0 is zero bytes from the start — not a choice, arithmetic",{fill:C.green,size:15}),0));
+ }},
+{s:"CORE 2 · DECLARATION",t:"3:15",vo:"In C, you declare an array with a type, a name, and a size in square brackets.",
+ vis:"Code panel: int marks[6];",act:"Line types on.",hold:"700ms",dur:4600,
+ build(){
+  const P=panel(230,180,500,120);
+  const t=E("text",{x:40,y:74,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":34},P);
+  const full="int marks[6];";
+  for(let i=0;i<=full.length;i++)at(400+i*130,()=>t.textContent=full.slice(0,i));
+  at(2300,()=>{fadeUp(label(288,340,"type",{fill:C.blue,size:13}),0);
+    fadeUp(label(400,340,"name",{fill:C.yellow,size:13}),150);
+    fadeUp(label(520,340,"size",{fill:C.green,size:13}),300)});
+  at(3200,()=>fadeUp(label(480,420,"six ints  ·  24 bytes  ·  reserved as one block",{size:15}),0));
+ }},
+{s:"CORE 2 · DECLARATION",t:"3:30",vo:"That size must be known at compile time. The compiler needs it to reserve the block — it can't reserve a block whose size it doesn't know yet.",
+ vis:"Memory ribbon with a fixed-width reservation bracket over it.",act:"Bracket draws with hard walls at both ends.",hold:"1000ms",dur:5600,
+ build(){
+  label(480,110,"RESERVED AT COMPILE TIME",{fill:C.yellow,ls:"0.2em",size:13});
+  const cs=[];for(let i=0;i<6;i++)cs.push(cell(200+i*100,240,{w:88,h:80,stroke:C.yellow}));
+  at(500,()=>{const b=bracket(200,788,200,"24 bytes — fixed",C.yellow);b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(1300,()=>{const w1=wall(178,232,96,C.red),w2=wall(792,232,96,C.red);
+    [w1,w2].forEach(w=>{w.style.opacity=0;setTimeout(()=>w.style.opacity=.8,20)})});
+  at(2100,()=>fadeUp(label(480,380,"the compiler must know the size to reserve the block",{size:16}),0));
+  at(3000,()=>fadeUp(label(480,440,"int marks[n];  ← not allowed in classic C",{fill:C.red,size:15,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 2 · DECLARATION",t:"3:50",vo:"Which means an array cannot grow. Ask for a seventh element in a six-element array and C won't stop you — it'll just read whatever memory happens to be sitting there.",
+ vis:"Six cells with walls, a seventh access attempted past the wall.",act:"Arrow crosses the wall into a red-hatched region showing garbage value.",hold:"1300ms",dur:6800,
+ build(){
+  hatchDefs();
+  const cs=[];for(let i=0;i<6;i++)cs.push(cell(150+i*100,230,{w:88,h:80,label:i,stroke:C.yellow,tf:"var(--dim)"}));
+  wall(744,222,96,C.red);
+  const hz=E("rect",{x:762,y:230,width:180,height:80,rx:8,fill:"url(#hz)",stroke:C.red,"stroke-width":2,class:"p"});
+  hz.style.opacity=0;
+  at(600,()=>fadeUp(label(480,160,"marks[6]  ←  the seventh element",{fill:C.red,size:17,f:"IBM Plex Mono"}),0));
+  at(1300,()=>{const p=E("path",{d:"M690 210 C 730 170, 800 170, 840 216",stroke:C.red,"stroke-width":3.5,fill:"none","marker-end":"url(#ah)",class:"p"});drawIn2(p,700)});
+  at(2100,()=>hz.style.opacity=1);
+  at(2600,()=>fadeUp(label(852,278,"-29347",{fill:C.red,size:18,f:"IBM Plex Mono"}),0));
+  at(3300,()=>fadeUp(label(852,340,"garbage",{fill:C.red,size:13,ls:"0.16em"}),0));
+  at(4000,()=>fadeUp(label(420,420,"C does not stop you. It just reads.",{fill:C.red,size:17}),0));
+ }},
+{s:"CORE 2 · DECLARATION",t:"4:15",vo:"No bounds checking. This is the single most common source of crashes in C, and the reason you'll hear the phrase 'buffer overflow' for the rest of your career.",
+ vis:"Red region holds.",act:"Region flashes once.",hold:"1100ms",dur:5600,
+ build(){
+  hatchDefs();
+  for(let i=0;i<6;i++)cell(150+i*100,230,{w:88,h:80,label:i,stroke:C.yellow,tf:"var(--dim)"});
+  wall(744,222,96,C.red);
+  const hz=E("rect",{x:762,y:230,width:180,height:80,rx:8,fill:"url(#hz)",stroke:C.red,"stroke-width":2,class:"p"});
+  label(852,278,"-29347",{fill:C.red,size:18,f:"IBM Plex Mono"});
+  at(700,()=>{hz.setAttribute("fill","rgba(255,107,107,.5)")});
+  at(1100,()=>hz.setAttribute("fill","url(#hz)"));
+  at(1700,()=>fadeUp(label(480,400,"NO BOUNDS CHECKING",{fill:C.red,size:26,f:"Space Grotesk",w:700,ls:"0.06em"}),0));
+  at(2600,()=>fadeUp(label(480,450,'you will hear "buffer overflow" for the rest of your career',{size:15}),0));
+ }},
+{s:"CORE 3 · TWO DIMENSIONS",t:"4:45",vo:"Now, two dimensions. You picture a matrix — rows and columns, a grid.",
+ vis:"3×4 grid of cells, indices labeled.",act:"Grid draws.",hold:"800ms",dur:5000,
+ build(){
+  label(480,90,"int a[3][4];",{fill:C.yellow,size:20,f:"IBM Plex Mono"});
+  for(let r=0;r<3;r++)for(let c=0;c<4;c++){const g=cell(GX(c),GY(r),{w:62,h:62,label:r+","+c,stroke:C.yellow,tf:"var(--dim)"});
+    g.style.opacity=0;at(300+(r*4+c)*110,()=>g.style.opacity=1)}
+  at(1900,()=>{fadeUp(label(250,175,"rows",{size:13,anchor:"end"}),0);fadeUp(label(480,470,"columns",{size:13}),150)});
+  at(2800,()=>fadeUp(label(760,300,"you picture a grid",{fill:C.yellow,size:16,anchor:"start"}),0));
+ }},
+{s:"CORE 3 · TWO DIMENSIONS",t:"4:58",vo:"Memory has no idea what a grid is. Memory is one long line of bytes, and it always has been.",
+ vis:"Grid holds, memory ribbon appears beneath, empty.",act:"Ribbon fades in.",hold:"800ms",dur:5000,
+ build(){
+  for(let r=0;r<3;r++)for(let c=0;c<4;c++)cell(GX(c),GY(r),{w:62,h:62,label:r+","+c,stroke:C.yellow,tf:"var(--dim)"});
+  at(700,()=>fadeUp(label(480,368,"MEMORY",{fill:"var(--dim)",size:12,ls:"0.28em"}),0));
+  for(let i=0;i<12;i++)at(1000+i*70,()=>{const s=slot(RX(i),RY,62,62);s.style.opacity=0;setTimeout(()=>s.style.opacity=1,20)});
+  at(2400,()=>fadeUp(label(480,490,"one long line of bytes — that's all it has ever been",{size:16}),0));
+ }},
+{s:"CORE 3 · TWO DIMENSIONS",t:"5:12",vo:"So a two-dimensional array is a lie we tell for convenience. Underneath, it's flattened into one straight sequence.",
+ vis:"Grid and ribbon.",act:"Row 0's four cells detach and slide down into the ribbon, left to right, staying blue.",hold:"1000ms",dur:5800,
+ build(){
+  for(let i=0;i<12;i++)slot(RX(i),RY,62,62);
+  const cs=[];
+  for(let r=0;r<3;r++)for(let c=0;c<4;c++)cs.push(cell(GX(c),GY(r),{w:62,h:62,label:r+","+c,stroke:C.yellow,tf:"var(--dim)"}));
+  at(600,()=>fadeUp(label(480,510,"a 2-D array is a convenience — memory is 1-D",{size:15}),0));
+  [0,1,2,3].forEach((k,i)=>at(1200+i*420,()=>{
+    cs[k].rect.setAttribute("stroke",C.blue);cs[k].rect.setAttribute("fill","#12213A");
+    move(cs[k],RX(i),RY)}));
+  at(3200,()=>fadeUp(label(480,340,"row 0 → first four slots",{fill:C.blue,size:15}),0));
+ }},
+{s:"CORE 3 · TWO DIMENSIONS",t:"5:30",vo:"Row zero, then row one, then row two — laid end to end. That flattening order is called row-major, and it's what C uses.",
+ vis:"Rows 1 and 2 follow.",act:"Each row slides down in turn, 400ms apart, each a different shade; label ROW-MAJOR appears.",hold:"1300ms",dur:7000,
+ build(){
+  for(let i=0;i<12;i++)slot(RX(i),RY,62,62);
+  const cs=[];
+  for(let r=0;r<3;r++)for(let c=0;c<4;c++)cs.push(cell(GX(c),GY(r),{w:62,h:62,label:r+","+c,stroke:C.yellow,tf:"var(--dim)"}));
+  const COL=[[C.blue,"#12213A"],[C.green,"#122A21"],["#FF9F45","#2A1F15"]];
+  [0,1,2,3].forEach((k,i)=>{cs[k].rect.setAttribute("stroke",COL[0][0]);cs[k].rect.setAttribute("fill",COL[0][1]);move(cs[k],RX(i),RY)});
+  [1,2].forEach(r=>at(500+(r-1)*1400,()=>{
+    [0,1,2,3].forEach(c=>{const k=r*4+c;
+      setTimeout(()=>{cs[k].rect.setAttribute("stroke",COL[r][0]);cs[k].rect.setAttribute("fill",COL[r][1]);
+        move(cs[k],RX(r*4+c),RY)},c*260)})}));
+  at(4200,()=>fadeUp(label(480,510,"ROW-MAJOR — this is what C uses",{fill:C.yellow,size:18,ls:"0.1em"}),0));
+  at(4900,()=>fadeUp(label(480,200,"row 0 · row 1 · row 2 — end to end",{size:15}),0));
+ }},
+{s:"CORE 3 · TWO DIMENSIONS",t:"5:55",vo:"Some languages — Fortran, MATLAB — flatten by columns instead. Column-major. Same grid, completely different memory order.",
+ vis:"Grid resets, ribbon clears.",act:"Column 0 slides down first, then column 1, 2, 3. Label switches to COLUMN-MAJOR.",hold:"1300ms",dur:7400,
+ build(){
+  for(let i=0;i<12;i++)slot(RX(i),RY,62,62);
+  const cs=[];
+  for(let r=0;r<3;r++)for(let c=0;c<4;c++)cs.push(cell(GX(c),GY(r),{w:62,h:62,label:r+","+c,stroke:C.yellow,tf:"var(--dim)"}));
+  const COL=[[C.blue,"#12213A"],[C.green,"#122A21"],["#FF9F45","#2A1F15"],[C.red,"#2A1618"]];
+  let slotIdx=0;
+  for(let c=0;c<4;c++)for(let r=0;r<3;r++){const k=r*4+c,pos=slotIdx++;
+    at(500+pos*450,()=>{cs[k].rect.setAttribute("stroke",COL[c][0]);cs[k].rect.setAttribute("fill",COL[c][1]);
+      move(cs[k],RX(pos),RY)})}
+  at(5600,()=>fadeUp(label(480,510,"COLUMN-MAJOR — Fortran, MATLAB",{fill:"#FF9F45",size:18,ls:"0.1em"}),0));
+  at(6100,()=>fadeUp(label(480,200,"same grid · completely different memory order",{size:15}),0));
+ }},
+{s:"CORE 3 · TWO DIMENSIONS",t:"6:20",vo:"This isn't trivia. It changes the address formula, it changes which loop order runs faster, and it's the derivation you'll be asked for in the exam. Next video does it properly.",
+ vis:"Both orderings shown stacked for comparison.",act:"Hold, no motion.",hold:"1200ms",dur:5800,
+ build(){
+  label(480,80,"SAME GRID · TWO LAYOUTS",{fill:C.yellow,ls:"0.2em",size:13});
+  label(110,150,"ROW-MAJOR",{fill:C.blue,size:13,anchor:"start",ls:"0.16em"});
+  const RM=["0,0","0,1","0,2","0,3","1,0","1,1","1,2","1,3","2,0","2,1","2,2","2,3"];
+  RM.forEach((s,i)=>cell(92+i*66,175,{w:58,h:54,label:s,stroke:C.blue,tf:"var(--dim)"}));
+  label(110,290,"COLUMN-MAJOR",{fill:"#FF9F45",size:13,anchor:"start",ls:"0.16em"});
+  const CM=["0,0","1,0","2,0","0,1","1,1","2,1","0,2","1,2","2,2","0,3","1,3","2,3"];
+  CM.forEach((s,i)=>cell(92+i*66,315,{w:58,h:54,label:s,stroke:"#FF9F45",tf:"var(--dim)"}));
+  at(900,()=>fadeUp(label(480,430,"it changes the address formula",{size:16}),0));
+  at(1600,()=>fadeUp(label(480,464,"it changes which loop order is faster",{size:16}),0));
+  at(2400,()=>fadeUp(label(480,506,"next video derives both properly",{fill:C.yellow,size:14,ls:"0.08em"}),0));
+ }},
+{s:"CORE 3 · TWO DIMENSIONS",t:"6:40",vo:"One consequence worth seeing now. Walking a matrix row by row reads memory in order. Walking it column by column jumps across the whole block on every single step.",
+ vis:"Grid with ribbon beneath, row-major layout.",act:"Row-wise traversal: pointer moves smoothly along the ribbon, green. Then column-wise: pointer leaps across the ribbon in large jumps, yellow.",hold:"1400ms",dur:8000,
+ build(){
+  label(480,100,"ROW-MAJOR MEMORY",{fill:"var(--dim)",ls:"0.2em",size:12});
+  const RM=["0,0","0,1","0,2","0,3","1,0","1,1","1,2","1,3","2,0","2,1","2,2","2,3"];
+  const cs=RM.map((s,i)=>cell(92+i*66,220,{w:58,h:58,label:s,stroke:"var(--cells)",tf:"var(--dim)",cls:"fast"}));
+  const ptr=pointerTri(121,210,C.green);
+  at(300,()=>fadeUp(label(480,180,"row by row",{fill:C.green,size:15}),0));
+  for(let i=0;i<12;i++)at(600+i*230,()=>{ptr.style.transition="transform .2s linear";move(ptr,121+i*66,210);
+    cs[i].rect.setAttribute("fill","#122A21")});
+  at(3500,()=>{cs.forEach(c=>c.rect.setAttribute("fill","var(--cellf)"));ptr.setAttribute("fill",C.yellow);
+    fadeUp(label(480,400,"column by column",{fill:C.yellow,size:15}),0)});
+  const order=[0,4,8,1,5,9,2,6,10,3,7,11];
+  order.forEach((k,i)=>at(3900+i*300,()=>{ptr.style.transition="transform .26s cubic-bezier(.5,0,.5,1)";
+    move(ptr,121+k*66,210);cs[k].rect.setAttribute("fill","#2A2415")}));
+  at(7000,()=>fadeUp(label(480,470,"every step leaps across the whole block",{fill:C.yellow,size:16}),0));
+ }},
+{s:"CORE 3 · TWO DIMENSIONS",t:"7:00",vo:"Same operations, same result. The second one can be several times slower on real hardware — and nothing in your code would tell you why.",
+ vis:"Two chips: row-wise: fast, column-wise: slow.",act:"Chips appear staggered.",hold:"1200ms",dur:5600,
+ build(){
+  const a=panel(90,180,340,180,{stroke:C.green});a.style.opacity=0;
+  const b=panel(530,180,340,180,{stroke:C.yellow});b.style.opacity=0;
+  const t1=label(260,250,"row-wise",{fill:C.green,size:26,f:"Space Grotesk",w:700});t1.style.opacity=0;
+  const s1=label(260,300,"reads memory in order",{size:14});s1.style.opacity=0;
+  const t2=label(700,250,"column-wise",{fill:C.yellow,size:26,f:"Space Grotesk",w:700});t2.style.opacity=0;
+  const s2=label(700,300,"leaps on every step",{size:14});s2.style.opacity=0;
+  at(400,()=>{a.style.opacity=1;t1.style.opacity=1;s1.style.opacity=1});
+  at(1100,()=>{b.style.opacity=1;t2.style.opacity=1;s2.style.opacity=1});
+  at(1900,()=>{fadeUp(label(260,405,"fast",{fill:C.green,size:20,f:"IBM Plex Mono"}),0);
+    fadeUp(label(700,405,"several× slower",{fill:C.yellow,size:20,f:"IBM Plex Mono"}),200)});
+  at(2900,()=>fadeUp(label(480,470,"identical code shape — nothing on screen tells you why",{size:15}),0));
+ }},
+{s:"CORE 4 · SCORECARD",t:"7:15",vo:"So, the honest scorecard. Access by index: constant time, unbeatable.",
+ vis:"Two-column table forming — WINS and COSTS.",act:"First WINS row fills green: access O(1).",hold:"700ms",dur:4400,
+ build(){
+  label(250,110,"WINS",{fill:C.green,ls:"0.3em",size:14});
+  label(710,110,"COSTS",{fill:C.red,ls:"0.3em",size:14});
+  line(480,90,480,470,{stroke:"var(--line)",sw:1});
+  for(let i=0;i<3;i++){panel(70,160+i*100,380,80).style.opacity=.3;panel(530,160+i*100,380,80).style.opacity=.3}
+  at(600,()=>{const p=panel(70,160,380,80,{stroke:C.green});
+    label(260,196,"access by index",{fill:"var(--text)",size:19,f:"Space Grotesk",w:500});
+    label(260,224,"O(1) — unbeatable",{fill:C.green,size:14,f:"IBM Plex Mono"})});
+  at(2000,()=>fadeUp(label(480,510,"no other structure beats this",{fill:C.green,size:15}),0));
+ }},
+{s:"CORE 4 · SCORECARD",t:"7:25",vo:"Memory efficiency: no pointers, no overhead — just the data. And cache friendliness, because contiguous data is exactly what hardware is optimized for.",
+ vis:"Two more WINS rows.",act:"Rows fill green, staggered.",hold:"900ms",dur:5400,
+ build(){
+  label(250,110,"WINS",{fill:C.green,ls:"0.3em",size:14});
+  label(710,110,"COSTS",{fill:C.red,ls:"0.3em",size:14});
+  line(480,90,480,470,{stroke:"var(--line)",sw:1});
+  for(let i=0;i<3;i++)panel(530,160+i*100,380,80).style.opacity=.3;
+  panel(70,160,380,80,{stroke:C.green});
+  label(260,196,"access by index",{fill:"var(--text)",size:19,f:"Space Grotesk",w:500});
+  label(260,224,"O(1) — unbeatable",{fill:C.green,size:14,f:"IBM Plex Mono"});
+  const W=[["memory efficient","no pointers — just the data"],["cache friendly","contiguous is what hardware wants"]];
+  W.forEach((w,i)=>at(500+i*900,()=>{const p=panel(70,260+i*100,380,80,{stroke:C.green});p.style.opacity=0;
+    setTimeout(()=>p.style.opacity=1,20);
+    const a=label(260,296+i*100,w[0],{fill:"var(--text)",size:19,f:"Space Grotesk",w:500});
+    const b=label(260,324+i*100,w[1],{fill:C.green,size:13})}));
+  at(2800,()=>fadeUp(label(480,510,"three real wins — that's why arrays survive",{fill:C.green,size:15}),0));
+ }},
+{s:"CORE 4 · SCORECARD",t:"7:40",vo:"Now the costs. Fixed size — decided at compile time, can't change.",
+ vis:"COSTS column.",act:"First row fills red.",hold:"700ms",dur:4200,
+ build(){
+  label(250,110,"WINS",{fill:C.green,ls:"0.3em",size:14});
+  label(710,110,"COSTS",{fill:C.red,ls:"0.3em",size:14});
+  line(480,90,480,470,{stroke:"var(--line)",sw:1});
+  [["access by index","O(1) — unbeatable"],["memory efficient","no pointers — just the data"],["cache friendly","contiguous is what hardware wants"]]
+    .forEach((w,i)=>{panel(70,160+i*100,380,80,{stroke:C.green});
+      label(260,196+i*100,w[0],{fill:"var(--text)",size:19,f:"Space Grotesk",w:500});
+      label(260,224+i*100,w[1],{fill:C.green,size:13})});
+  for(let i=1;i<3;i++)panel(530,160+i*100,380,80).style.opacity=.3;
+  at(600,()=>{const p=panel(530,160,380,80,{stroke:C.red});p.style.opacity=0;setTimeout(()=>p.style.opacity=1,20);
+    label(720,196,"fixed size",{fill:"var(--text)",size:19,f:"Space Grotesk",w:500});
+    label(720,224,"decided at compile time",{fill:C.red,size:13})});
+  at(2000,()=>fadeUp(label(480,510,"it cannot grow. ever.",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 4 · SCORECARD",t:"7:50",vo:"Insertion and deletion in the middle: O of n, because everything after the gap has to shift.",
+ vis:"Row of 8 cells; element removed at position 2.",act:"Cell fades red; the five cells to its right each slide one position left, staggered 120ms.",hold:"1200ms",dur:6400,
+ build(){
+  label(480,120,"DELETE AT POSITION 2",{fill:C.red,ls:"0.2em",size:13});
+  const V=[4,7,2,9,1,6,3,8];
+  const X=i=>150+i*84;
+  const cs=V.map((v,i)=>cell(X(i),230,{w:70,h:70,label:v}));
+  V.forEach((v,i)=>label(X(i)+35,330,"["+i+"]",{size:12}));
+  at(700,()=>{cs[2].rect.setAttribute("stroke",C.red);cs[2].rect.setAttribute("fill","#2A1618")});
+  at(1300,()=>{cs[2].style.opacity=0});
+  at(1700,()=>[3,4,5,6,7].forEach((k,i)=>setTimeout(()=>{
+    cs[k].rect.setAttribute("stroke",C.yellow);move(cs[k],X(k-1),230)},i*120)));
+  at(3000,()=>fadeUp(label(480,400,"five elements had to move",{fill:C.yellow,size:17}),0));
+  at(3800,()=>{const c=chip(390,440,"O(n)",{w:180,stroke:C.red,tf:C.red});c.style.opacity=0;setTimeout(()=>c.style.opacity=1,20)});
+  at(4400,()=>fadeUp(label(480,510,"contiguity is the win AND the cost",{size:15}),0));
+ }},
+{s:"CORE 4 · SCORECARD",t:"8:00",vo:"And wasted space, because you must declare for the worst case. Expecting up to a thousand students? You reserve a thousand slots, even for a class of thirty.",
+ vis:"Reservation bracket of 1000 with only 30 cells filled.",act:"Empty region shades grey.",hold:"1200ms",dur:6000,
+ build(){
+  label(480,110,"int students[1000];",{fill:C.yellow,size:20,f:"IBM Plex Mono"});
+  E("rect",{x:100,y:220,width:760,height:70,rx:8,fill:"#101720",stroke:"var(--line)","stroke-width":1.5});
+  const used=E("rect",{x:104,y:224,width:0,height:62,rx:6,fill:C.green,class:"p"});
+  at(500,()=>{used.style.transition="width .8s ease";used.setAttribute("width",23)});
+  at(1400,()=>{const g=E("rect",{x:128,y:224,width:728,height:62,rx:6,fill:"rgba(124,136,153,.16)",class:"p"});
+    g.style.opacity=0;setTimeout(()=>g.style.opacity=1,20)});
+  at(2100,()=>{const b=bracket(104,128,200,"30 used",C.green);b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(2500,()=>{const b=bracket(128,856,340,"970 reserved and never touched",C.red,{down:true});
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(3400,()=>fadeUp(label(480,430,"you must declare for the worst case",{fill:C.red,size:17}),0));
+  at(4200,()=>fadeUp(label(480,478,"97% of that block is paid for and unused",{size:15}),0));
+ }},
+{s:"CORE 4 · SCORECARD",t:"8:08",vo:"Those three costs are the entire motivation for linked lists in Unit Five. Keep them in mind — the trade runs in both directions.",
+ vis:"Full scorecard, both columns.",act:"Hold.",hold:"1200ms",dur:5600,
+ build(){
+  label(250,110,"WINS",{fill:C.green,ls:"0.3em",size:14});
+  label(710,110,"COSTS",{fill:C.red,ls:"0.3em",size:14});
+  line(480,90,480,440,{stroke:"var(--line)",sw:1});
+  [["access by index","O(1) — unbeatable"],["memory efficient","no pointers — just the data"],["cache friendly","contiguous is what hardware wants"]]
+    .forEach((w,i)=>{panel(70,150+i*98,380,78,{stroke:C.green});
+      label(260,185+i*98,w[0],{fill:"var(--text)",size:18,f:"Space Grotesk",w:500});
+      label(260,212+i*98,w[1],{fill:C.green,size:12.5})});
+  [["fixed size","decided at compile time"],["O(n) insert / delete","everything after must shift"],["wasted space","declared for the worst case"]]
+    .forEach((w,i)=>{panel(530,150+i*98,380,78,{stroke:C.red});
+      label(720,185+i*98,w[0],{fill:"var(--text)",size:18,f:"Space Grotesk",w:500});
+      label(720,212+i*98,w[1],{fill:C.red,size:12.5})});
+  at(1200,()=>fadeUp(label(480,480,"these three costs are the entire motivation for linked lists",{fill:C.yellow,size:16}),0));
+  at(2400,()=>fadeUp(label(480,516,"UNIT 5 · the trade runs both ways",{size:13,ls:"0.16em"}),0));
+ }},
+{s:"CLOSE",t:"8:15",vo:"Recap. Arrays are homogeneous and contiguous. The index is an offset, which is why it starts at zero. Two-dimensional arrays are flattened — row-major in C. Constant-time access is the win; fixed size and O of n insertion are the price.",
+ vis:"Five-item summary card.",act:"Instant draw, no stagger.",hold:"1800ms",dur:6600,
+ build(){
+  label(480,58,"RECAP",{fill:C.yellow,ls:"0.3em",size:13});
+  const D=[["01","Homogeneous and contiguous","same size each, packed back to back"],
+           ["02","The index is an offset","which is exactly why it starts at zero"],
+           ["03","2-D arrays are flattened","row-major in C · column-major in Fortran"],
+           ["04","The win: O(1) access","and cache-friendly, pointer-free storage"],
+           ["05","The price: fixed size, O(n) insert","and space declared for the worst case"]];
+  D.forEach((d,i)=>{const y=90+i*88;
+    panel(90,y,780,74);
+    label(122,y+46,d[0],{fill:C.yellow,size:14,anchor:"start",f:"IBM Plex Mono"});
+    label(166,y+34,d[1],{fill:"var(--text)",size:18,anchor:"start",f:"Space Grotesk",w:500});
+    label(166,y+58,d[2],{size:12.5,anchor:"start"})});
+ }},
+{s:"CLOSE",t:"8:45",vo:"Exam question: an integer array is declared with 50 elements starting at address 2000. What's the address of element 20, and how many bytes does the whole array occupy? Pause and answer.",
+ vis:"Question card.",act:"Card slides up.",hold:"2200ms",dur:6600,
+ build(){
+  const g=G({class:"p"});move(g,140,560);
+  E("rect",{width:680,height:330,rx:16,fill:"#141B25",stroke:C.yellow,"stroke-width":2},g);
+  const t1=E("text",{x:36,y:50,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":12,"letter-spacing":"0.24em"},g);
+  t1.textContent="EXAM QUESTION · 4 MARKS";
+  ["An int array of 50 elements starts at","address 2000. Assume 4 bytes per int."].forEach((s,i)=>{
+    const t=E("text",{x:36,y:96+i*32,fill:"var(--text)","font-family":"Space Grotesk","font-size":22,"font-weight":500},g);t.textContent=s});
+  E("rect",{x:36,y:152,width:608,height:106,rx:8,fill:"#0F151E",stroke:"var(--line)","stroke-width":1.5},g);
+  ["(a)  Address of element 20?","(b)  Total bytes occupied?"].forEach((s,i)=>{
+    const t=E("text",{x:58,y:188+i*34,fill:"#B9C4D2","font-family":"IBM Plex Mono","font-size":15},g);t.textContent=s});
+  const t3=E("text",{x:36,y:296,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t3.textContent="⏸  Pause and answer.";
+  at(300,()=>move(g,140,110));
+  at(3600,()=>{const bar=E("rect",{x:176,y:466,width:0,height:4,rx:2,fill:C.yellow});
+    bar.style.transition="width 2.2s linear";setTimeout(()=>bar.setAttribute("width",608),30)});
+ }},
+{s:"CLOSE",t:"9:00",vo:"Next video: the index formula derived properly — one dimension, two dimensions, row-major, column-major, and the off-by-one that costs students marks every single year.",
+ vis:"End card.",act:"Fade.",hold:"End.",dur:6400,
+ build(){
+  const l=label(110,200,"NEXT",{fill:"var(--dim)",size:14,anchor:"start",ls:"0.3em"});
+  const a=label(110,262,"The Index Formula",{fill:"var(--text)",size:38,f:"Space Grotesk",w:700,anchor:"start"});
+  const b=label(110,306,"1-D, 2-D, row-major, column-major",{fill:"var(--dim)",size:17,anchor:"start"});
+  const b2=label(110,332,"— and the off-by-one that costs marks",{fill:"var(--dim)",size:17,anchor:"start"});
+  const c=label(110,392,"VIDEO 06 · UNIT 2",{fill:C.yellow,size:13,anchor:"start",ls:"0.16em"});
+  [l,a,b,b2,c].forEach((n,i)=>{n.style.opacity=0;at(200+i*160,()=>n.style.opacity=1)});
+  const g=G({class:"p"});move(g,560,170);g.style.opacity=0;
+  E("rect",{width:330,height:190,rx:12,fill:"#101722",stroke:"var(--line)","stroke-width":1.5},g);
+  const f1=E("text",{x:165,y:60,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":16,"text-anchor":"middle"},g);
+  f1.textContent="addr = base + i × w";
+  const f2=E("text",{x:165,y:110,fill:C.blue,"font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle"},g);
+  f2.textContent="base + (i×cols + j) × w";
+  const f3=E("text",{x:165,y:154,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g);
+  f3.textContent="…and the lower-bound trap";
+  at(1100,()=>g.style.opacity=1);
+  at(4400,()=>fadeUp(label(480,500,"SUBSCRIBE · UNIT 2 CONTINUES",{size:12,ls:"0.2em"}),0));
+ }}
+];
+
+/* small helper used by beat 1 for the check path */
+function drawIn2(p,ms){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{p.style.transition=`stroke-dashoffset ${ms}ms ease`;p.style.strokeDashoffset=0})}
+
+/* ── runner ── */
+let idx=0,elapsed=0,playing=false,rate=1,queue=[],last=0;
+const tickrow=document.getElementById("tickrow"),secrow=document.getElementById("secrow");
+const total=BEATS.reduce((a,b)=>a+b.dur,0);
+BEATS.forEach((b,i)=>{const t=document.createElement("button");t.className="tick";
+  t.style.flex=b.dur;t.innerHTML='<i></i><span>'+(i+1)+'</span>';
+  t.title="Beat "+(i+1)+" — "+b.s;t.onclick=()=>go(i,playing);tickrow.appendChild(t)});
+let cur=null;BEATS.forEach(b=>{if(!cur||cur.s!==b.s){cur={s:b.s,d:0};const el=document.createElement("div");el.className="sec";el.textContent=b.s;el.dataset.s=b.s;secrow.appendChild(el)}
+  cur.d+=b.dur;secrow.lastChild.style.flex=cur.d});
+
+function go(i,autoplay){
+  idx=Math.max(0,Math.min(BEATS.length-1,i));elapsed=0;queue=[];
+  clearStage();const b=BEATS[idx];
+  at=(ms,fn)=>queue.push({ms,fn,done:false});
+  b.build();
+  document.getElementById("bn").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("bt").textContent=b.t;
+  document.getElementById("f-vo").textContent=b.vo;
+  document.getElementById("f-vis").textContent=b.vis;
+  document.getElementById("f-act").textContent=b.act;
+  document.getElementById("f-hold").textContent=b.hold;
+  [...tickrow.children].forEach((t,k)=>{t.classList.toggle("now",k===idx);t.classList.toggle("done",k<idx)});
+  playing=!!autoplay;paint();
+}
+function paint(){document.getElementById("play").textContent=playing?"❚❚ PAUSE":"▶ PLAY";
+  const t=tickrow.children[idx];t.querySelector("i").style.transform=`scaleX(${elapsed/BEATS[idx].dur})`}
+function frame(ts){const dt=Math.min(64,ts-(last||ts));last=ts;
+  if(playing){elapsed+=dt*rate;
+    queue.forEach(q=>{if(!q.done&&elapsed>=q.ms){q.done=true;q.fn()}});
+    if(elapsed>=BEATS[idx].dur){if(idx<BEATS.length-1)go(idx+1,true);else{playing=false;elapsed=BEATS[idx].dur}}
+    paint()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+document.getElementById("play").onclick=()=>{if(!playing&&elapsed>=BEATS[idx].dur)go(idx,true);else{playing=!playing;paint()}};
+document.getElementById("next").onclick=()=>go(idx+1,playing);
+document.getElementById("prev").onclick=()=>go(idx-1,playing);
+document.getElementById("replay").onclick=()=>go(idx,true);
+document.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>{rate=parseFloat(b.dataset.r);
+  document.querySelectorAll(".rate button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;
+  if(e.key===" "){e.preventDefault();document.getElementById("play").click()}
+  if(e.key==="ArrowRight")go(idx+1,playing);if(e.key==="ArrowLeft")go(idx-1,playing);
+  if(e.key.toLowerCase()==="r")go(idx,true)});
+
+go(0,false);
+</script>
+</body>
+</html>

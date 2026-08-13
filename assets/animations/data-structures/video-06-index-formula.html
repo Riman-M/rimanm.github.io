@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video 06 — The Index Formula: Derived, Not Memorized · Animatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080A0D; --panel:#0D1116; --stage:#12161C; --line:#1E252E;
+  --cellf:#28313D; --cells:#3B4756;
+  --blue:#4C8DFF; --green:#3DD68C; --red:#FF6B6B; --yellow:#FFC94D;
+  --text:#E7ECF3; --dim:#7C8899; --faint:#4A5464;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--disp)}
+body{padding:18px 16px 60px;max-width:1180px;margin:0 auto}
+
+/* ── masthead ── */
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.slate{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink);background:var(--yellow);padding:3px 8px;border-radius:3px;font-weight:600}
+h1{font-size:clamp(19px,4vw,27px);font-weight:700;letter-spacing:-.02em;margin:0}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;margin-left:auto}
+
+/* ── stage ── */
+.stagewrap{margin-top:14px;position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--stage)}
+svg#stage{display:block;width:100%;height:auto;background:
+  linear-gradient(rgba(76,141,255,.035) 1px,transparent 1px) 0 0/100% 36px,
+  linear-gradient(90deg,rgba(76,141,255,.035) 1px,transparent 1px) 0 0/36px 100%,
+  var(--stage)}
+.badge{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint)}
+.badge b{color:var(--blue);font-weight:600}
+
+/* ── ruler (signature) ── */
+.ruler{margin-top:12px}
+.secrow,.tickrow{display:flex;gap:2px}
+.secrow{margin-bottom:5px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--faint);border-top:1px solid var(--line);padding-top:4px;overflow:hidden;white-space:nowrap}
+.tick{height:26px;background:#131922;border:0;padding:0;border-radius:2px;position:relative;cursor:pointer;overflow:hidden}
+.tick:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tick i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:var(--faint)}
+.tick.done i{transform:scaleX(1)}
+.tick.now i{background:var(--blue)}
+.tick span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--dim)}
+.tick.now span{color:#fff}
+
+/* ── transport ── */
+.transport{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.ctl{font-family:var(--mono);font-size:12px;color:var(--text);background:#131922;border:1px solid var(--line);border-radius:6px;padding:9px 13px;cursor:pointer}
+button.ctl:hover{border-color:var(--faint)}
+button.ctl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.ctl.primary{background:var(--blue);color:#06101F;border-color:var(--blue);font-weight:600;min-width:96px}
+.rate{margin-left:auto;display:flex;gap:2px}
+.rate button{padding:9px 10px}
+.rate button[aria-pressed="true"]{background:#1B2431;border-color:var(--faint);color:var(--yellow)}
+
+/* ── spec sheet ── */
+.spec{margin-top:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.vo{border-left:2px solid var(--yellow);padding:2px 0 2px 14px}
+.vo .lab,.fld .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.vo p{margin:6px 0 0;font-size:clamp(16px,2.4vw,20px);line-height:1.45;letter-spacing:-.01em}
+.fields{display:grid;gap:10px}
+.fld{border-left:1px solid var(--line);padding-left:14px}
+.fld p{margin:4px 0 0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#B9C4D2}
+.fld.hold p{color:var(--green)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:760px){.spec{grid-template-columns:1fr}.meta{margin-left:0;width:100%}.tick span{display:none}}
+
+/* ── stage element transitions ── */
+.p{transition:transform .55s cubic-bezier(.2,.8,.25,1),opacity .4s ease,fill .3s ease,stroke .3s ease}
+.fast{transition:transform .25s ease,opacity .2s ease,fill .12s ease}
+.q{transition:none}
+@keyframes shake{0%,100%{transform:translate(var(--tx),var(--ty))}25%{transform:translate(calc(var(--tx) - 7px),var(--ty))}75%{transform:translate(calc(var(--tx) + 7px),var(--ty))}}
+.shake{animation:shake .28s 2}
+@media(prefers-reduced-motion:reduce){.p,.fast{transition-duration:.01ms}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="slate">VID 06</span>
+  <h1>The Index Formula: Derived, Not Memorized</h1>
+  <span class="meta">UNIT 2 · TARGET 10:30 · 33 BEATS · ANIMATIC v1</span>
+</header>
+
+<div class="stagewrap">
+  <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Animation stage"></svg>
+  <div class="badge">BEAT <b id="bn">01</b> · <span id="bt">0:00</span></div>
+</div>
+
+<div class="ruler">
+  <div class="secrow" id="secrow"></div>
+  <div class="tickrow" id="tickrow"></div>
+</div>
+
+<div class="transport">
+  <button class="ctl" id="prev" aria-label="Previous beat">◀ PREV</button>
+  <button class="ctl primary" id="play">▶ PLAY</button>
+  <button class="ctl" id="next" aria-label="Next beat">NEXT ▶</button>
+  <button class="ctl" id="replay">↻ BEAT</button>
+  <div class="rate" role="group" aria-label="Playback rate">
+    <button class="ctl" data-r="0.5">.5×</button>
+    <button class="ctl" data-r="1" aria-pressed="true">1×</button>
+    <button class="ctl" data-r="2">2×</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div class="vo"><span class="lab">VO</span><p id="f-vo"></p></div>
+  <div class="fields">
+    <div class="fld"><span class="lab">VIS</span><p id="f-vis"></p></div>
+    <div class="fld"><span class="lab">ACT</span><p id="f-act"></p></div>
+    <div class="fld hold"><span class="lab">HOLD</span><p id="f-hold"></p></div>
+  </div>
+</div>
+
+<footer>
+  ANIMATIC RUNS AT STORYBOARD PACE — REAL CUT IS TIMED TO VO (10:30).<br>
+  KEYS: SPACE PLAY/PAUSE · ← → STEP BEAT · R REPLAY BEAT.<br>
+  THIS FILE IS THE FORMAT SPEC. CLONE FOR VIDEOS 02–48; REPLACE THE BEATS ARRAY ONLY.
+</footer>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const stage=document.getElementById("stage");
+let layer=document.createElementNS(NS,"g");stage.appendChild(layer);
+
+/* ── primitive kit ── */
+function E(t,a={},p){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);(p||layer).appendChild(n);return n}
+function G(a={},p){return E("g",a,p)}
+function move(n,x,y){n.style.setProperty("--tx",x+"px");n.style.setProperty("--ty",y+"px");n.style.transform=`translate(${x}px,${y}px)`}
+function cell(x,y,o={}){const w=o.w||46,h=o.h||46;
+  const g=G({class:o.cls||"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:o.rx??9,fill:o.fill||"var(--cellf)",stroke:o.stroke||"var(--cells)","stroke-width":1.5,class:o.cls||"p"},g);
+  if(o.label!=null)E("text",{x:w/2,y:h/2+5,fill:o.tf||"var(--dim)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g).textContent=o.label;
+  g.rect=r;g.opacity=v=>g.style.opacity=v;return g}
+function label(x,y,s,o={}){const t=E("text",{x,y,fill:o.fill||"var(--dim)","font-family":o.f||"IBM Plex Mono","font-size":o.size||13,"text-anchor":o.anchor||"middle","letter-spacing":o.ls||0,class:o.cls||"p","font-weight":o.w||400},o.p);t.textContent=s;if(o.o!=null)t.style.opacity=o.o;return t}
+function line(x1,y1,x2,y2,o={}){return E("line",{x1,y1,x2,y2,stroke:o.stroke||"var(--cells)","stroke-width":o.sw||2,"stroke-linecap":"round",class:"p",...(o.attrs||{})})}
+function drawIn(l,ms,delay){const len=Math.hypot(l.x2.baseVal.value-l.x1.baseVal.value,l.y2.baseVal.value-l.y1.baseVal.value);
+  l.style.strokeDasharray=len;l.style.strokeDashoffset=len;l.style.transition="none";
+  requestAnimationFrame(()=>{l.style.transition=`stroke-dashoffset ${ms||420}ms cubic-bezier(.3,.7,.3,1) ${delay||0}ms, stroke .3s`;l.style.strokeDashoffset=0});return l}
+function arrow(x1,y1,x2,y2,o={}){const l=line(x1,y1,x2,y2,o);l.setAttribute("marker-end","url(#ah)");return l}
+function chip(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||(s.length*8.4+22);
+  const r=E("rect",{width:w,height:28,rx:14,fill:o.fill||"#1A2230",stroke:o.stroke||"var(--line)","stroke-width":1.5,class:"p"},g);
+  const t=E("text",{x:w/2,y:19,fill:o.tf||"var(--text)","font-family":"IBM Plex Mono","font-size":12,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;g.w=w;return g}
+function nodeBox(x,y,s,o={}){const g=G({class:"p"});move(g,x,y);const w=o.w||64,h=o.h||44;
+  const r=E("rect",{width:w,height:h,rx:8,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:w/2,y:h/2+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":14,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.rect=r;g.txt=t;return g}
+function circleNode(cx,cy,s,o={}){const g=G({class:"p"});
+  const c=E("circle",{cx,cy,r:o.r||24,fill:"#1B2431",stroke:o.stroke||"var(--cells)","stroke-width":1.8,class:"p"},g);
+  const t=E("text",{x:cx,y:cy+5,fill:"var(--text)","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle",class:"p"},g);t.textContent=s;
+  g.c=c;g.txt=t;return g}
+function fadeUp(n,d){n.style.opacity=0;setTimeout(()=>n.style.opacity=1,d||0);return n}
+function defs(){const d=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"},d);
+  E("path",{d:"M0 0 L10 5 L0 10 z",fill:"var(--cells)"},m)}
+function clearStage(){layer.remove();layer=document.createElementNS(NS,"g");stage.appendChild(layer);defs()}
+const C={blue:"var(--blue)",green:"var(--green)",red:"var(--red)",yellow:"var(--yellow)",grey:"var(--cellf)"};
+
+/* ── beats ── */
+let at; // scheduler injected per beat
+
+/* ── extra primitives for Video 06 ── */
+function panel(x,y,w,h,o={}){const g=G({class:"p"});move(g,x,y);
+  const r=E("rect",{width:w,height:h,rx:10,fill:o.fill||"#131A24",stroke:o.stroke||"var(--line)","stroke-width":o.sw||1.5,class:"p"},g);
+  g.rect=r;g.w=w;g.h=h;return g}
+function bracket(x1,x2,y,txt,col,o={}){const g=G({class:"p"});const d=o.down?-1:1;
+  E("path",{d:`M${x1} ${y} v${-10*d} H${x2} v${10*d}`,stroke:col,"stroke-width":2,fill:"none",class:"p"},g);
+  const t=E("text",{x:(x1+x2)/2,y:y-16*d+(o.down?14:0),fill:col,"font-family":"IBM Plex Mono","font-size":o.size||13,"text-anchor":"middle",class:"p"},g);
+  t.textContent=txt;g.txt=t;return g}
+function slot(x,y,w,h){return E("rect",{x,y,width:w,height:h,rx:7,fill:"#101720",stroke:"var(--line)","stroke-width":1.4,"stroke-dasharray":"4 4",class:"p"})}
+/* lay mono text pieces left-to-right, one node per piece */
+function terms(cx,y,parts,size,o={}){const cw=size*0.6;
+  const total=parts.reduce((a,p)=>a+p.t.length,0)*cw;
+  let x=(o.anchor==="start")?cx:cx-total/2;const out=[];
+  parts.forEach(p=>{const t=E("text",{x,y,fill:p.c||"var(--text)","font-family":"IBM Plex Mono","font-size":size,"text-anchor":"start",class:"p"});
+    t.textContent=p.t;out.push(t);x+=p.t.length*cw});
+  return out}
+function lines(x,y,arr,o={}){return arr.map((s,i)=>{
+  const t=E("text",{x,y:y+i*(o.lh||34),fill:o.fill||"#B9C4D2","font-family":"IBM Plex Mono","font-size":o.size||17,"text-anchor":o.anchor||"start",class:"p"});
+  t.textContent=s;return t})}
+
+const GX2=c=>330+c*60, GY2=r=>130+r*58;   /* 4 rows × 5 cols */
+const RX2=i=>45+i*44,  RY2=400;            /* 20-slot ribbon */
+
+const BEATS=[
+{s:"HOOK",t:"0:00",vo:"Last video's question: integer array, 50 elements, base address 2000. Where does element 20 live?",
+ vis:"Memory ribbon, base labeled 2000, target cell at index 20 pulsing yellow.",act:"Ribbon draws, target pulses.",hold:"800ms",dur:5600,
+ build(){
+  label(480,100,"int A[50];   base = 2000",{fill:C.yellow,size:19,f:"IBM Plex Mono"});
+  const cs=[];
+  for(let i=0;i<8;i++){const c=cell(70+i*74,220,{w:62,h:70,label:i,tf:"var(--dim)"});c.style.opacity=0;cs.push(c);
+    at(300+i*110,()=>c.style.opacity=1)}
+  at(1200,()=>fadeUp(label(700,262,"· · ·",{size:26}),0));
+  const tgt=cell(760,220,{w:62,h:70,label:20,tf:"var(--dim)"});tgt.style.opacity=0;
+  at(1500,()=>tgt.style.opacity=1);
+  at(1900,()=>fadeUp(label(101,330,"2000",{fill:C.blue,size:15,f:"IBM Plex Mono"}),0));
+  at(2300,()=>{tgt.rect.setAttribute("stroke",C.yellow);tgt.rect.setAttribute("fill","#2A2415")});
+  at(2700,()=>tgt.rect.setAttribute("fill","var(--cellf)"));
+  at(3000,()=>tgt.rect.setAttribute("fill","#2A2415"));
+  at(3500,()=>fadeUp(label(480,450,"where does element 20 live?",{size:18}),0));
+ }},
+{s:"HOOK",t:"0:08",vo:"2080. Base plus 20 times 4 bytes. And the whole array takes 200 bytes.",
+ vis:"Calculation writes: 2000 + 20 × 4 = 2080.",act:"Arrow jumps to the cell, turns green.",hold:"1000ms",dur:6000,
+ build(){
+  for(let i=0;i<8;i++)cell(70+i*74,200,{w:62,h:70,label:i,tf:"var(--dim)"});
+  label(700,242,"· · ·",{size:26});
+  const tgt=cell(760,200,{w:62,h:70,label:20,tf:"var(--dim)",stroke:C.yellow});
+  label(101,310,"2000",{fill:C.blue,size:15,f:"IBM Plex Mono"});
+  const T=terms(480,390,[{t:"2000",c:C.blue},{t:"  +  20",c:"var(--text)"},{t:"  ×  4",c:"var(--text)"},{t:"  =  2080",c:C.green}],30);
+  T.forEach((t,i)=>{t.style.opacity=0;at(400+i*600,()=>t.style.opacity=1)});
+  at(2600,()=>{const p=E("path",{d:"M101 182 C 300 90, 660 90, 790 194",stroke:C.green,"stroke-width":3.5,fill:"none","marker-end":"url(#ah)",class:"p"});drawIn2(p,800)});
+  at(3400,()=>{tgt.rect.setAttribute("stroke",C.green);tgt.rect.setAttribute("fill","#122A21")});
+  at(4000,()=>fadeUp(label(480,460,"50 × 4  =  200 bytes for the whole array",{fill:C.green,size:16,f:"IBM Plex Mono"}),0));
+ }},
+{s:"HOOK",t:"0:16",vo:"Easy — because the array started at index zero. Now watch it get interesting. What if it starts at index five? Or what if it's two-dimensional?",
+ vis:"Ribbon relabels indices 5, 6, 7…; then a 2-D grid fades in beside it.",act:"Relabel, then grid appears.",hold:"1000ms",dur:6400,
+ build(){
+  const cs=[];for(let i=0;i<8;i++)cs.push(cell(70+i*74,150,{w:62,h:66,label:i,tf:"var(--dim)"}));
+  at(300,()=>fadeUp(label(480,110,"easy — because it started at zero",{fill:C.green,size:15}),0));
+  at(1200,()=>cs.forEach((c,i)=>setTimeout(()=>{const t=c.querySelector("text");t.textContent=i+5;
+    t.setAttribute("fill",C.yellow);c.rect.setAttribute("stroke",C.yellow)},i*110)));
+  at(2300,()=>fadeUp(label(480,254,"…but what if it starts at five?",{fill:C.yellow,size:17}),0));
+  at(3300,()=>{for(let r=0;r<3;r++)for(let c=0;c<4;c++){const g=cell(320+c*66,300+r*62,{w:56,h:54,label:r+","+c,tf:"var(--dim)",stroke:C.blue});
+    g.style.opacity=0;setTimeout(()=>g.style.opacity=1,(r*4+c)*70)}});
+  at(4600,()=>fadeUp(label(480,510,"…or what if it's two-dimensional?",{fill:C.blue,size:17}),0));
+ }},
+{s:"HOOK",t:"0:24",vo:"Most students memorize four formulas and mix them up under pressure. We're going to derive one idea instead, and let the formulas fall out of it.",
+ vis:"Title card.",act:'"INDEX FORMULAE" types on.',hold:"600ms",dur:5400,
+ build(){
+  const four=["LOC = B + w(i − LB)","LOC = B + w[(i−LB₁)N + (j−LB₂)]","LOC = B + w[(j−LB₂)M + (i−LB₁)]","n = UB − LB + 1"];
+  const ns=four.map((s,i)=>{const t=label(480,140+i*34,s,{fill:"var(--faint)",size:15,f:"IBM Plex Mono"});t.style.opacity=0;return t});
+  ns.forEach((n,i)=>at(200+i*180,()=>n.style.opacity=1));
+  at(1400,()=>{const x=line(300,130,660,270,{stroke:C.red,sw:5});drawIn(x,400);
+    const y=line(660,130,300,270,{stroke:C.red,sw:5});drawIn(y,400,150)});
+  at(2100,()=>fadeUp(label(480,310,"don't memorize four — derive one",{fill:C.red,size:15}),0));
+  const t=label(480,410,"",{fill:C.yellow,size:46,f:"Space Grotesk",w:700,ls:"0.02em"});
+  const full="INDEX FORMULAE";
+  for(let i=0;i<=full.length;i++)at(2600+i*80,()=>t.textContent=full.slice(0,i)+(i<full.length?"▌":""));
+  at(2600+full.length*80+140,()=>{t.textContent=full;fadeUp(label(480,460,"derived, not memorized",{size:15,ls:"0.14em"}),0)});
+ }},
+{s:"PROMISE",t:"0:30",vo:"One-dimensional first, then two-dimensional in both storage orders, then three worked problems including the non-zero lower bound that costs marks every year.",
+ vis:"Three chips: 1-D · 2-D · Worked.",act:"Stagger 150ms.",hold:"500ms",dur:4400,
+ build(){
+  label(480,150,"IN THIS VIDEO",{ls:"0.28em",size:12});
+  ["One dimension","Two dimensions, both orders","Three worked problems"].forEach((s,i)=>{
+    const c=chip(-340,236+i*62,s,{w:300});c.rect.setAttribute("height",44);c.txt.setAttribute("y",27);c.style.opacity=0;
+    const n=label(286,236+i*62+28,"0"+(i+1),{fill:C.yellow,size:13});n.style.opacity=0;
+    at(200+i*150,()=>{move(c,330,236+i*62);c.style.opacity=1;n.style.opacity=1})});
+ }},
+{s:"CORE 1 · THE 1-D DERIVATION",t:"0:50",vo:"Here's the only idea in this video. Address of an element equals where the array starts, plus how far into it you are.",
+ vis:"Ribbon with two labeled segments: START and DISTANCE.",act:"Segments highlight in turn.",hold:"900ms",dur:6000,
+ build(){
+  label(480,100,"THE ONLY IDEA",{fill:C.yellow,ls:"0.3em",size:13});
+  const cs=[];for(let i=0;i<9;i++)cs.push(cell(80+i*90,200,{w:76,h:76,label:i,tf:"var(--dim)"}));
+  at(500,()=>{cs[0].rect.setAttribute("stroke",C.blue);cs[0].rect.setAttribute("fill","#12213A");
+    fadeUp(label(118,320,"START",{fill:C.blue,size:13,ls:"0.16em"}),0)});
+  at(1500,()=>[1,2,3,4,5].forEach((k,i)=>setTimeout(()=>{
+    cs[k].rect.setAttribute("stroke",C.yellow);cs[k].rect.setAttribute("fill","#2A2415")},i*130)));
+  at(2400,()=>{const b=bracket(118,568,340,"DISTANCE",C.yellow,{down:true});b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(3300,()=>{const T=terms(480,440,[{t:"address  =  ",c:"var(--dim)"},{t:"START",c:C.blue},{t:"  +  ",c:"var(--dim)"},{t:"DISTANCE",c:C.yellow}],24);
+    T.forEach((t,i)=>{t.style.opacity=0;setTimeout(()=>t.style.opacity=1,i*200)})});
+  at(4400,()=>fadeUp(label(480,494,"everything else is working out that distance",{size:15}),0));
+ }},
+{s:"CORE 1 · THE 1-D DERIVATION",t:"1:10",vo:"Everything else is working out that distance. So: how many elements come before the one you want, times the size of each element.",
+ vis:"Ribbon, target at index 5.",act:"Five preceding cells shade blue and get counted 1,2,3,4,5.",hold:"1000ms",dur:6200,
+ build(){
+  const cs=[];for(let i=0;i<9;i++)cs.push(cell(80+i*90,190,{w:76,h:76,label:i,tf:"var(--dim)"}));
+  cs[5].rect.setAttribute("stroke",C.yellow);cs[5].rect.setAttribute("fill","#2A2415");
+  at(300,()=>fadeUp(label(568,150,"target",{fill:C.yellow,size:13}),0));
+  [0,1,2,3,4].forEach((k,i)=>at(900+i*400,()=>{
+    cs[k].rect.setAttribute("stroke",C.blue);cs[k].rect.setAttribute("fill","#12213A");
+    fadeUp(label(118+k*90,310,i+1,{fill:C.blue,size:20,f:"IBM Plex Mono"}),0)}));
+  at(3200,()=>fadeUp(label(300,360,"5 elements come before it",{fill:C.blue,size:16}),0));
+  at(4000,()=>{const T=terms(480,440,[{t:"distance  =  ",c:"var(--dim)"},{t:"count",c:C.blue},{t:"  ×  ",c:"var(--dim)"},{t:"w",c:C.green}],24);
+    T.forEach((t,i)=>{t.style.opacity=0;setTimeout(()=>t.style.opacity=1,i*180)})});
+  at(5000,()=>fadeUp(label(480,490,"w = size of one element, in bytes",{fill:C.green,size:14}),0));
+ }},
+{s:"CORE 1 · THE 1-D DERIVATION",t:"1:30",vo:"If indexing starts at zero, elements before index i is just i. But if it starts somewhere else — say five — then at index eight, only three elements come before you, not eight.",
+ vis:"Ribbon relabeled 5,6,7,8,9…, target at index 8.",act:"Three preceding cells shade blue; a red X strikes the number 8 floating above.",hold:"1300ms",dur:7000,
+ build(){
+  const cs=[];for(let i=0;i<9;i++)cs.push(cell(80+i*90,210,{w:76,h:76,label:i+5,tf:"var(--dim)"}));
+  at(300,()=>fadeUp(label(480,140,"lower bound = 5",{fill:C.yellow,size:17,f:"IBM Plex Mono"}),0));
+  at(900,()=>{cs[3].rect.setAttribute("stroke",C.yellow);cs[3].rect.setAttribute("fill","#2A2415");
+    fadeUp(label(388,180,"target = index 8",{fill:C.yellow,size:13}),0)});
+  const eight=label(760,330,"8",{fill:"var(--text)",size:44,f:"IBM Plex Mono"});eight.style.opacity=0;
+  at(1700,()=>eight.style.opacity=1);
+  at(2200,()=>{const a=line(730,300,790,360,{stroke:C.red,sw:5});drawIn(a,260);
+    const b=line(790,300,730,360,{stroke:C.red,sw:5});drawIn(b,260,120)});
+  at(2900,()=>[0,1,2].forEach((k,i)=>setTimeout(()=>{
+    cs[k].rect.setAttribute("stroke",C.blue);cs[k].rect.setAttribute("fill","#12213A");
+    fadeUp(label(118+k*90,325,i+1,{fill:C.blue,size:20,f:"IBM Plex Mono"}),0)},i*350)));
+  at(4300,()=>fadeUp(label(300,400,"only 3 elements come before it",{fill:C.blue,size:17}),0));
+  at(5200,()=>fadeUp(label(480,480,"8 − 5  =  3",{fill:C.green,size:26,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 1 · THE 1-D DERIVATION",t:"1:55",vo:"So the count is always i minus the lower bound. That subtraction is the entire trick, and it's the thing people forget.",
+ vis:"Expression writes: i − LB.",act:"Expression appears accent blue; − LB pulses yellow.",hold:"1200ms",dur:5600,
+ build(){
+  label(480,140,"THE ENTIRE TRICK",{fill:C.yellow,ls:"0.3em",size:13});
+  const T=terms(480,280,[{t:"count  =  ",c:"var(--dim)"},{t:"i",c:C.blue},{t:" − ",c:C.yellow},{t:"LB",c:C.yellow}],48);
+  T.forEach((t,i)=>{t.style.opacity=0;at(400+i*350,()=>t.style.opacity=1)});
+  at(2200,()=>{T[2].setAttribute("fill","var(--text)");T[3].setAttribute("fill","var(--text)")});
+  at(2600,()=>{T[2].setAttribute("fill",C.yellow);T[3].setAttribute("fill",C.yellow)});
+  at(3000,()=>{T[2].setAttribute("fill","var(--text)");T[3].setAttribute("fill","var(--text)")});
+  at(3300,()=>{T[2].setAttribute("fill",C.yellow);T[3].setAttribute("fill",C.yellow)});
+  at(3800,()=>fadeUp(label(480,380,"forget this subtraction and every answer is wrong",{fill:C.red,size:16}),0));
+  at(4500,()=>fadeUp(label(480,430,"by a fixed multiple of w — which the marker spots instantly",{size:14}),0));
+ }},
+{s:"CORE 1 · THE 1-D DERIVATION",t:"2:15",vo:"Which gives the formula. Address of A at i equals base address, plus w times i minus lower bound. Where w is the size of one element in bytes.",
+ vis:"Formula card: LOC(A[i]) = Base + w × (i − LB).",act:"Formula writes term by term, 300ms apart.",hold:"1500ms",dur:6400,
+ build(){
+  panel(90,180,780,150,{stroke:C.yellow});
+  const T=terms(480,270,[{t:"LOC(A[i])  =  ",c:"var(--dim)"},{t:"Base",c:C.blue},{t:"  +  ",c:"var(--dim)"},
+    {t:"w",c:C.green},{t:" × (",c:"var(--dim)"},{t:"i − LB",c:C.yellow},{t:")",c:"var(--dim)"}],30);
+  T.forEach((t,i)=>{t.style.opacity=0;at(400+i*300,()=>t.style.opacity=1)});
+  at(2800,()=>{fadeUp(label(230,390,"Base = start address",{fill:C.blue,size:14,anchor:"start"}),0);
+    fadeUp(label(230,424,"w = bytes per element",{fill:C.green,size:14,anchor:"start"}),150);
+    fadeUp(label(230,458,"LB = lower bound of the index",{fill:C.yellow,size:14,anchor:"start"}),300)});
+  at(4400,()=>fadeUp(label(480,510,"one formula — the general case",{size:15,ls:"0.06em"}),0));
+ }},
+{s:"CORE 1 · THE 1-D DERIVATION",t:"2:35",vo:"Check it against a zero-based array. LB is zero, so it collapses to base plus w times i — exactly what we did in the hook. The formula isn't a new rule, it's the general case.",
+ vis:"Formula with LB = 0 substituted.",act:"− 0 fades out, leaving Base + w × i in green.",hold:"1300ms",dur:6200,
+ build(){
+  panel(90,160,780,140,{stroke:C.yellow});
+  const T=terms(480,245,[{t:"LOC(A[i])  =  ",c:"var(--dim)"},{t:"Base",c:C.blue},{t:"  +  ",c:"var(--dim)"},
+    {t:"w",c:C.green},{t:" × (",c:"var(--dim)"},{t:"i",c:C.yellow},{t:" − LB",c:C.yellow},{t:")",c:"var(--dim)"}],30);
+  at(600,()=>{T[6].textContent=" − 0";T[6].setAttribute("fill",C.red)});
+  at(1400,()=>T[6].style.opacity=0);
+  at(2000,()=>{const P=panel(200,340,560,120,{stroke:C.green});P.style.opacity=0;setTimeout(()=>P.style.opacity=1,20);
+    const U=terms(480,412,[{t:"LOC(A[i])  =  Base + w × i",c:C.green}],28);
+    U.forEach(u=>{u.style.opacity=0;setTimeout(()=>u.style.opacity=1,220)})});
+  at(3600,()=>fadeUp(label(480,510,"not a new rule — the same one, with LB = 0",{size:15}),0));
+ }},
+{s:"CORE 1 · THE 1-D DERIVATION",t:"2:50",vo:"And the total number of elements: upper bound minus lower bound, plus one. That plus one is the second place marks disappear.",
+ vis:"Ribbon from index 5 to 20, bracket beneath.",act:"Bracket labels 20 − 5 + 1 = 16; the + 1 writes in yellow, 400ms late.",hold:"1300ms",dur:6400,
+ build(){
+  const cs=[];for(let i=0;i<7;i++)cs.push(cell(90+i*84,190,{w:70,h:70,label:i+5,tf:"var(--dim)",stroke:C.blue}));
+  label(680,225,"· · ·",{size:26});
+  cell(750,190,{w:70,h:70,label:20,tf:"var(--dim)",stroke:C.blue});
+  at(500,()=>{const b=bracket(125,785,300,"",C.blue,{down:true});b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  const T=terms(480,340,[{t:"n  =  20 − 5",c:"var(--text)"},{t:"  +  1",c:C.yellow},{t:"  =  16",c:C.green}],30);
+  T.forEach(t=>t.style.opacity=0);
+  at(1200,()=>T[0].style.opacity=1);
+  at(1600,()=>T[1].style.opacity=1);
+  at(2200,()=>T[2].style.opacity=1);
+  at(3000,()=>fadeUp(label(480,420,"n  =  UB − LB + 1",{fill:C.yellow,size:26,f:"IBM Plex Mono"}),0));
+  at(3900,()=>fadeUp(label(480,480,"the second place marks disappear",{fill:C.red,size:16}),0));
+ }},
+{s:"CORE 2 · ROW-MAJOR",t:"3:00",vo:"Two dimensions. Same idea — count what comes before you — but now 'before' has two parts: whole rows, then part of a row.",
+ vis:"4×5 grid, target cell at row 2, column 3, yellow.",act:"Grid draws, target pulses.",hold:"900ms",dur:5800,
+ build(){
+  label(480,90,"int A[4][5];   find A[2][3]",{fill:C.yellow,size:18,f:"IBM Plex Mono"});
+  const cs=[];
+  for(let r=0;r<4;r++)for(let c=0;c<5;c++){const g=cell(GX2(c),GY2(r),{w:42,h:42,label:"",tf:"var(--dim)"});
+    g.style.opacity=0;cs.push(g);at(250+(r*5+c)*60,()=>g.style.opacity=1)}
+  const tgt=cs[2*5+3];
+  at(1800,()=>{tgt.rect.setAttribute("stroke",C.yellow);tgt.rect.setAttribute("fill","#2A2415")});
+  at(2200,()=>tgt.rect.setAttribute("fill","var(--cellf)"));
+  at(2500,()=>tgt.rect.setAttribute("fill","#2A2415"));
+  at(3000,()=>{fadeUp(label(280,265,"row 2",{fill:C.yellow,size:14,anchor:"end"}),0);
+    fadeUp(label(510,395,"col 3",{fill:C.yellow,size:14}),150)});
+  at(3900,()=>fadeUp(label(480,470,'"before" now has two parts: whole rows, then part of a row',{size:16}),0));
+ }},
+{s:"CORE 2 · ROW-MAJOR",t:"3:20",vo:"In row-major, memory fills row by row. So to reach row two, you must pass rows zero and one — completely.",
+ vis:"Grid with ribbon beneath.",act:"Rows 0 and 1 slide down into the ribbon, shading blue.",hold:"1100ms",dur:6600,
+ build(){
+  for(let i=0;i<20;i++)slot(RX2(i),RY2,42,42);
+  const cs=[];
+  for(let r=0;r<4;r++)for(let c=0;c<5;c++)cs.push(cell(GX2(c),GY2(r),{w:42,h:42}));
+  cs[13].rect.setAttribute("stroke",C.yellow);cs[13].rect.setAttribute("fill","#2A2415");
+  at(300,()=>fadeUp(label(480,378,"ROW-MAJOR MEMORY",{fill:"var(--dim)",size:11,ls:"0.24em"}),0));
+  [0,1].forEach(r=>at(800+r*1600,()=>{
+    [0,1,2,3,4].forEach(c=>{const k=r*5+c;
+      setTimeout(()=>{cs[k].rect.setAttribute("stroke",C.blue);cs[k].rect.setAttribute("fill","#12213A");
+        move(cs[k],RX2(k),RY2)},c*280)})}));
+  at(4400,()=>fadeUp(label(480,478,"two whole rows passed — completely",{fill:C.blue,size:17}),0));
+ }},
+{s:"CORE 2 · ROW-MAJOR",t:"3:45",vo:"That's two full rows. Each row holds N elements, where N is the number of columns. So: i minus LB-one, times N.",
+ vis:"Expression builds: (i − LB₁) × N.",act:"Blue cells in the ribbon get bracketed and labeled with the expression.",hold:"1300ms",dur:6400,
+ build(){
+  for(let i=0;i<20;i++)slot(RX2(i),RY2,42,42);
+  const cs=[];
+  for(let r=0;r<4;r++)for(let c=0;c<5;c++)cs.push(cell(GX2(c),GY2(r),{w:42,h:42}));
+  for(let k=0;k<10;k++){cs[k].rect.setAttribute("stroke",C.blue);cs[k].rect.setAttribute("fill","#12213A");move(cs[k],RX2(k),RY2)}
+  cs[13].rect.setAttribute("stroke",C.yellow);cs[13].rect.setAttribute("fill","#2A2415");
+  at(500,()=>{const b=bracket(RX2(0),RX2(9)+42,RY2+62,"10 elements",C.blue,{down:true});
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(1400,()=>{const b=bracket(GX2(0),GX2(4)+42,GY2(0)-14,"N = 5 columns",C.green);
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(2400,()=>{const T=terms(140,300,[{t:"(",c:"var(--dim)"},{t:"i − LB₁",c:C.yellow},{t:") × ",c:"var(--dim)"},{t:"N",c:C.green}],28,{anchor:"start"});
+    T.forEach((t,i)=>{t.style.opacity=0;setTimeout(()=>t.style.opacity=1,i*250)})});
+  at(3600,()=>fadeUp(label(190,350,"(2 − 0) × 5  =  10",{fill:C.blue,size:20,f:"IBM Plex Mono",anchor:"start"}),0));
+  at(4600,()=>fadeUp(label(190,395,"whole rows passed",{size:13,anchor:"start"}),0));
+ }},
+{s:"CORE 2 · ROW-MAJOR",t:"4:10",vo:"Then, inside row two, you walk across to column three — passing three cells.",
+ vis:"Row 2 slides down; first three cells shade yellow, target green.",act:"Slide, then stagger the three cells.",hold:"1100ms",dur:6400,
+ build(){
+  for(let i=0;i<20;i++)slot(RX2(i),RY2,42,42);
+  const cs=[];
+  for(let r=0;r<4;r++)for(let c=0;c<5;c++)cs.push(cell(GX2(c),GY2(r),{w:42,h:42}));
+  for(let k=0;k<10;k++){cs[k].rect.setAttribute("stroke",C.blue);cs[k].rect.setAttribute("fill","#12213A");move(cs[k],RX2(k),RY2)}
+  at(400,()=>[10,11,12,13,14].forEach((k,i)=>setTimeout(()=>move(cs[k],RX2(k),RY2),i*220)));
+  at(1900,()=>[10,11,12].forEach((k,i)=>setTimeout(()=>{
+    cs[k].rect.setAttribute("stroke",C.yellow);cs[k].rect.setAttribute("fill","#2A2415")},i*300)));
+  at(3100,()=>{cs[13].rect.setAttribute("stroke",C.green);cs[13].rect.setAttribute("fill","#122A21")});
+  at(3500,()=>{const b=bracket(RX2(10),RX2(12)+42,RY2+62,"3 more",C.yellow,{down:true});
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(4200,()=>fadeUp(label(480,300,"j − LB₂  =  3 − 0  =  3",{fill:C.yellow,size:24,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 2 · ROW-MAJOR",t:"4:30",vo:"That's j minus LB-two. Add the two counts, multiply by w, add the base. Done.",
+ vis:"Full formula card: LOC(A[i][j]) = Base + w × [ (i − LB₁) × N + (j − LB₂) ].",act:"Formula assembles from the two bracketed pieces on screen.",hold:"1600ms",dur:7000,
+ build(){
+  label(480,110,"ROW-MAJOR",{fill:C.blue,ls:"0.3em",size:14});
+  const a=label(250,180,"10 whole rows",{fill:C.blue,size:16});
+  const b=label(700,180,"+ 3 across",{fill:C.yellow,size:16});
+  const c=label(480,230,"13 elements before us",{fill:"var(--text)",size:20});
+  [a,b,c].forEach((n,i)=>{n.style.opacity=0;at(300+i*500,()=>n.style.opacity=1)});
+  at(2200,()=>{const P=panel(60,290,840,150,{stroke:C.blue});P.style.opacity=0;setTimeout(()=>P.style.opacity=1,20)});
+  at(2600,()=>{const T=terms(480,375,[{t:"LOC(A[i][j]) = ",c:"var(--dim)"},{t:"Base",c:C.blue},{t:" + ",c:"var(--dim)"},
+    {t:"w",c:C.green},{t:" × [ ",c:"var(--dim)"},{t:"(i − LB₁) × N",c:C.blue},{t:" + ",c:"var(--dim)"},
+    {t:"(j − LB₂)",c:C.yellow},{t:" ]",c:"var(--dim)"}],23);
+    T.forEach((t,i)=>{t.style.opacity=0;setTimeout(()=>t.style.opacity=1,i*260)})});
+  at(5200,()=>fadeUp(label(480,490,"add the counts · multiply by w · add the base",{size:15}),0));
+ }},
+{s:"CORE 2 · ROW-MAJOR",t:"4:55",vo:"N is the number of columns. Say that back to yourself — in row-major you multiply by columns, not rows. Getting this backwards is the single most common error in this topic.",
+ vis:"Grid with the column count bracketed across the top.",act:"Column bracket flashes accent blue; a row bracket appears and is struck through red.",hold:"1500ms",dur:7000,
+ build(){
+  for(let r=0;r<4;r++)for(let c=0;c<5;c++)cell(GX2(c),GY2(r),{w:42,h:42});
+  at(400,()=>{const b=bracket(GX2(0),GX2(4)+42,GY2(0)-16,"N = 5 columns",C.blue);
+    b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  at(1200,()=>fadeUp(label(480,120,"row-major multiplies by COLUMNS",{fill:C.blue,size:18}),0));
+  at(2200,()=>{const g=G({class:"p"});
+    E("path",{d:`M${GX2(0)-16} ${GY2(0)} h-10 V${GY2(3)+42} h10`,stroke:C.red,"stroke-width":2,fill:"none"},g);
+    const t=E("text",{x:GX2(0)-46,y:(GY2(0)+GY2(3)+42)/2,fill:C.red,"font-family":"IBM Plex Mono","font-size":13,"text-anchor":"end"},g);
+    t.textContent="M = 4 rows";g.style.opacity=0;setTimeout(()=>g.style.opacity=1,20)});
+  at(3200,()=>{const x=line(190,220,300,330,{stroke:C.red,sw:5});drawIn(x,300);
+    const y=line(300,220,190,330,{stroke:C.red,sw:5});drawIn(y,300,140)});
+  at(4200,()=>fadeUp(label(480,450,"not rows — the most common error in this topic",{fill:C.red,size:17}),0));
+  at(5200,()=>fadeUp(label(480,496,"you multiply by the size of the OTHER dimension",{size:14}),0));
+ }},
+{s:"CORE 3 · COLUMN-MAJOR",t:"5:30",vo:"Column-major flips it. Memory fills column by column, so now you pass whole columns first.",
+ vis:"Fresh grid, ribbon cleared.",act:"Columns 0, 1, 2 slide down into the ribbon in turn, blue.",hold:"1200ms",dur:7400,
+ build(){
+  for(let i=0;i<20;i++)slot(RX2(i),RY2,42,42);
+  const cs=[];
+  for(let r=0;r<4;r++)for(let c=0;c<5;c++)cs.push(cell(GX2(c),GY2(r),{w:42,h:42}));
+  at(300,()=>fadeUp(label(480,378,"COLUMN-MAJOR MEMORY",{fill:"var(--dim)",size:11,ls:"0.24em"}),0));
+  let pos=0;
+  for(let c=0;c<3;c++)for(let r=0;r<4;r++){const k=r*5+c,p=pos++;
+    at(700+p*420,()=>{cs[k].rect.setAttribute("stroke",C.blue);cs[k].rect.setAttribute("fill","#12213A");move(cs[k],RX2(p),RY2)})}
+  at(6000,()=>fadeUp(label(480,478,"whole columns pass first",{fill:C.blue,size:17}),0));
+ }},
+{s:"CORE 3 · COLUMN-MAJOR",t:"5:55",vo:"Each column holds M elements, where M is the number of rows. So it's j minus LB-two, times M — then plus i minus LB-one to walk down inside the column.",
+ vis:"Formula card: LOC(A[i][j]) = Base + w × [ (j − LB₂) × M + (i − LB₁) ].",act:"Formula assembles.",hold:"1500ms",dur:6800,
+ build(){
+  label(480,100,"COLUMN-MAJOR",{fill:"#FF9F45",ls:"0.3em",size:14});
+  for(let r=0;r<4;r++)for(let c=0;c<5;c++)cell(GX2(c)-90,GY2(r)+20,{w:36,h:36});
+  at(400,()=>{const g=G({class:"p"});
+    E("path",{d:`M${GX2(0)-106} ${GY2(0)+20} h-10 V${GY2(3)+56} h10`,stroke:"#FF9F45","stroke-width":2,fill:"none"},g);
+    const t=E("text",{x:GX2(0)-136,y:(GY2(0)+GY2(3)+76)/2,fill:"#FF9F45","font-family":"IBM Plex Mono","font-size":13,"text-anchor":"end"},g);
+    t.textContent="M = 4 rows";g.style.opacity=0;setTimeout(()=>g.style.opacity=1,20)});
+  at(1400,()=>{const P=panel(60,300,840,150,{stroke:"#FF9F45"});P.style.opacity=0;setTimeout(()=>P.style.opacity=1,20)});
+  at(1800,()=>{const T=terms(480,385,[{t:"LOC(A[i][j]) = ",c:"var(--dim)"},{t:"Base",c:C.blue},{t:" + ",c:"var(--dim)"},
+    {t:"w",c:C.green},{t:" × [ ",c:"var(--dim)"},{t:"(j − LB₂) × M",c:"#FF9F45"},{t:" + ",c:"var(--dim)"},
+    {t:"(i − LB₁)",c:C.yellow},{t:" ]",c:"var(--dim)"}],23);
+    T.forEach((t,i)=>{t.style.opacity=0;setTimeout(()=>t.style.opacity=1,i*260)})});
+  at(4400,()=>fadeUp(label(480,500,"multiply by M — the number of rows",{fill:"#FF9F45",size:16}),0));
+ }},
+{s:"CORE 3 · COLUMN-MAJOR",t:"6:15",vo:"Put them side by side and you'll never need to memorize either. Row-major multiplies by columns. Column-major multiplies by rows. Whichever direction memory fills, you multiply by the size of the other dimension.",
+ vis:"Both formulas stacked, differences highlighted.",act:"× N and × M both pulse; the swapped terms flash yellow.",hold:"1700ms",dur:7600,
+ build(){
+  const A=panel(60,140,840,120,{stroke:C.blue});
+  label(140,180,"ROW-MAJOR",{fill:C.blue,size:13,ls:"0.16em",anchor:"start"});
+  const T1=terms(480,225,[{t:"Base + w × [ ",c:"var(--dim)"},{t:"(i − LB₁)",c:C.blue},{t:" × N",c:C.green},
+    {t:" + ",c:"var(--dim)"},{t:"(j − LB₂)",c:C.yellow},{t:" ]",c:"var(--dim)"}],23);
+  const B=panel(60,290,840,120,{stroke:"#FF9F45"});
+  label(140,330,"COLUMN-MAJOR",{fill:"#FF9F45",size:13,ls:"0.16em",anchor:"start"});
+  const T2=terms(480,375,[{t:"Base + w × [ ",c:"var(--dim)"},{t:"(j − LB₂)",c:C.yellow},{t:" × M",c:C.green},
+    {t:" + ",c:"var(--dim)"},{t:"(i − LB₁)",c:C.blue},{t:" ]",c:"var(--dim)"}],23);
+  at(900,()=>{T1[2].setAttribute("fill",C.yellow);T2[2].setAttribute("fill",C.yellow)});
+  at(1400,()=>{T1[2].setAttribute("fill",C.green);T2[2].setAttribute("fill",C.green)});
+  at(1900,()=>{T1[2].setAttribute("fill",C.yellow);T2[2].setAttribute("fill",C.yellow)});
+  at(2600,()=>{[T1[1],T1[4],T2[1],T2[4]].forEach((n,i)=>setTimeout(()=>{n.style.opacity=.35;
+    setTimeout(()=>n.style.opacity=1,400)},i*160))});
+  at(4000,()=>fadeUp(label(480,460,"whichever way memory fills,",{fill:"var(--text)",size:18}),0));
+  at(4400,()=>fadeUp(label(480,494,"you multiply by the size of the other dimension",{fill:C.green,size:18}),0));
+ }},
+{s:"CORE 4 · WORKED",t:"6:45",vo:"Problem one. A ten by twenty integer array, base address 1000, two bytes per element, zero-based, row-major. Find A at five, seven.",
+ vis:"Problem card with givens listed.",act:"Givens fill in.",hold:"1000ms",dur:6000,
+ build(){
+  label(480,90,"PROBLEM 1",{fill:C.yellow,ls:"0.3em",size:14});
+  panel(180,140,600,290,{stroke:C.yellow});
+  const G1=["A[10][20]        M = 10, N = 20","Base  =  1000","w  =  2 bytes","LB₁ = LB₂ = 0   (zero-based)","row-major","","find  A[5][7]"];
+  const ns=lines(230,190,G1,{lh:36,size:17});
+  ns.forEach((n,i)=>{n.style.opacity=0;at(300+i*550,()=>n.style.opacity=1)});
+  at(3900,()=>{ns[6].setAttribute("fill",C.yellow);ns[6].setAttribute("font-size",22)});
+ }},
+{s:"CORE 4 · WORKED",t:"7:00",vo:"N is twenty — the columns. Five times twenty is a hundred, plus seven is 107. Times two bytes is 214. Plus base: 1214.",
+ vis:"Substitution writes line by line.",act:"Three lines appear, 500ms apart; answer 1214 in green.",hold:"1400ms",dur:6600,
+ build(){
+  label(480,80,"PROBLEM 1 · ROW-MAJOR",{fill:C.blue,ls:"0.2em",size:13});
+  label(480,130,"N = 20  ← the columns",{fill:C.green,size:17,f:"IBM Plex Mono"});
+  panel(120,170,720,240,{stroke:C.blue});
+  const S=["LOC = 1000 + 2 × [ (5 − 0) × 20 + (7 − 0) ]",
+           "      = 1000 + 2 × [ 100 + 7 ]",
+           "      = 1000 + 2 × 107",
+           "      = 1000 + 214"];
+  const ns=lines(160,215,S,{lh:44,size:17});
+  ns.forEach((n,i)=>{n.style.opacity=0;at(500+i*900,()=>n.style.opacity=1)});
+  at(4400,()=>fadeUp(label(480,460,"LOC(A[5][7])  =  1214",{fill:C.green,size:30,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 4 · WORKED",t:"7:20",vo:"Same array, same element, column-major. Now M is ten — the rows. Seven times ten is seventy, plus five is 75. Times two is 150. Answer: 1150.",
+ vis:"Second substitution beside the first.",act:"Lines appear; answer 1150 in green.",hold:"1400ms",dur:6600,
+ build(){
+  label(480,80,"PROBLEM 1 · COLUMN-MAJOR",{fill:"#FF9F45",ls:"0.2em",size:13});
+  label(480,130,"M = 10  ← the rows",{fill:C.green,size:17,f:"IBM Plex Mono"});
+  panel(120,170,720,240,{stroke:"#FF9F45"});
+  const S=["LOC = 1000 + 2 × [ (7 − 0) × 10 + (5 − 0) ]",
+           "      = 1000 + 2 × [ 70 + 5 ]",
+           "      = 1000 + 2 × 75",
+           "      = 1000 + 150"];
+  const ns=lines(160,215,S,{lh:44,size:17});
+  ns.forEach((n,i)=>{n.style.opacity=0;at(500+i*900,()=>n.style.opacity=1)});
+  at(4400,()=>fadeUp(label(480,460,"LOC(A[5][7])  =  1150",{fill:C.green,size:30,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 4 · WORKED",t:"7:40",vo:"Different addresses, same element, same array. Storage order is not a detail.",
+ vis:"Both answers side by side.",act:"Both pulse once.",hold:"1100ms",dur:5400,
+ build(){
+  label(480,110,"SAME ARRAY · SAME ELEMENT · A[5][7]",{ls:"0.16em",size:14});
+  const A=panel(90,180,340,180,{stroke:C.blue}),B=panel(530,180,340,180,{stroke:"#FF9F45"});
+  label(260,240,"row-major",{fill:C.blue,size:18,f:"IBM Plex Mono"});
+  const a=label(260,310,"1214",{fill:C.green,size:42,f:"IBM Plex Mono"});
+  label(700,240,"column-major",{fill:"#FF9F45",size:18,f:"IBM Plex Mono"});
+  const b=label(700,310,"1150",{fill:C.green,size:42,f:"IBM Plex Mono"});
+  [a,b].forEach(n=>n.style.opacity=0);
+  at(500,()=>{a.style.opacity=1});at(900,()=>{b.style.opacity=1});
+  at(1800,()=>{a.setAttribute("fill",C.yellow);b.setAttribute("fill",C.yellow)});
+  at(2200,()=>{a.setAttribute("fill",C.green);b.setAttribute("fill",C.green)});
+  at(2800,()=>fadeUp(label(480,430,"64 bytes apart — same element",{fill:C.yellow,size:17}),0));
+  at(3500,()=>fadeUp(label(480,478,"storage order is not a detail",{size:16}),0));
+ }},
+{s:"CORE 4 · WORKED",t:"7:55",vo:"Problem two — the one with non-zero bounds. Array A from five to twenty, and three to ten. Four bytes each, base 500, row-major. Find A at eight, six.",
+ vis:"Problem card.",act:"Givens fill.",hold:"1100ms",dur:6200,
+ build(){
+  label(480,90,"PROBLEM 2 · NON-ZERO BOUNDS",{fill:C.red,ls:"0.2em",size:14});
+  panel(180,140,600,290,{stroke:C.red});
+  const G1=["A[5 … 20][3 … 10]","LB₁ = 5   UB₁ = 20","LB₂ = 3   UB₂ = 10","Base = 500      w = 4 bytes","row-major","","find  A[8][6]"];
+  const ns=lines(230,190,G1,{lh:36,size:17});
+  ns.forEach((n,i)=>{n.style.opacity=0;at(300+i*550,()=>n.style.opacity=1)});
+  at(3900,()=>{ns[6].setAttribute("fill",C.yellow);ns[6].setAttribute("font-size",22)});
+  at(4600,()=>fadeUp(label(480,480,"this is where marks disappear every year",{fill:C.red,size:15}),0));
+ }},
+{s:"CORE 4 · WORKED",t:"8:15",vo:"First, N. Columns run three to ten, so ten minus three plus one — that's eight columns. Not seven.",
+ vis:"Column bracket on a small grid.",act:"10 − 3 + 1 = 8; the + 1 in yellow.",hold:"1200ms",dur:6200,
+ build(){
+  const cs=[];for(let c=0;c<8;c++)cs.push(cell(230+c*66,200,{w:56,h:56,label:c+3,tf:"var(--dim)",stroke:C.blue}));
+  at(400,()=>{const b=bracket(230,758,180,"how many columns?",C.blue);b.style.opacity=0;setTimeout(()=>b.style.opacity=1,20)});
+  const T=terms(480,320,[{t:"N  =  10 − 3",c:"var(--text)"},{t:"  +  1",c:C.yellow},{t:"  =  8",c:C.green}],30);
+  T.forEach(t=>t.style.opacity=0);
+  at(1200,()=>T[0].style.opacity=1);
+  at(2000,()=>T[1].style.opacity=1);
+  at(2600,()=>T[2].style.opacity=1);
+  at(3200,()=>{cs.forEach((c,i)=>setTimeout(()=>c.rect.setAttribute("stroke",C.green),i*90))});
+  at(4200,()=>fadeUp(label(480,400,"eight columns — not seven",{fill:C.red,size:19}),0));
+  at(4900,()=>fadeUp(label(480,450,"count the cells if you don't believe the formula",{size:14}),0));
+ }},
+{s:"CORE 4 · WORKED",t:"8:35",vo:"Now the row count. Eight minus five is three full rows passed. Three times eight is 24.",
+ vis:"Substitution line 1.",act:"Line writes.",hold:"900ms",dur:5000,
+ build(){
+  label(480,90,"PROBLEM 2 · SUBSTITUTING",{fill:C.red,ls:"0.2em",size:13});
+  label(480,140,"N = 8      w = 4      Base = 500",{fill:"var(--dim)",size:16,f:"IBM Plex Mono"});
+  panel(120,190,720,190,{stroke:C.red});
+  const T=terms(480,250,[{t:"(i − LB₁)  =  8 − 5  =  ",c:"var(--text)"},{t:"3",c:C.blue}],24);
+  T.forEach(t=>{t.style.opacity=0});
+  at(500,()=>T.forEach((t,i)=>setTimeout(()=>t.style.opacity=1,i*300)));
+  at(1800,()=>fadeUp(label(480,310,"3 full rows passed",{fill:C.blue,size:17}),0));
+  at(2600,()=>fadeUp(label(480,360,"3 × 8  =  24 elements",{fill:C.blue,size:24,f:"IBM Plex Mono"}),0));
+  at(3600,()=>fadeUp(label(480,450,"every row holds N = 8 elements",{size:15}),0));
+ }},
+{s:"CORE 4 · WORKED",t:"8:50",vo:"Then within the row: six minus three is three. Total 27 elements before us. Times four bytes is 108. Plus 500 gives 608.",
+ vis:"Remaining substitution lines.",act:"Lines write; answer 608 in green.",hold:"1400ms",dur:7000,
+ build(){
+  label(480,80,"PROBLEM 2 · SUBSTITUTING",{fill:C.red,ls:"0.2em",size:13});
+  panel(120,120,720,300,{stroke:C.red});
+  const S=["(j − LB₂)  =  6 − 3  =  3",
+           "count  =  24 + 3  =  27",
+           "LOC  =  500 + 4 × 27",
+           "        =  500 + 108"];
+  const ns=lines(180,180,S,{lh:52,size:19});
+  ns.forEach((n,i)=>{n.style.opacity=0;at(500+i*1000,()=>n.style.opacity=1)});
+  at(4800,()=>fadeUp(label(480,470,"LOC(A[8][6])  =  608",{fill:C.green,size:32,f:"IBM Plex Mono"}),0));
+ }},
+{s:"CORE 4 · WORKED",t:"9:05",vo:"Every single subtraction there was a lower bound. Miss one and you're off by a fixed multiple of four — and the marker sees it instantly.",
+ vis:"The worked solution with all three − LB terms highlighted.",act:"Three terms flash yellow in sequence.",hold:"1400ms",dur:6600,
+ build(){
+  label(480,90,"EVERY SUBTRACTION WAS A LOWER BOUND",{fill:C.yellow,ls:"0.14em",size:14});
+  panel(90,150,780,180,{stroke:C.yellow});
+  const T=terms(480,220,[{t:"LOC = 500 + 4 × [ (",c:"var(--dim)"},{t:"8 − 5",c:"var(--text)"},{t:") × 8 + (",c:"var(--dim)"},
+    {t:"6 − 3",c:"var(--text)"},{t:") ]",c:"var(--dim)"}],23);
+  const N=terms(480,290,[{t:"N = ",c:"var(--dim)"},{t:"10 − 3 + 1",c:"var(--text)"},{t:" = 8",c:"var(--dim)"}],20);
+  const hits=[T[1],T[3],N[1]];
+  hits.forEach((h,i)=>{at(700+i*900,()=>{h.setAttribute("fill",C.yellow);h.setAttribute("font-weight",600)});
+    at(1200+i*900,()=>h.setAttribute("fill",C.yellow))});
+  at(3600,()=>fadeUp(label(480,390,"miss one → off by a fixed multiple of w",{fill:C.red,size:18}),0));
+  at(4400,()=>fadeUp(label(480,440,"the marker sees it instantly",{fill:C.red,size:15}),0));
+  at(5000,()=>fadeUp(label(480,500,"when LB = 0 the subtraction vanishes — that's the only reason you can skip it",{size:13}),0));
+ }},
+{s:"CLOSE",t:"9:15",vo:"Recap. One idea: base plus distance. Distance is always how many elements come before you, times element size. Always subtract the lower bound. Total elements is UB minus LB plus one. Row-major multiplies by columns; column-major multiplies by rows.",
+ vis:"Five-item summary card.",act:"Instant draw, no stagger.",hold:"2000ms",dur:7000,
+ build(){
+  label(480,58,"RECAP",{fill:C.yellow,ls:"0.3em",size:13});
+  const D=[["01","One idea: base + distance","every formula in this video is that sentence"],
+           ["02","Distance = count × w","count = how many elements come before you"],
+           ["03","Always subtract the lower bound","i − LB · j − LB₂ · and inside UB − LB + 1"],
+           ["04","n = UB − LB + 1","the plus one is the second marks-loser"],
+           ["05","Row-major × N · column-major × M","multiply by the size of the other dimension"]];
+  D.forEach((d,i)=>{const y=90+i*88;
+    panel(90,y,780,74);
+    label(122,y+46,d[0],{fill:C.yellow,size:14,anchor:"start",f:"IBM Plex Mono"});
+    label(166,y+34,d[1],{fill:"var(--text)",size:18,anchor:"start",f:"Space Grotesk",w:500});
+    label(166,y+58,d[2],{size:12.5,anchor:"start"})});
+ }},
+{s:"CLOSE",t:"9:50",vo:"Exam question: an array B from minus five to plus ten, four bytes per element, base address 1500. Find the address of B at index two, and the total size. Negative lower bounds are legal — the formula doesn't care. Pause and answer.",
+ vis:"Question card.",act:"Card slides up.",hold:"2400ms",dur:7000,
+ build(){
+  const g=G({class:"p"});move(g,140,560);
+  E("rect",{width:680,height:340,rx:16,fill:"#141B25",stroke:C.yellow,"stroke-width":2},g);
+  const t1=E("text",{x:36,y:50,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":12,"letter-spacing":"0.24em"},g);
+  t1.textContent="EXAM QUESTION · 5 MARKS";
+  ["Array B[−5 … 10], 4 bytes per element,","base address 1500."].forEach((s,i)=>{
+    const t=E("text",{x:36,y:96+i*32,fill:"var(--text)","font-family":"Space Grotesk","font-size":22,"font-weight":500},g);t.textContent=s});
+  E("rect",{x:36,y:150,width:608,height:108,rx:8,fill:"#0F151E",stroke:"var(--line)","stroke-width":1.5},g);
+  ["(a)  Address of B[2]?","(b)  Total size in bytes?"].forEach((s,i)=>{
+    const t=E("text",{x:58,y:186+i*34,fill:"#B9C4D2","font-family":"IBM Plex Mono","font-size":15},g);t.textContent=s});
+  const t4=E("text",{x:36,y:294,fill:C.green,"font-family":"IBM Plex Mono","font-size":14},g);
+  t4.textContent="Negative lower bounds are legal — the formula doesn't care.";
+  const t3=E("text",{x:36,y:322,fill:"var(--dim)","font-family":"IBM Plex Mono","font-size":14},g);
+  t3.textContent="⏸  Pause and answer.";
+  at(300,()=>move(g,140,100));
+  at(4000,()=>{const bar=E("rect",{x:176,y:466,width:0,height:4,rx:2,fill:C.yellow});
+    bar.style.transition="width 2.4s linear";setTimeout(()=>bar.setAttribute("width",608),30)});
+ }},
+{s:"CLOSE",t:"10:10",vo:"Next video: what arrays are actually used for — and the one application that turns a wasteful matrix into a compact list.",
+ vis:"End card.",act:"Fade.",hold:"End.",dur:6400,
+ build(){
+  const l=label(110,210,"NEXT",{fill:"var(--dim)",size:14,anchor:"start",ls:"0.3em"});
+  const a=label(110,272,"What Arrays Are For",{fill:"var(--text)",size:38,f:"Space Grotesk",w:700,anchor:"start"});
+  const b=label(110,316,"applications — and the sparse matrix",{fill:"var(--dim)",size:17,anchor:"start"});
+  const b2=label(110,342,"that becomes a compact list",{fill:"var(--dim)",size:17,anchor:"start"});
+  const c=label(110,400,"VIDEO 07 · UNIT 2",{fill:C.yellow,size:13,anchor:"start",ls:"0.16em"});
+  [l,a,b,b2,c].forEach((n,i)=>{n.style.opacity=0;at(200+i*160,()=>n.style.opacity=1)});
+  const g=G({class:"p"});move(g,570,170);g.style.opacity=0;
+  E("rect",{width:320,height:200,rx:12,fill:"#101722",stroke:"var(--line)","stroke-width":1.5},g);
+  for(let r=0;r<5;r++)for(let c2=0;c2<5;c2++){
+    const on=(r===1&&c2===3)||(r===3&&c2===0)||(r===4&&c2===4);
+    E("rect",{x:38+c2*50,y:34+r*32,width:38,height:24,rx:5,fill:on?"#2A2415":"#161E29",
+      stroke:on?C.yellow:"#232C38","stroke-width":1.4},g)}
+  const t=E("text",{x:160,y:186,fill:C.yellow,"font-family":"IBM Plex Mono","font-size":13,"text-anchor":"middle"},g);
+  t.textContent="3 non-zeros out of 25";
+  at(1100,()=>g.style.opacity=1);
+  at(4400,()=>fadeUp(label(480,500,"SUBSCRIBE · UNIT 2 CONTINUES",{size:12,ls:"0.2em"}),0));
+ }}
+];
+
+/* small helper used by beat 1 for the check path */
+function drawIn2(p,ms){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>{p.style.transition=`stroke-dashoffset ${ms}ms ease`;p.style.strokeDashoffset=0})}
+
+/* ── runner ── */
+let idx=0,elapsed=0,playing=false,rate=1,queue=[],last=0;
+const tickrow=document.getElementById("tickrow"),secrow=document.getElementById("secrow");
+const total=BEATS.reduce((a,b)=>a+b.dur,0);
+BEATS.forEach((b,i)=>{const t=document.createElement("button");t.className="tick";
+  t.style.flex=b.dur;t.innerHTML='<i></i><span>'+(i+1)+'</span>';
+  t.title="Beat "+(i+1)+" — "+b.s;t.onclick=()=>go(i,playing);tickrow.appendChild(t)});
+let cur=null;BEATS.forEach(b=>{if(!cur||cur.s!==b.s){cur={s:b.s,d:0};const el=document.createElement("div");el.className="sec";el.textContent=b.s;el.dataset.s=b.s;secrow.appendChild(el)}
+  cur.d+=b.dur;secrow.lastChild.style.flex=cur.d});
+
+function go(i,autoplay){
+  idx=Math.max(0,Math.min(BEATS.length-1,i));elapsed=0;queue=[];
+  clearStage();const b=BEATS[idx];
+  at=(ms,fn)=>queue.push({ms,fn,done:false});
+  b.build();
+  document.getElementById("bn").textContent=String(idx+1).padStart(2,"0");
+  document.getElementById("bt").textContent=b.t;
+  document.getElementById("f-vo").textContent=b.vo;
+  document.getElementById("f-vis").textContent=b.vis;
+  document.getElementById("f-act").textContent=b.act;
+  document.getElementById("f-hold").textContent=b.hold;
+  [...tickrow.children].forEach((t,k)=>{t.classList.toggle("now",k===idx);t.classList.toggle("done",k<idx)});
+  playing=!!autoplay;paint();
+}
+function paint(){document.getElementById("play").textContent=playing?"❚❚ PAUSE":"▶ PLAY";
+  const t=tickrow.children[idx];t.querySelector("i").style.transform=`scaleX(${elapsed/BEATS[idx].dur})`}
+function frame(ts){const dt=Math.min(64,ts-(last||ts));last=ts;
+  if(playing){elapsed+=dt*rate;
+    queue.forEach(q=>{if(!q.done&&elapsed>=q.ms){q.done=true;q.fn()}});
+    if(elapsed>=BEATS[idx].dur){if(idx<BEATS.length-1)go(idx+1,true);else{playing=false;elapsed=BEATS[idx].dur}}
+    paint()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+document.getElementById("play").onclick=()=>{if(!playing&&elapsed>=BEATS[idx].dur)go(idx,true);else{playing=!playing;paint()}};
+document.getElementById("next").onclick=()=>go(idx+1,playing);
+document.getElementById("prev").onclick=()=>go(idx-1,playing);
+document.getElementById("replay").onclick=()=>go(idx,true);
+document.querySelectorAll(".rate button").forEach(b=>b.onclick=()=>{rate=parseFloat(b.dataset.r);
+  document.querySelectorAll(".rate button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;
+  if(e.key===" "){e.preventDefault();document.getElementById("play").click()}
+  if(e.key==="ArrowRight")go(idx+1,playing);if(e.key==="ArrowLeft")go(idx-1,playing);
+  if(e.key.toLowerCase()==="r")go(idx,true)});
+
+go(0,false);
+</script>
+</body>
+</html>
